@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { padding: 2em 3em; font-size: 14px; }
+        section > div { margin: 0 1.5em; }
+        section > div > *:not(:first-child) { margin-top: 1.75em; }
+
+        div.obox { color: #555; word-break: break-word; }
+
+        /* input style */
+        div.ibox { position: relative; width: 500px; margin-top: 35px; }
+        div.ibox input { color: #222222; width: 100%; border: none; border-bottom: solid #aaaaaa 1px; padding: 10px; position: relative; background: none; z-index: 5; }
+        div.ibox input::placeholder { color: #aaaaaa; }
+        div.ibox input:focus { outline: none; }
+
+        div.ibox span { display: block; position: absolute; bottom: 0; left: 0%; /* right로만 바꿔주면 오 - 왼 */
+        background-color: #666; width: 0; height: 2px; border-radius: 2px; transition: 0.5s; }
+        div.ibox label { position: absolute; color: #aaa; left: 3px; font-size: 1.15em; bottom: 8px; transition: all .2s; }
+
+        div.ibox :is(input:focus ~ label, input:valid ~ label) { font-size: 0.8em; left: 3px; bottom: 40px; color: #666; font-weight: bold; }
+        div.ibox :is(input:focus ~ span, input:valid ~ span) { width: 100%; }
+    </style>
+</head>
+
+<body>
+    <section id="s1">
+        <h1>🔹QueryString 빈 값 삭제</h1>
+        <div>
+            <div class="ibox">
+                <input type="text" id="s1_i1" required/>
+                <label for="s1_i1">querystring</label>
+                <span></span>
+            </div>
+            <h4>🔸output</h4>
+            <div id="s1_o1" class="obox">output..</div>
+            <h4>🔸origin</h4>
+            <div id="s1_o2" class="obox">origin..</div>
+        </div>
+    </section>
+    <section id="s2">
+        
+    </section>
+</body>
+<script>
+    // section 1
+    document.querySelector('input#s1_i1').addEventListener('input', (e) => {
+        let value = e.target.value;
+
+        if (value) {
+            const params = new URLSearchParams(value);
+            const obj = {};
+    
+            // URLSearchParams 객체를 일반 객체로 변환s
+            for (const [key, value] of params) {
+                obj[key] = value;
+            }
+    
+            // 빈 값 필터링
+            const filteredObj = Object.fromEntries(
+                Object.entries(obj).filter(([_, value]) => value !== "" && value !== null && value !== undefined)
+            );
+    
+            // 필터링된 객체를 다시 URLSearchParams 객체로 변환
+            const newParams = new URLSearchParams(filteredObj).toString();
+    
+            if (newParams) document.querySelector('div#s1_o1').textContent = newParams;
+
+        } else {
+            document.querySelector('div#s1_o1').textContent = 'output..';
+            value = 'origin..';
+        }
+
+        document.querySelector('div#s1_o2').textContent = value;
+
+    })
+
+
+</script>
+</html>
