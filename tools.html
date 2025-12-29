@@ -5,50 +5,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Acme&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { padding: 2em 3em; font-size: 14px; }
+        body { font-size: 13px; }
+
+        .acme-regular { font-family: "Acme", sans-serif; font-weight: 400; font-style: normal;}
+
+        div#header_box { padding: 1em 2em; text-transform: uppercase; }
+        div#section_box { padding: 0 2em; display: flex; flex-wrap: wrap; }
+        section { border-bottom: 1px solid #ccc; padding: 2em 0; flex-basis: 48%; flex-grow: 1; margin: 0 1%; }
         section > div { margin: 0 1.5em; }
         section > div > *:not(:first-child) { margin-top: 1.75em; }
 
         div.obox { color: #555; word-break: break-word; }
 
-        /* input style */
-        div.ibox { position: relative; width: 500px; margin-top: 35px; }
-        div.ibox input { color: #222222; width: 100%; border: none; border-bottom: solid #aaaaaa 1px; padding: 10px; position: relative; background: none; z-index: 5; }
-        div.ibox input::placeholder { color: #aaaaaa; }
-        div.ibox input:focus { outline: none; }
+    /* section1 input style */
+        div.s1_ibox { position: relative; width: 500px; margin-top: 35px; }
+        div.s1_ibox input { color: #222222; width: 100%; border: none; border-bottom: solid #aaaaaa 1px; padding: 10px; position: relative; background: none; z-index: 5; }
+        div.s1_ibox input::placeholder { color: #aaaaaa; }
+        div.s1_ibox input:focus { outline: none; }
 
-        div.ibox span { display: block; position: absolute; bottom: 0; left: 0%; /* right로만 바꿔주면 오 - 왼 */
+        div.s1_ibox span { display: block; position: absolute; bottom: 0; left: 0%; /* right로만 바꿔주면 오 - 왼 */
         background-color: #666; width: 0; height: 2px; border-radius: 2px; transition: 0.5s; }
-        div.ibox label { position: absolute; color: #aaa; left: 3px; font-size: 1.15em; bottom: 8px; transition: all .2s; }
+        div.s1_ibox label { position: absolute; color: #aaa; left: 3px; font-size: 1.15em; bottom: 8px; transition: all .2s; }
 
-        div.ibox :is(input:focus ~ label, input:valid ~ label) { font-size: 0.8em; left: 3px; bottom: 40px; color: #666; font-weight: bold; }
-        div.ibox :is(input:focus ~ span, input:valid ~ span) { width: 100%; }
+        div.s1_ibox :is(input:focus ~ label, input:valid ~ label) { font-size: 0.8em; left: 3px; bottom: 40px; color: #666; font-weight: bold; }
+        div.s1_ibox :is(input:focus ~ span, input:valid ~ span) { width: 100%; }
+
+    /* section 2 input style */
+        /* 공통 컨테이너 스타일 */
+        div.s2_ibox { margin-top: 8px; padding: 8px 0; color: #333; }
+        /* 라디오 버튼 그룹 */
+        input[type="radio"] { margin-right: 4px; vertical-align: middle; }
+        label { margin-right: 12px; vertical-align: middle; cursor: pointer; }
+        /* 라벨과 숫자 입력 필드 줄맞춤 */
+        div label[for="rnd_length"] { margin-right: 8px; }
+        /* 숫자 입력 필드 스타일 */
+        input[type="number"] { width: 60px; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
+        /* 포커스 시 스타일 */
+        input[type="number"]:focus { border-color: #0078d4; outline: none; box-shadow: 0 0 2px rgba(0,120,212,0.3); }
+        /* 구분선 느낌 주기 (섹션 구분) */
+        div.s2_ibox + div { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
     </style>
 </head>
 
 <body>
-    <section id="s1">
-        <h1>🔹QueryString 빈 값 삭제</h1>
-        <div>
-            <div class="ibox">
-                <input type="text" id="s1_i1" required/>
-                <label for="s1_i1">querystring</label>
-                <span></span>
+    <div id="header_box" class="box acme-regular">
+        <header>
+            <h1>
+                <span style="color: #2f3e46;">t</span>
+                <span style="color: #354f52;">o</span>
+                <span style="color: #52796f;">o</span>
+                <span style="color: #84a98c;">l</span>
+                <span style="color: #cad2c5;">s</span>
+            </h1>
+        </header>
+    </div>
+    <div id="section_box" class="box">
+        <section id="s1">
+            <h2>🔹QueryString 빈 값 삭제</h2>
+            <div>
+                <div class="s1_ibox">
+                    <input type="text" id="s1_i1" required/>
+                    <label for="s1_i1">querystring</label>
+                    <span></span>
+                </div>
+                <h4>🔸output</h4>
+                <div id="s1_o1" class="obox">output..</div>
+                <h4>🔸origin</h4>
+                <div id="s1_o2" class="obox">origin..</div>
             </div>
-            <h4>🔸output</h4>
-            <div id="s1_o1" class="obox">output..</div>
-            <h4>🔸origin</h4>
-            <div id="s1_o2" class="obox">origin..</div>
-        </div>
-    </section>
-    <section id="s2">
-        
-    </section>
+        </section>
+        <section id="s2">
+            <h2>🔹무작위 문자열 생성</h2>
+            <div>
+                <div class="s2_ibox">
+                    <input type="radio" name="rnd_type" id="rnd_string" value="string" checked>
+                    <label for="rnd_string">혼합 문자열</label>
+                    <input type="radio" name="rnd_type" id="rnd_alphabet" value="alphabet">
+                    <label for="rnd_alphabet">영문 문자열</label>
+                    <input type="radio" name="rnd_type" id="rnd_number" value="number">
+                    <label for="rnd_number">숫자 문자열</label>
+                    <div>
+                        <label for="rnd_length">문자열 길이</label>
+                        <input type="number" name="rnd_length" id="rnd_length" min="0" max="1024" value="128" oninput="clampNumber(this)">
+                    </div>
+                    <div>
+                        <button id="s2_btn">생성</button>
+                    </div>
+                </div>
+                <h4>🔸output</h4>
+                <div id="s2_o1" class="obox">output..</div>
+            </div>
+        </section>
+        <section id="s3">
+            <h2>🔹Unix Timestamp</h2>
+            <div>
+                <div class="s2_ibox">
+                    
+                </div>
+                <h4>🔸<span>timestamp</span></h4>
+                <div id="s3_o1" class="obox">loading...</div>
+            </div>
+        </section>
+    </div>
 </body>
 <script>
-    // section 1
+    // section 1 "query string"
     document.querySelector('input#s1_i1').addEventListener('input', (e) => {
         let value = e.target.value;
 
@@ -77,8 +143,75 @@
         }
 
         document.querySelector('div#s1_o2').textContent = value;
-
     })
+
+    // section 2 "random string"
+    document.querySelector('button#s2_btn').addEventListener('click', () => {
+        const type = document.querySelector('input[name="rnd_type"]:checked')?.value;
+        const length = document.querySelector('input#rnd_length')?.value;
+
+        const generator = {
+            string: (ll) => generateRandom(ll, 3, 0),
+            alphabet: (ll) => generateRandom(ll, 2, 0),
+            number: (ll) => generateRandom(ll, 1, 2)
+        }
+
+
+        document.querySelector('div#s2_o1').textContent = generator[type](length);
+    })
+
+    const generateRandom = (length, range, offset) => {
+        const arr = [[26, 'a'.charCodeAt()], [26, 'A'.charCodeAt()], [10, '0'.charCodeAt()]];
+
+        let result = '';
+
+        for (let i = 0; i < length; i++) {
+            const idx = Math.floor(Math.random() * range) + offset;
+            const charCode = Math.floor(Math.random() * arr[idx][0]) + arr[idx][1];
+            result += String.fromCharCode(charCode);
+        }
+
+        return result;
+    }
+
+    const clampNumber = (el) => {
+        const min = Number(el.min);
+        const max = Number(el.max);
+        const value = Number(el.value);
+
+        el.value = value < min ? min : (value > max ? max : value);
+    }
+
+    // section 3
+    const section3 = {
+        display : document.querySelector("#s3_o1"),
+        readTime : function() {
+            setInterval(() => {
+                const time = Math.floor( new Date().getTime() / 1000 );
+                this.display.innerText = time;
+            }, 1000);
+        },
+        copyEvent : function () {
+            this.display.style.cursor = "pointer";
+
+            this.display.addEventListener("click", () => {
+                const time = this.display.textContent;
+
+                navigator.clipboard.writeText(time)
+                    .then(() => {
+                        const span = document.querySelector("#s3 > div > h4 > span");
+                        const txt = span.innerText;
+                        span.innerText = "📋 Copied !!";
+
+                        setTimeout(() => {
+                            span.innerText = txt;
+                        }, 1500)
+                    });
+            })
+        }
+    }
+    section3.readTime();
+    section3.copyEvent();
 
 
 </script>
