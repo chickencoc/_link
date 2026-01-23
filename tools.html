@@ -111,6 +111,27 @@
                 <div id="s3_o1" class="obox">loading...</div>
             </div>
         </section>
+        <section id="s4">
+            <h2>🔹Base64</h2>
+            <div>
+                <div class="s2_ibox">
+                    <input type="radio" name="encoding_type" id="s4_ic1" value="enc" checked>
+                    <label for="s4_ic1">encoding</label>
+                    <input type="radio" name="encoding_type" id="s4_ic2" value="dec">
+                    <label for="s4_ic2">decoding</label>
+                    <input type="radio" name="encoding_type" id="s4_ic3" value="urlenc">
+                    <label for="s4_ic3">url encoding</label>
+                    <input type="radio" name="encoding_type" id="s4_ic4" value="urldec">
+                    <label for="s4_ic4">url decoding</label>
+                    <br>
+                    <br>
+                    <textarea name="" id="s4_i1" style="border: none; padding: 10px; border-bottom: 1px solid #ccc; font-family: inherit; width: 300px;"></textarea>
+                </div>
+                </div>
+                <h4>🔸<span>timestamp</span></h4>
+                <div id="s4_o1" class="obox">loading...</div>
+            </div>
+        </section>
     </div>
 </body>
 <script>
@@ -212,6 +233,59 @@
     }
     section3.readTime();
     section3.copyEvent();
+
+    // section 4
+    const section4 = {
+        display : document.querySelector("#s4_o1"),
+        textarea : document.querySelector("#s4_i1"),
+        base64urlencode: (str) => {
+            return btoa(unescape(encodeURIComponent(str)))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, ''); // 패딩(=) 제거
+        },
+        base64urldecode: (base64urlStr) => {
+            // 1. 길이를 4의 배수로 맞추기 위해 패딩 복구
+            let base64 = base64urlStr
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+            
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+
+            return decodeURIComponent(escape(atob(base64)));
+        },
+        eventFn : function() {
+            const value = this.textarea.value;
+            const fnType = document.querySelector("input[name='encoding_type']:checked").value;
+            let result  = 'fail';
+
+            try {
+                if( fnType == 'enc' ) {
+                    result = btoa(value);
+                } else if( fnType == 'dec' ) {
+                    result = atob(value);
+                } else if( fnType == 'urlenc') {
+                    result = this.base64urlencode(value);
+                } else if( fnType == 'urldec') {
+                    result = this.base64urldecode(value);
+                }
+
+                this.display.innerText = result;
+            } catch (error) {
+                this.display.innerText = error.toString().substring( error.toString().lastIndexOf(':') + 1 );
+            }
+        },
+        addEvent : function() {
+            this.textarea.addEventListener( 'input', () => this.eventFn() );
+            document.querySelectorAll("input[name='encoding_type']").forEach( (e, i) => {
+                e.addEventListener('click', () => this.eventFn() );
+            });
+        }
+    }
+
+    section4.addEvent();
 
 
 </script>
