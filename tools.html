@@ -16,14 +16,14 @@
 
         div#header_box { padding: 1em 2em; text-transform: uppercase; }
         div#section_box { padding: 0 2em; display: flex; flex-wrap: wrap; }
-        section { border-bottom: 1px solid #ccc; padding: 2em 0; flex-basis: 48%; flex-grow: 1; margin: 0 1%; }
+        section { border-bottom: 1px solid #ccc; padding: 2em 0; margin: 0 1%; flex-basis: 48%; flex-grow: 1; }
         section > div { margin: 0 1.5em; }
         section > div > *:not(:first-child) { margin-top: 1.75em; }
 
         div.obox { color: #555; word-break: break-word; }
 
     /* section1 input style */
-        div.s1_ibox { position: relative; width: 500px; margin-top: 35px; }
+        div.s1_ibox { position: relative; margin-top: 35px; }
         div.s1_ibox input { color: #222222; width: 100%; border: none; border-bottom: solid #aaaaaa 1px; padding: 10px; position: relative; background: none; z-index: 5; }
         div.s1_ibox input::placeholder { color: #aaaaaa; }
         div.s1_ibox input:focus { outline: none; }
@@ -49,6 +49,10 @@
         input[type="number"]:focus { border-color: #0078d4; outline: none; box-shadow: 0 0 2px rgba(0,120,212,0.3); }
         /* 구분선 느낌 주기 (섹션 구분) */
         div.s2_ibox + div { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+
+        @media screen and (max-width: 700px) {
+            div#section_box { display: block; }
+        }
     </style>
 </head>
 
@@ -125,10 +129,10 @@
                     <label for="s4_ic4">url decoding</label>
                     <br>
                     <br>
-                    <textarea name="" id="s4_i1" style="border: none; padding: 10px; border-bottom: 1px solid #ccc; font-family: inherit; width: 300px;"></textarea>
+                    <textarea name="" id="s4_i1" style="border: none; padding: 10px; border-bottom: 1px solid #ccc; font-family: inherit; width: 100%;"></textarea>
                 </div>
                 </div>
-                <h4>🔸<span>timestamp</span></h4>
+                <h4>🔸<span>result</span></h4>
                 <div id="s4_o1" class="obox">loading...</div>
             </div>
         </section>
