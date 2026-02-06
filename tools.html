@@ -256,8 +256,6 @@
         copyEvent : function () {
 
             this.displayTag1.addEventListener("click", () => {
-                if(!this.copyFlag) return;
-
                 const timeValue = this.displayTag1.textContent;
                 copyText(timeValue, "#s3_copy_alert");
             })
