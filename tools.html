@@ -17,10 +17,21 @@
         div#header_box { padding: 1em 2em; text-transform: uppercase; }
         div#section_box { padding: 0 2em; display: flex; flex-wrap: wrap; }
         section { border-bottom: 1px solid #ccc; padding: 2em 0; margin: 0 1%; flex-basis: 48%; flex-grow: 1; }
-        section > div { margin: 0 1.5em; }
-        section > div > *:not(:first-child) { margin-top: 1.75em; }
+        section > div.content_box { margin: 0 1.5em; }
+        section > div.content_box > *:not(:first-child) { margin-top: 1.75em; }
+
+        textarea { border: none; padding: 10px; border-bottom: 1px solid #ccc; font-family: inherit; width: 100%; }
+        input[type="radio"] { margin-right: 4px; vertical-align: middle; }
+        label { vertical-align: middle; cursor: pointer; }
+        
+        button { border: 2px solid #888; padding: 0 8px; background: #fff; border-radius: 4px; cursor: pointer; transition: cubic-bezier(0.4, 0, 0.2, 1) 0.1s; }
+        button > span { display: inline-block;}
+        button:hover { background-color: #888; border: 2px solid #888; color: #fff; }
 
         div.obox { color: #555; word-break: break-word; }
+        div.obox.pointer { cursor: pointer; }
+        div.input_case { margin-bottom: 10px; }
+        div.input_case label { margin-right: 8px; }
 
     /* section1 input style */
         div.s1_ibox { position: relative; margin-top: 35px; }
@@ -38,18 +49,20 @@
     /* section 2 input style */
         /* 공통 컨테이너 스타일 */
         div.s2_ibox { margin-top: 8px; padding: 8px 0; color: #333; }
-        /* 라디오 버튼 그룹 */
-        input[type="radio"] { margin-right: 4px; vertical-align: middle; }
-        label { margin-right: 12px; vertical-align: middle; cursor: pointer; }
         /* 라벨과 숫자 입력 필드 줄맞춤 */
-        div label[for="rnd_length"] { margin-right: 8px; }
+        /* div label[for="rnd_length"] { margin-right: 4px; } */
         /* 숫자 입력 필드 스타일 */
-        input[type="number"] { width: 60px; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
+        div.s2_ibox input[type="number"] { width: 60px; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
         /* 포커스 시 스타일 */
-        input[type="number"]:focus { border-color: #0078d4; outline: none; box-shadow: 0 0 2px rgba(0,120,212,0.3); }
+        div.s2_ibox input[type="number"]:focus { border-color: #0078d4; outline: none; box-shadow: 0 0 2px rgba(0,120,212,0.3); }
         /* 구분선 느낌 주기 (섹션 구분) */
         div.s2_ibox + div { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
 
+
+    /* section3 input style */
+
+
+    
         @media screen and (max-width: 700px) {
             div#section_box { display: block; }
         }
@@ -71,7 +84,7 @@
     <div id="section_box" class="box">
         <section id="s1">
             <h2>🔹QueryString 빈 값 삭제</h2>
-            <div>
+            <div class="content_box">
                 <div class="s1_ibox">
                     <input type="text" id="s1_i1" required/>
                     <label for="s1_i1">querystring</label>
@@ -85,60 +98,74 @@
         </section>
         <section id="s2">
             <h2>🔹무작위 문자열 생성</h2>
-            <div>
+            <div class="content_box">
                 <div class="s2_ibox">
-                    <input type="radio" name="rnd_type" id="rnd_string" value="string" checked>
-                    <label for="rnd_string">혼합 문자열</label>
-                    <input type="radio" name="rnd_type" id="rnd_alphabet" value="alphabet">
-                    <label for="rnd_alphabet">영문 문자열</label>
-                    <input type="radio" name="rnd_type" id="rnd_number" value="number">
-                    <label for="rnd_number">숫자 문자열</label>
-                    <div>
+                    <div class="input_case">
+                        <input type="radio" name="rnd_type" id="rnd_string" value="string" checked>
+                        <label for="rnd_string">혼합 문자열</label>
+                        <input type="radio" name="rnd_type" id="rnd_alphabet" value="alphabet">
+                        <label for="rnd_alphabet">영문 문자열</label>
+                        <input type="radio" name="rnd_type" id="rnd_number" value="number">
+                        <label for="rnd_number">숫자 문자열</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
                         <label for="rnd_length">문자열 길이</label>
                         <input type="number" name="rnd_length" id="rnd_length" min="0" max="1024" value="128" oninput="clampNumber(this)">
-                    </div>
-                    <div>
-                        <button id="s2_btn">생성</button>
+                        <button id="s2_btn">생성<span></span></button>
                     </div>
                 </div>
-                <h4>🔸output</h4>
-                <div id="s2_o1" class="obox">output..</div>
+                <h4>🔸output<small id="s2_copy_alert"></small></h4>
+                <div id="s2_o1" class="obox pointer"></div>
             </div>
         </section>
         <section id="s3">
             <h2>🔹Unix Timestamp</h2>
-            <div>
+            <div class="content_box">
                 <div class="s2_ibox">
-                    
                 </div>
-                <h4>🔸<span>timestamp</span></h4>
-                <div id="s3_o1" class="obox">loading...</div>
+                <h4>🔸timestamp<small id="s3_copy_alert"></small></h4>
+                <div id="s3_o1" class="obox pointer"></div>
+                <h4>🔸local time</h4>
+                <div id="s3_o2" class="obox"></div>
             </div>
         </section>
         <section id="s4">
             <h2>🔹Base64</h2>
-            <div>
+            <div class="content_box">
                 <div class="s2_ibox">
-                    <input type="radio" name="encoding_type" id="s4_ic1" value="enc" checked>
-                    <label for="s4_ic1">encoding</label>
-                    <input type="radio" name="encoding_type" id="s4_ic2" value="dec">
-                    <label for="s4_ic2">decoding</label>
-                    <input type="radio" name="encoding_type" id="s4_ic3" value="urlenc">
-                    <label for="s4_ic3">url encoding</label>
-                    <input type="radio" name="encoding_type" id="s4_ic4" value="urldec">
-                    <label for="s4_ic4">url decoding</label>
-                    <br>
-                    <br>
-                    <textarea name="" id="s4_i1" style="border: none; padding: 10px; border-bottom: 1px solid #ccc; font-family: inherit; width: 100%;"></textarea>
+                    <div class="input_case">
+                        <input type="radio" name="encoding_type" id="s4_ic1" value="enc" checked>
+                        <label for="s4_ic1">encoding</label>
+                        <input type="radio" name="encoding_type" id="s4_ic2" value="dec">
+                        <label for="s4_ic2">decoding</label>
+                        <input type="radio" name="encoding_type" id="s4_ic3" value="urlenc">
+                        <label for="s4_ic3">url encoding</label>
+                        <input type="radio" name="encoding_type" id="s4_ic4" value="urldec">
+                        <label for="s4_ic4">url decoding</label>
+                    </div>
+                    <textarea name="" id="s4_i1"></textarea>
                 </div>
-                </div>
-                <h4>🔸<span>result</span></h4>
-                <div id="s4_o1" class="obox">loading...</div>
+                <h4>🔸result<small id="s4_copy_alert"></small></h4>
+                <div id="s4_o1" class="obox pointer"></div>
             </div>
         </section>
     </div>
 </body>
 <script>
+    // common
+    const copyText = (originText, alertTagId) => {
+        return navigator.clipboard.writeText(originText)
+        .then(() => {
+            const span = document.querySelector(alertTagId);
+            const txt = span.innerText;
+            span.innerText = " [Copied!!]";
+
+            setTimeout(() => {
+                span.innerText = txt;
+            }, 1500)
+        });
+    }
+
     // section 1 "query string"
     document.querySelector('input#s1_i1').addEventListener('input', (e) => {
         let value = e.target.value;
@@ -171,6 +198,8 @@
     })
 
     // section 2 "random string"
+    let sct2CopyFlag = false;
+
     document.querySelector('button#s2_btn').addEventListener('click', () => {
         const type = document.querySelector('input[name="rnd_type"]:checked')?.value;
         const length = document.querySelector('input#rnd_length')?.value;
@@ -181,8 +210,16 @@
             number: (ll) => generateRandom(ll, 1, 2)
         }
 
-
         document.querySelector('div#s2_o1').textContent = generator[type](length);
+
+        sct2CopyFlag = true;
+    })
+
+    document.querySelector('div#s2_o1').addEventListener('click', (e) => {
+        if(!sct2CopyFlag) return;
+
+        const value = e.target.textContent;
+        copyText(value, '#s2_copy_alert');
     })
 
     const generateRandom = (length, range, offset) => {
@@ -203,36 +240,34 @@
         const min = Number(el.min);
         const max = Number(el.max);
         const value = Number(el.value);
-
+        // 입력한 값의 최대-최소값 제한: 최소 보다 작을 때, 최대 보다 클 때
         el.value = value < min ? min : (value > max ? max : value);
     }
 
-    // section 3
+    // section 3 "timestamp"
     const section3 = {
-        display : document.querySelector("#s3_o1"),
+        displayTag1 : document.querySelector("#s3_o1"),
+        displayTag2 : document.querySelector("#s3_o2"),
         readTime : function() {
-            setInterval(() => {
-                const time = Math.floor( new Date().getTime() / 1000 );
-                this.display.innerText = time;
-            }, 1000);
+            this.updateTime();
+
+            setInterval(() => this.updateTime(), 1000);
         },
         copyEvent : function () {
-            this.display.style.cursor = "pointer";
 
-            this.display.addEventListener("click", () => {
-                const time = this.display.textContent;
+            this.displayTag1.addEventListener("click", () => {
+                if(!this.copyFlag) return;
 
-                navigator.clipboard.writeText(time)
-                    .then(() => {
-                        const span = document.querySelector("#s3 > div > h4 > span");
-                        const txt = span.innerText;
-                        span.innerText = "📋 Copied !!";
-
-                        setTimeout(() => {
-                            span.innerText = txt;
-                        }, 1500)
-                    });
+                const timeValue = this.displayTag1.textContent;
+                copyText(timeValue, "#s3_copy_alert");
             })
+        },
+        updateTime : function () {
+            const date = new Date();
+            const time = Math.floor( date.getTime() / 1000 );
+            const localTime = date.toLocaleString();
+            this.displayTag1.innerText = time;
+            this.displayTag2.innerText = localTime;
         }
     }
     section3.readTime();
@@ -240,7 +275,7 @@
 
     // section 4
     const section4 = {
-        display : document.querySelector("#s4_o1"),
+        displayTag : document.querySelector("#s4_o1"),
         textarea : document.querySelector("#s4_i1"),
         base64urlencode: (str) => {
             return btoa(unescape(encodeURIComponent(str)))
@@ -276,15 +311,23 @@
                     result = this.base64urldecode(value);
                 }
 
-                this.display.innerText = result;
+                this.displayTag.innerText = result;
             } catch (error) {
-                this.display.innerText = error.toString().substring( error.toString().lastIndexOf(':') + 1 );
+                this.displayTag.innerText = error.toString().substring( error.toString().lastIndexOf(':') + 1 );
             }
         },
         addEvent : function() {
             this.textarea.addEventListener( 'input', () => this.eventFn() );
+
             document.querySelectorAll("input[name='encoding_type']").forEach( (e, i) => {
                 e.addEventListener('click', () => this.eventFn() );
+            });
+
+            this.displayTag.addEventListener('click', (e) => {
+                const value = e.target.innerText;
+                if(value && value !== "") {
+                    copyText(value, "#s4_copy_alert");
+                }
             });
         }
     }
