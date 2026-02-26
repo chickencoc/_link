@@ -17,6 +17,7 @@
         div#header_box { padding: 1em 2em; text-transform: uppercase; }
         div#section_box { padding: 0 2em; padding-bottom: 15em; display: flex; flex-wrap: wrap; }
         section { border-bottom: 1px solid #ccc; padding: 2em 0; margin: 0 1%; flex-basis: 48%; flex-grow: 1; }
+        section > h2 {margin-bottom: 16px;}
         section div.content_box { margin: 0 1.5em; }
         section div.content_box > *:not(:first-child) { margin-top: 1.75em; }
 
@@ -49,7 +50,7 @@
 
     /* section 2 input style */
         /* 공통 컨테이너 스타일 */
-        div.s2_ibox { margin-top: 8px; padding: 8px 0; color: #333; }
+        div.s2_ibox { color: #333; }
         /* 라벨과 숫자 입력 필드 줄맞춤 */
         /* div label[for="rnd_length"] { margin-right: 4px; } */
         /* 숫자 입력 필드 스타일 */
@@ -66,6 +67,19 @@
     
         @media screen and (max-width: 700px) {
             div#section_box { display: block; }
+        }
+
+        .s3_grid { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); column-gap: 36px; row-gap: 22px; }
+        .s3_cell h4 { margin: 0 0 10px; }
+        .s3_cell .obox { min-height: 20px; }
+        .s3_input_row { display: flex; align-items: center; }
+        .s3_input_row input[type="text"] { width: 140px; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
+        .s3_input_row input[type="text"]:focus { border-color: #0078d4; outline: none; box-shadow: 0 0 2px rgba(0,120,212,0.3); }
+        #s3_o1 .s3_future { color: #19c436; }
+        #s3_o1 .s3_past { color: #eb4c0e; }
+
+        @media screen and (max-width: 700px) {
+            .s3_grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -84,17 +98,17 @@
     </div>
     <div id="section_box" class="box">
         <section id="s1">
-            <h2>🔹QueryString 빈 값 삭제</h2>
+            <h2>🔹Query String 빈 값 삭제</h2>
             <div class="content_box">
                 <div class="s1_ibox">
                     <input type="text" id="s1_i1" required/>
                     <label for="s1_i1">querystring</label>
                     <span></span>
                 </div>
-                <h4>🔸output</h4>
-                <div id="s1_o1" class="obox">output..</div>
-                <h4>🔸origin</h4>
-                <div id="s1_o2" class="obox">origin..</div>
+                <h4>🔸filtered query string<small id="s1_copy_alert1"></small></h4>
+                <div id="s1_o1" class="obox pointer"></div>
+                <h4>🔸filtered URL<small id="s1_copy_alert2"></small></h4>
+                <div id="s1_o2" class="obox pointer"></div>
             </div>
         </section>
         <section id="s2">
@@ -122,12 +136,26 @@
         <section id="s3">
             <h2>🔹Unix Timestamp</h2>
             <div class="content_box">
-                <div class="s2_ibox">
+                <div class="s3_grid">
+                    <div class="s3_cell">
+                        <h4>🔸input timestamp</h4>
+                        <div class="s3_input_row">
+                            <input type="text" id="s3_i1" placeholder="e.g. 1769439600" inputmode="numeric" pattern="[0-9]*" min="1" max="253402268399">
+                        </div>
+                    </div>
+                    <div class="s3_cell">
+                        <h4>🔸timestamp<small id="s3_copy_alert"></small></h4>
+                        <div id="s3_o1" class="obox pointer"></div>
+                    </div>
+                    <div class="s3_cell">
+                        <h4>🔸inputed local time</h4>
+                        <div id="s3_o3" class="obox"></div>
+                    </div>
+                    <div class="s3_cell">
+                        <h4>🔸local time</h4>
+                        <div id="s3_o2" class="obox"></div>
+                    </div>
                 </div>
-                <h4>🔸timestamp<small id="s3_copy_alert"></small></h4>
-                <div id="s3_o1" class="obox pointer"></div>
-                <h4>🔸local time</h4>
-                <div id="s3_o2" class="obox"></div>
             </div>
         </section>
         <section id="s4">
@@ -168,35 +196,72 @@
     }
 
     // section 1 "query string"
-    document.querySelector('input#s1_i1').addEventListener('input', (e) => {
-        let value = e.target.value;
+    const section1 = {
+        inputTag : document.querySelector("#s1_i1"),
+        displayTag1 : document.querySelector("#s1_o1"),
+        displayTag2 : document.querySelector("#s1_o2"),
+        eventFn : function(e) {
+            const value = e.target.value;
+            let host = '';
+            let queryString = '';
 
-        if (value) {
-            const params = new URLSearchParams(value);
-            const obj = {};
-    
-            // URLSearchParams 객체를 일반 객체로 변환s
-            for (const [key, value] of params) {
-                obj[key] = value;
+            if (value.includes('?')) {
+                host = value.split('?')[0];
+                queryString = value.split('?')[1];
+            } else {
+                queryString = value;
             }
-    
-            // 빈 값 필터링
-            const filteredObj = Object.fromEntries(
-                Object.entries(obj).filter(([_, value]) => value !== "" && value !== null && value !== undefined)
-            );
-    
-            // 필터링된 객체를 다시 URLSearchParams 객체로 변환
-            const newParams = new URLSearchParams(filteredObj).toString();
-    
-            if (newParams) document.querySelector('div#s1_o1').textContent = newParams;
 
-        } else {
-            document.querySelector('div#s1_o1').textContent = 'output..';
-            value = 'origin..';
+            if (queryString) {
+                const params = new URLSearchParams(queryString);
+                const obj = {};
+
+                // URLSearchParams 객체를 일반 객체로 변환s
+                for (const [key, value] of params) {
+                    obj[key] = value;
+                }
+
+                // 빈 값 필터링
+                const filteredObj = Object.fromEntries(
+                    Object.entries(obj).filter(([_, val]) => val !== "" && val !== null && val !== undefined)
+                );
+
+                // 필터링된 객체를 다시 URLSearchParams 객체로 변환
+                const newParams = new URLSearchParams(filteredObj).toString();
+
+                if (newParams) {
+                    host += '?';
+                }
+
+                this.displayTag1.textContent = newParams;
+                this.displayTag2.textContent = host + newParams;
+
+            } else {
+                this.displayTag1.textContent = '';
+                this.displayTag2.textContent = host;
+            }
+        },
+        copyEvent : function() {
+            this.displayTag1.addEventListener('click', (e) => {
+                const value = e.target.textContent;
+                if (value && value !== "") {
+                    copyText(value, '#s1_copy_alert1');
+                }
+            });
+
+            this.displayTag2.addEventListener('click', (e) => {
+                const value = e.target.textContent;
+                if (value && value !== "") {
+                    copyText(value, '#s1_copy_alert2');
+                }
+            });
+        },
+        addEvent : function() {
+            this.inputTag.addEventListener('input', (e) => this.eventFn(e));
         }
-
-        document.querySelector('div#s1_o2').textContent = value;
-    })
+    }
+    section1.addEvent();
+    section1.copyEvent();
 
     // section 2 "random string"
     let sct2CopyFlag = false;
@@ -247,8 +312,12 @@
 
     // section 3 "timestamp"
     const section3 = {
+        minTimestamp : 1,
+        maxTimestamp : 253402268399,
         displayTag1 : document.querySelector("#s3_o1"),
         displayTag2 : document.querySelector("#s3_o2"),
+        displayTag3 : document.querySelector("#s3_o3"),
+        inputTag : document.querySelector("#s3_i1"),
         readTime : function() {
             this.updateTime();
 
@@ -257,20 +326,73 @@
         copyEvent : function () {
 
             this.displayTag1.addEventListener("click", () => {
-                const timeValue = this.displayTag1.textContent;
+                const timeValue = this.displayTag1.dataset.copyValue || this.displayTag1.textContent;
                 copyText(timeValue, "#s3_copy_alert");
             })
+        },
+        sanitizeInput : function(applyMin = false) {
+            const digitsOnly = this.inputTag.value.replace(/[^0-9]/g, "");
+            if (!digitsOnly) {
+                this.inputTag.value = "";
+                return;
+            }
+
+            let value = Number(digitsOnly);
+            if (!Number.isFinite(value)) {
+                this.inputTag.value = "";
+                return;
+            }
+
+            if (value > this.maxTimestamp) value = this.maxTimestamp;
+            if (applyMin && value < this.minTimestamp) value = this.minTimestamp;
+            this.inputTag.value = String(value);
+        },
+        addInputEvent : function() {
+            this.inputTag.addEventListener("input", () => {
+                this.sanitizeInput(false);
+                this.updateTime();
+            });
+            this.inputTag.addEventListener("blur", () => {
+                this.sanitizeInput(true);
+                this.updateTime();
+            });
+        },
+        getInputTimestamp : function() {
+            const rawValue = this.inputTag.value.trim();
+            if (!rawValue) return null;
+
+            const value = Number(rawValue);
+            if (!Number.isFinite(value)) return null;
+            if (value < this.minTimestamp || value > this.maxTimestamp) return null;
+            return Math.floor(value);
         },
         updateTime : function () {
             const date = new Date();
             const time = Math.floor( date.getTime() / 1000 );
+            const inputTime = this.getInputTimestamp();
+            let timestampText = String(time);
             const localTime = date.toLocaleString();
-            this.displayTag1.innerText = time;
+            let inputLocalTime = "-";
+
+            if (inputTime !== null) {
+                const gap = inputTime - time;
+                const sign = gap >= 0 ? "+" : "-";
+                const cls = gap >= 0 ? "s3_future" : "s3_past";
+                const absGap = Math.abs(gap);
+
+                timestampText += ` <span class="${cls}">(${sign} ${absGap})</span>`;
+                inputLocalTime = new Date(inputTime * 1000).toLocaleString();
+            }
+
+            this.displayTag1.innerHTML = timestampText;
+            this.displayTag1.dataset.copyValue = String(time);
             this.displayTag2.innerText = localTime;
+            this.displayTag3.innerText = inputLocalTime;
         }
     }
     section3.readTime();
     section3.copyEvent();
+    section3.addInputEvent();
 
     // section 4
     const section4 = {
