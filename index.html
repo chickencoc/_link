@@ -11,10 +11,66 @@
     <title>🎉</title>
     <style>
         * {padding: 0; margin: 0; box-sizing: border-box;}
-        img {max-width: 500px; margin: 0 auto;}
+
+        img, div#cover {width: 320px; top: calc(50vh - 160px); position: fixed;}
+        div#cover {height: 273px;}
+        img.alter_ego {width: 183px; top: calc(50vh - 99px); left: 91px; transition: 0.5s cubic-bezier(0.29, 0.48, 0, 0.99);}
     </style>
 </head>
 <body>
-    <img src="./assets/images/duckies2.jpg">
+    <img id="i2" src="./assets/images/duckies2.jpg">
+
+    <img id="i3" class="alter_ego" src="./assets/images/duckies3.png">
+    <img id="i4" class="alter_ego" src="./assets/images/duckies3.png">
+    <img id="i5" class="alter_ego" src="./assets/images/duckies3.png">
+    <img id="i6" class="alter_ego" src="./assets/images/duckies3.png">
+
+    <img id="i9" class="alter_ego" src="./assets/images/duckies3.png">
+    <div id="cover" onmouseenter="action.enter()" onmouseleave="action.leave()"></div>
 </body>
+<script>
+    const action = {
+        init: function () {
+            this.img3 = document.querySelector("img#i3");
+            this.img4 = document.querySelector("img#i4");
+            this.img5 = document.querySelector("img#i5");
+            this.img6 = document.querySelector("img#i6");
+            this.img9 = document.querySelector("img#i9");
+            this.imgAlterEgos = [this.img3, this.img4, this.img5, this.img6];
+        },
+        enter: function () {
+            this.imgAlterEgos.forEach((el, i) => {
+
+                const s = this.decisionSign(++i);
+
+                el.style.top = `calc(50vh - 99px + ${s[0]}px)`;
+                el.style.left = `calc(91px + ${s[1]}px)`;
+            });
+
+            this.img9.style.mixBlendMode = "color-burn";
+        },
+        leave: function () {
+            this.imgAlterEgos.forEach((el, i) => {
+
+                el.style.top = "calc(50vh - 99px)";
+                el.style.left = "91px";
+            });
+
+            this.img9.style.mixBlendMode = "unset";
+        },
+        decisionSign: function (num) {
+            const con1 = num <= ( this.imgAlterEgos.length / 2 );
+            const con2 = num % 2 == 0;
+
+            console.log(con1, con2, num)
+
+            return [
+                (con1 ? 1 : -1) * 60,
+                (con2 ? -1 : 1) * 33
+            ];
+        }
+    }
+
+    action.init();
+</script>
 </html>
