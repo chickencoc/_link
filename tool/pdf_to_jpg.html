@@ -270,7 +270,7 @@
 
       } catch (err) {
         console.error(err);
-        statusEl.textContent = '오류 발생';
+        statusEl.textContent = '오류 발생' + err?.message ? ': ' + err.message : '';
       }
     }
 
