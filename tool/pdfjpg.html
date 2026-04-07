@@ -238,6 +238,11 @@
         const buffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
+        // 파일 이름 화면에 표시
+        fileName = file.name.replace(".pdf", "");
+        zipName.textContent = file.name;
+
+        // jpg 생성 및 화면에 표시
         for (let i = 1; i <= pdf.numPages; i++) {
           statusEl.textContent = `페이지 ${i} / ${pdf.numPages} 처리 중...`;
 
@@ -256,7 +261,6 @@
           }).promise;
 
           const imgData = canvas.toDataURL('image/jpeg', quality);
-          fileName = file.name.replace(".pdf", "");
 
           images.push({
             name: `${fileName}_page_${i}.jpg`,
