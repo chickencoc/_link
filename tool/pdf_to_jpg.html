@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF → JPG 변환기</title>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Arial;
+      padding: 24px;
+      background: #f7f7f7;
+      width: 100%;
+    }
+
+    h1 {
+      margin-bottom: 12px;
+    }
+
+    #maxInfo {
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    #controls {
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+    }
+
+    #dropZone {
+      border: 2px dashed #aaa;
+      padding: 45px;
+      text-align: center;
+      background: #fff;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    #dropZone.hover, #dropZone:hover {
+      border-color: #333;
+    }
+
+    #status, #downloadZipBtnBox {
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .page {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      flex-basis: 300px;
+    }
+
+    img {
+      width: 100%;
+      max-width: 600px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    div#result {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    footer {
+      font-size: 0.8em;
+      color: #555;
+      text-align: center;
+      margin-top: 7em;
+    }
+
+    @media screen and (max-width: 700px) {
+      .page {
+        flex-basis: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>PDF → JPG 변환기</h1>
+
+  <div id="maxInfo">
+    ⚠️ 브라우저 변환 권장 용량: <b id="maxSize">계산 중...</b>
+  </div>
+
+  <div id="controls">
+    <label>
+      해상도:
+      <select id="scale">
+        <option value="1">기본 (빠름)</option>
+        <option value="2" selected>고화질</option>
+        <option value="3">초고화질</option>
+      </select>
+    </label>
+
+    <label style="margin-left: 16px;">
+      이미지 품질:
+      <select id="quality">
+        <option value="0.7">낮음</option>
+        <option value="0.9" selected>보통</option>
+        <option value="1">최고</option>
+      </select>
+    </label>
+
+  </div>
+  
+  <div id="dropZone">PDF 파일을 클릭하거나 드래그해서 업로드</div>
+  <input type="file" id="fileInput" accept="application/pdf" hidden />
+  
+  <div id="status"></div>
+  <div id="downloadZipBtnBox">
+    <button id="downloadZipBtn">전체 ZIP 다운로드</button>
+    <span id="downloadZipName"></span>
+  </div>
+  <div id="result"></div>
+
+  <footer>
+    <p>* 안내사항</p>
+    <p>모든 작업은 서버로 전송되지 않으며, 브라우저에서 처리됩니다.</p>
+    <p>© 2026, ducking 🐤</p>
+  </footer>
+
+  <script>
+    // ( PDF → JPG 변환 / 해상도·품질 선택 / ZIP 다운로드 / 최대 용량 안내 + 경고)
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    const zipBtn = document.getElementById('downloadZipBtn');
+    const zipName = document.getElementById('downloadZipName');
+
+    const scaleSelect = document.getElementById('scale');
+    const qualitySelect = document.getElementById('quality');
+    const maxSizeEl = document.getElementById('maxSize');
+
+    let images = [];
+    let fileName = "";
+
+    // 최대 용량 계산
+    function estimateMaxFileSize() {
+      if (navigator.deviceMemory) {
+        const memory = navigator.deviceMemory;
+        const safeSizeMB = memory * 50;
+        return `약 ${safeSizeMB}MB 이하 권장 (현재 기기 메모리: 대략 ${memory}GB)`;
+      }
+      return '약 50~200MB 이하 권장 (기기별 상이)';
+    }
+
+    // 초기 표시
+    maxSizeEl.textContent = estimateMaxFileSize();
+
+    // 업로드 이벤트
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('hover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('hover');
+    });
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('hover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+
+    // PDF 처리
+    async function handleFile(file) {
+      if (!file || file.type !== 'application/pdf') {
+        alert('PDF 파일만 업로드 가능합니다.');
+        return;
+      }
+
+      // 파일 크기 경고
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (navigator.deviceMemory) {
+        const limit = navigator.deviceMemory * 50;
+        if (fileSizeMB > limit) {
+          alert(`파일이 큽니다 (${fileSizeMB.toFixed(1)}MB).\n브라우저에서 멈출 수 있습니다.`);
+        }
+      }
+
+      images = [];
+      resultEl.innerHTML = '';
+      statusEl.textContent = '파일 로딩 중...';
+
+      const scale = parseFloat(scaleSelect.value);
+      const quality = parseFloat(qualitySelect.value);
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          statusEl.textContent = `페이지 ${i} / ${pdf.numPages} 처리 중...`;
+
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          await page.render({
+            canvasContext: ctx,
+            viewport: viewport
+          }).promise;
+
+          const imgData = canvas.toDataURL('image/jpeg', quality);
+          fileName = file.name.replace(".pdf", "");
+
+          images.push({
+            name: `${fileName}_page_${i}.jpg`,
+            data: imgData
+          });
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'page';
+
+          const img = document.createElement('img');
+          img.src = imgData;
+
+          const btn = document.createElement('button');
+          btn.textContent = `페이지 ${i} 다운로드`;
+          btn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = imgData;
+            a.download = `${fileName}_page_${i}.jpg`;
+            a.click();
+          };
+
+          wrapper.appendChild(img);
+          wrapper.appendChild(btn);
+          resultEl.appendChild(wrapper);
+        }
+
+        statusEl.textContent = '변환 완료 ✔';
+
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = '오류 발생';
+      }
+    }
+
+    // ZIP 다운로드
+    zipBtn.onclick = async () => {
+      if (images.length === 0) {
+        alert('먼저 PDF를 업로드하세요.');
+        return;
+      }
+
+      statusEl.textContent = 'ZIP 생성 중...';
+
+      const zip = new JSZip();
+
+      for (const img of images) {
+        const base64 = img.data.split(',')[1];
+        zip.file(img.name, base64, { base64: true });
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName + '_pdf_images.zip';
+      a.click();
+
+      statusEl.textContent = 'ZIP 다운로드 완료 ✔';
+    };
+  </script>
+
+</body>
+
+</html>
