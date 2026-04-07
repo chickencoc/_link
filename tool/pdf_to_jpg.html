@@ -266,11 +266,11 @@
           resultEl.appendChild(wrapper);
         }
 
-        statusEl.textContent = '변환 완료 ✔';
+        statusEl.textContent = '✔ 변환 완료';
 
       } catch (err) {
         console.error(err);
-        statusEl.textContent = '오류 발생' + err?.message ? ': ' + err.message : '';
+        statusEl.textContent = '❗오류 발생' + (err?.message ? ': ' + err.message : '');
       }
     }
 
