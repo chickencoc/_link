@@ -367,10 +367,8 @@
         ctx.save();
         ctx.translate(petal.x + swayX, petal.y);
 
-        // 이모지는 회전 안 하는 게 더 자연스러움
-        // if (!petal.isEmoji) {
-          ctx.rotate(petal.rotation);
-        // }
+        // petal 회전
+        ctx.rotate(petal.rotation);
 
         ctx.globalAlpha = petal.alpha;
 
