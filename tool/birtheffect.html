@@ -7,11 +7,13 @@
   <style>
     * { box-sizing: border-box; }
 
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100vh;
+      height: 300vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       color: #333;
       display: flex;
@@ -19,7 +21,7 @@
       align-items: center;
     }
 
-    .wrap {
+    #wrap {
       max-width: 900px;
       margin: 0 auto;
       padding: 60px 20px;
@@ -195,7 +197,8 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <a href="#wrap" style="position: absolute; top: 1em; font-size: 1.25em;"><b>↓</b></a>
+  <div id="wrap">
     <div class="card">
       <h1>생일 축하 이펙트 🎉🥳👏</h1>
       <p>기존 웹페이지에 생일 축하 분위기의 낙하 이펙트를 붙였을 때의 동작을 확인하기 위한 테스트 페이지</p>
@@ -207,10 +210,10 @@
         <button type="button" class="secondary" onclick="stopBlossomEffect(); setStatus('이펙트 수동 종료');">수동 종료</button>
         <div class="range-wrap">
           <label for="effectAmount" class="range-label">이펙트 강도</label>
-          <input id="effectAmount" class="range-input" type="range" min="1" max="10" step="0.05" value="1">
+          <input id="effectAmount" class="range-input" type="range" min="1" max="10" step="0.05" value="1.25">
           <div class="range-scale">
             <span>1</span>
-            <strong id="effectAmountStatus" style="color: red;">1</strong>
+            <strong id="effectAmountStatus" style="color: red;">1.25</strong>
             <span>10</span>
           </div>
         </div>
@@ -232,7 +235,7 @@
       var running = false;
       var stopTimer = null;
       var resizeBound = false;
-      var ratio = 1;
+      var ratio = 1.25;
 
       document.getElementById('effectAmount').addEventListener("input", function(e) {
         document.getElementById('effectAmountStatus').innerText = e.target.value;
@@ -285,14 +288,14 @@
 
       function randomCelebrationColor() {
         var colors = [
-          '#ff9aa2', // soft pink
-          '#ffb7b2', // peach
-          '#ffdac1', // light orange
-          '#e2f0cb', // pastel green
-          '#b5ead7', // mint
-          '#c7ceea', // lavender blue
-          '#f3c4fb', // soft purple
-          '#ffd6e0'  // light rose
+          '#ff0014', // pink
+          '#ff4e42', // peach
+          '#ff6700', // orange
+          '#b1ff31', // pastel green
+          '#22f7ab', // mint
+          '#2752ff', // lavender blue
+          '#e027ff', // soft purple
+          '#fd1a52'  // light rose
         ];
         return colors[Math.floor(Math.random() * colors.length)];
       }
@@ -308,7 +311,7 @@
       }
 
       function buildParticleState(width, height, isReset) {
-        var isEmoji = Math.random() < 0.04;
+        var isEmoji = Math.random() < 0.035;
 
         return {
           x: random(0, width),
@@ -321,7 +324,7 @@
           swingOffset: random(0, Math.PI * 2),
           rotation: random(0, Math.PI * 2),
           rotationSpeed: random(-0.08, 0.08),
-          alpha: random(0.65, 0.9),
+          alpha: random(0.6, 0.9),
           isEmoji: isEmoji,
           emoji: isEmoji ? randomEmoji() : null,
           color: isEmoji ? null : randomCelebrationColor(),
@@ -367,8 +370,10 @@
         ctx.save();
         ctx.translate(petal.x + swayX, petal.y);
 
-        // petal 회전
-        ctx.rotate(petal.rotation);
+        // 이모지는 회전 안 하는 게 더 자연스러움
+        // if (!petal.isEmoji) {
+          ctx.rotate(petal.rotation);
+        // }
 
         ctx.globalAlpha = petal.alpha;
 
