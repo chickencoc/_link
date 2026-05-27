@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 보고서 생성기</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#eef0f3;color:#1f2937;font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif;font-size:14px;line-height:1.65}
+    .app{width:1080px;max-width:calc(100% - 32px);margin:28px auto}
+    .control-panel{background:#fff;border:1px solid #d1d5db;padding:24px;margin-bottom:24px}
+    .control-panel h1{margin:0 0 8px;font-size:23px;color:#111827;letter-spacing:-.04em}
+    .control-panel p{margin:0 0 18px;color:#4b5563}
+    label{display:block;font-weight:700;margin-bottom:6px;color:#111827}
+    input[type=file]{width:100%;border:1px solid #d1d5db;padding:10px;background:#f9fafb}
+    textarea{width:100%;min-height:180px;resize:vertical;border:1px solid #d1d5db;padding:12px;font-family:Consolas,"Courier New",monospace;font-size:13px;line-height:1.5;background:#fff}
+    .button-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    button{border:1px solid #374151;background:#374151;color:#fff;padding:9px 14px;cursor:pointer;font-weight:700;font-size:13px}
+    button.secondary{background:#fff;color:#374151}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .message{margin-top:12px;padding:10px 12px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;display:none;white-space:pre-line}
+    .message.error{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+    .message.success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+    .preview-title{margin:28px 0 10px;font-size:18px;color:#111827}
+    .empty-preview{text-align:center;color:#6b7280;background:#fff;border:1px dashed #cbd5e1;padding:48px 16px;margin-bottom:40px}
+
+    .document{width:960px;max-width:100%;margin:0 auto 40px;background:#fff;border:1px solid #d1d5db;padding:48px 56px}
+    .doc-header{border-bottom:2px solid #111827;padding-bottom:18px;margin-bottom:28px}
+    .document h1{margin:0 0 12px;font-size:26px;font-weight:700;letter-spacing:-.04em;color:#111827}
+    .subtitle{margin:0;color:#4b5563;font-size:14px}
+    .info-table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px}
+    .info-table th{width:120px;background:#f9fafb;color:#374151;font-weight:600}
+    .info-table th,.info-table td{border:1px solid #d1d5db;padding:8px 10px;text-align:left}
+    .document section{margin-top:30px}
+    .document h2{margin:0 0 12px;font-size:17px;font-weight:700;letter-spacing:-.03em;color:#111827;padding-left:10px;border-left:4px solid #374151}
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+    .summary-item{border:1px solid #d1d5db;background:#fafafa;padding:14px 16px;min-height:86px}
+    .summary-label{font-size:12px;color:#6b7280;margin-bottom:6px}
+    .summary-value{font-size:23px;font-weight:700;color:#111827;letter-spacing:-.03em}
+    .summary-note{margin-top:2px;font-size:12px;color:#6b7280}
+    table.data{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+    table.data th{background:#f3f4f6;color:#111827;font-weight:700;text-align:center}
+    table.data th,table.data td{border:1px solid #d1d5db;padding:9px 10px}
+    table.data td{text-align:center}
+    table.data td:first-child{text-align:left}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px}
+    .note{margin-top:12px;padding:12px 14px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-size:13px}
+    .status-success{font-weight:700;color:#166534}
+    .status-fail{font-weight:700;color:#991b1b}
+    .footer{margin-top:36px;padding-top:12px;border-top:1px solid #d1d5db;color:#6b7280;font-size:12px;text-align:right}
+
+    @media print{
+      body{background:#fff}
+      .control-panel,.preview-title{display:none}
+      .app{width:auto;max-width:none;margin:0}
+      .document{width:auto;max-width:none;margin:0;border:none;padding:24mm 18mm}
+      .document section{page-break-inside:avoid}
+    }
+    @media (max-width:760px){
+      .document{padding:32px 22px}
+      .summary-grid,.three-col{grid-template-columns:1fr}
+      .document h1{font-size:22px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="control-panel">
+      <h1>로그인 보고서 생성기</h1>
+      <p>CSV 또는 TXT 파일을 업로드하거나 데이터를 직접 붙여넣으면 문서형 로그인 보고서를 생성하고, HTML 또는 JPG 파일로 내려받을 수 있습니다.</p>
+
+      <div>
+        <label for="fileInput">CSV/TXT 파일 업로드</label>
+        <input id="fileInput" type="file" accept=".csv,.txt,.tsv,text/csv,text/plain" />
+      </div>
+
+      <div style="margin-top:14px;">
+        <label for="dataInput">데이터 직접 붙여넣기</label>
+        <textarea id="dataInput" placeholder="아이피	장치	운영체제	브라우저	상태	메시지	로그인 일시&#10;10.xxx.xxx.113	Computer	Windows 10	Chrome	실패	아이디가 올바르지 않습니다.	2026-05-27 0:04"></textarea>
+      </div>
+
+      <div class="button-row">
+        <button type="button" onclick="generateReport()">보고서 생성</button>
+        <button type="button" class="secondary" onclick="downloadReportHtml()" id="htmlBtn" disabled>HTML 다운로드</button>
+        <button type="button" class="secondary" onclick="downloadReportJpg()" id="jpgBtn" disabled>JPG 다운로드</button>
+        <button type="button" class="secondary" onclick="clearAll()">초기화</button>
+      </div>
+
+      <div id="message" class="message"></div>
+    </section>
+
+    <h2 class="preview-title">보고서 미리보기</h2>
+    <div id="reportArea">
+      <div class="empty-preview">데이터를 입력한 뒤 “보고서 생성” 버튼을 누르면 이곳에 보고서가 표시됩니다.</div>
+    </div>
+  </div>
+
+  <script>
+    let currentReportHtml = "";
+    let currentFileBaseName = "login_status";
+
+    document.getElementById("fileInput").addEventListener("change", async function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      currentFileBaseName = sanitizeBaseName(file.name.replace(/\.[^.]+$/, "")) || "login_status";
+
+      try {
+        const text = await readFileAsText(file);
+        document.getElementById("dataInput").value = text;
+        showMessage("파일을 불러왔습니다. 보고서 생성 버튼을 눌러주세요.", "success");
+      } catch (error) {
+        showMessage("파일을 읽는 중 오류가 발생했습니다.", "error");
+      }
+    });
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsText(file, "UTF-8");
+      });
+    }
+
+    function showMessage(text, type) {
+      const message = document.getElementById("message");
+      message.textContent = text;
+      message.className = "message " + (type || "");
+      message.style.display = "block";
+    }
+
+    function hideMessage() {
+      const message = document.getElementById("message");
+      message.textContent = "";
+      message.style.display = "none";
+    }
+
+    function clearAll() {
+      document.getElementById("fileInput").value = "";
+      document.getElementById("dataInput").value = "";
+      document.getElementById("reportArea").innerHTML = '<div class="empty-preview">데이터를 입력한 뒤 “보고서 생성” 버튼을 누르면 이곳에 보고서가 표시됩니다.</div>';
+      document.getElementById("htmlBtn").disabled = true;
+      document.getElementById("jpgBtn").disabled = true;
+      currentReportHtml = "";
+      currentFileBaseName = "login_status";
+      hideMessage();
+    }
+
+    function generateReport() {
+      try {
+        const rawText = document.getElementById("dataInput").value.trim();
+        if (!rawText) throw new Error("데이터를 입력하거나 파일을 업로드해주세요.");
+
+        const rows = parseTable(rawText);
+        if (rows.length === 0) throw new Error("분석 가능한 데이터가 없습니다.");
+
+        const reportData = aggregateRows(rows);
+        currentReportHtml = buildDocumentHtml(reportData);
+
+        document.getElementById("reportArea").innerHTML = currentReportHtml;
+        document.getElementById("htmlBtn").disabled = false;
+        document.getElementById("jpgBtn").disabled = false;
+
+        showMessage("보고서가 생성되었습니다. 총 " + reportData.total + "건을 기준으로 집계했습니다.", "success");
+      } catch (error) {
+        document.getElementById("htmlBtn").disabled = true;
+        document.getElementById("jpgBtn").disabled = true;
+        currentReportHtml = "";
+        showMessage(error.message, "error");
+      }
+    }
+
+    function parseTable(text) {
+      const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+      const lines = normalized.split("\n").filter(line => line.trim() !== "");
+      if (lines.length < 2) throw new Error("헤더와 데이터가 모두 필요합니다.");
+
+      const delimiter = detectDelimiter(lines[0]);
+      const headers = splitLine(lines[0], delimiter).map(v => v.trim());
+      const requiredHeaders = ["아이피", "장치", "운영체제", "브라우저", "상태", "메시지", "로그인 일시"];
+      const missing = requiredHeaders.filter(header => !headers.includes(header));
+      if (missing.length > 0) throw new Error("필수 컬럼이 없습니다: " + missing.join(", "));
+
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = splitLine(lines[i], delimiter);
+        if (values.length < headers.length) continue;
+
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = (values[index] || "").trim();
+        });
+
+        if (row["로그인 일시"] && row["상태"]) rows.push(row);
+      }
+
+      return rows;
+    }
+
+    function detectDelimiter(headerLine) {
+      const tabCount = (headerLine.match(/\t/g) || []).length;
+      const commaCount = (headerLine.match(/,/g) || []).length;
+      return tabCount >= commaCount ? "\t" : ",";
+    }
+
+    function splitLine(line, delimiter) {
+      if (delimiter === "\t") return line.split("\t");
+      return parseCsvLine(line);
+    }
+
+    function parseCsvLine(line) {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+
+        if (char === '"' && inQuotes && nextChar === '"') {
+          current += '"';
+          i++;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          result.push(current);
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+
+      result.push(current);
+      return result;
+    }
+
+    function aggregateRows(rows) {
+      const total = rows.length;
+      let success = 0;
+      let failure = 0;
+
+      const timeMap = new Map();
+      const failureReasonMap = new Map();
+      const deviceMap = new Map();
+      const osMap = new Map();
+      const browserMap = new Map();
+      const deviceOsBrowserMap = new Map();
+
+      rows.forEach(row => {
+        const status = row["상태"];
+        const loginDate = parseLoginDate(row["로그인 일시"]);
+        if (!loginDate) return;
+
+        const device = row["장치"] || "미기재";
+        const os = normalizeOs(row["운영체제"]);
+        const browser = normalizeBrowser(row["브라우저"]);
+
+        if (status === "성공") {
+          success++;
+        } else if (status === "실패") {
+          failure++;
+          addCount(failureReasonMap, row["메시지"] || "미기재");
+        }
+
+        const hour = loginDate.getHours();
+        const timeLabel = String(hour).padStart(2, "0") + ":00~" + String(hour + 1).padStart(2, "0") + ":00";
+
+        if (!timeMap.has(timeLabel)) {
+          timeMap.set(timeLabel, { label: timeLabel, sortHour: hour, total: 0, success: 0, failure: 0 });
+        }
+
+        const timeItem = timeMap.get(timeLabel);
+        timeItem.total++;
+
+        if (status === "성공") {
+          timeItem.success++;
+        } else if (status === "실패") {
+          timeItem.failure++;
+        }
+
+        addCount(deviceMap, device);
+        addCount(osMap, os);
+        addCount(browserMap, browser);
+        addCount(deviceOsBrowserMap, device + "||" + os + "||" + browser);
+      });
+
+      const successRate = total ? success / total * 100 : 0;
+      const failureRate = total ? failure / total * 100 : 0;
+
+      const timeRows = Array.from(timeMap.values())
+        .sort((a, b) => a.sortHour - b.sortHour)
+        .map(item => ({
+          label: item.label,
+          total: item.total,
+          success: item.success,
+          failure: item.failure,
+          successRate: item.total ? item.success / item.total * 100 : 0
+        }));
+
+      if (timeRows.length === 0) {
+        throw new Error("로그인 일시를 해석할 수 없습니다.");
+      }
+
+      const topHour = timeRows.reduce((max, item) => item.total > max.total ? item : max, timeRows[0]);
+
+      const failureReasons = mapToSortedRows(failureReasonMap).map(item => ({
+        reason: item.key,
+        count: item.count
+      }));
+
+      const deviceRows = mapToSortedRows(deviceMap).map(item => ({
+        device: item.key,
+        count: item.count,
+        ratio: total ? item.count / total * 100 : 0
+      }));
+
+      const osRows = mapToSortedRows(osMap).map(item => ({
+        os: item.key,
+        count: item.count,
+        ratio: total ? item.count / total * 100 : 0
+      }));
+
+      const browserRows = mapToSortedRows(browserMap).map(item => ({
+        browser: item.key,
+        count: item.count,
+        ratio: total ? item.count / total * 100 : 0
+      }));
+
+      const deviceOsBrowserRows = mapToSortedRows(deviceOsBrowserMap).map(item => {
+        const parts = item.key.split("||");
+        return {
+          device: parts[0],
+          os: parts[1],
+          browser: parts[2],
+          count: item.count
+        };
+      });
+
+      return {
+        total,
+        success,
+        failure,
+        successRate,
+        failureRate,
+        analysisDatetime: formatAnalysisDatetime(new Date()),
+        topHour,
+        timeRows,
+        failureReasons,
+        deviceRows,
+        osRows,
+        browserRows,
+        deviceOsBrowserRows
+      };
+    }
+
+    function parseLoginDate(value) {
+      const text = String(value || "").trim();
+      const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+      if (!match) return null;
+
+      const year = Number(match[1]);
+      const month = Number(match[2]) - 1;
+      const day = Number(match[3]);
+      const hour = Number(match[4]);
+      const minute = Number(match[5]);
+      const second = Number(match[6] || 0);
+
+      return new Date(year, month, day, hour, minute, second);
+    }
+
+    function normalizeOs(osName) {
+      const value = String(osName || "").trim();
+      if (!value) return "미기재";
+
+      const lower = value.toLowerCase();
+
+      if (lower.startsWith("windows")) return "Windows";
+      if (lower.startsWith("macos") || lower.startsWith("mac os")) return "macOS";
+      if (lower.startsWith("ios")) return "ios";
+      if (lower.startsWith("android")) return "Android";
+      if (lower.startsWith("linux")) return "Linux";
+      if (lower.startsWith("chrome os") || lower.startsWith("chromeos")) return "Chrome OS";
+
+      return value.replace(/\s+\d+(\.\d+)*.*$/, "");
+    }
+
+
+    function normalizeBrowser(browserName) {
+      const value = String(browserName || "").trim();
+      if (!value) return "미기재";
+
+      const lower = value.toLowerCase();
+
+      if (lower.startsWith("microsoft edge")) return "Microsoft Edge";
+      if (lower.startsWith("edge")) return "Microsoft Edge";
+      if (lower.startsWith("chrome mobile")) return "Chrome Mobile";
+      if (lower.startsWith("chrome")) return "Chrome";
+      if (lower.startsWith("safari mobile")) return "Safari Mobile";
+      if (lower.startsWith("safari")) return "Safari";
+      if (lower.startsWith("firefox")) return "Firefox";
+      if (lower.startsWith("opera")) return "Opera";
+      if (lower.startsWith("samsung internet")) return "Samsung Internet";
+      if (lower.startsWith("naver whale") || lower.startsWith("whale")) return "Whale";
+      if (lower.startsWith("internet explorer")) return "Internet Explorer";
+
+      return value.replace(/\s*\d+(\.\d+)*.*$/, "");
+    }
+
+    function addCount(map, key) {
+      const safeKey = key || "미기재";
+      map.set(safeKey, (map.get(safeKey) || 0) + 1);
+    }
+
+    function mapToSortedRows(map) {
+      return Array.from(map.entries())
+        .map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count !== a.count ? b.count - a.count : a.key.localeCompare(b.key, "ko"));
+    }
+
+    function formatAnalysisDatetime(date) {
+      return [
+        date.getFullYear(),
+        "-",
+        String(date.getMonth() + 1).padStart(2, "0"),
+        "-",
+        String(date.getDate()).padStart(2, "0"),
+        " ",
+        String(date.getHours()).padStart(2, "0"),
+        ":",
+        String(date.getMinutes()).padStart(2, "0"),
+        ":00"
+      ].join("");
+    }
+
+    function fmtPercent(value) {
+      return value.toFixed(1) + "%";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function td(value) {
+      return "<td>" + escapeHtml(value) + "</td>";
+    }
+
+    function buildRows(rows, cellBuilder) {
+      return rows.map(row => "<tr>" + cellBuilder(row) + "</tr>").join("");
+    }
+
+    function buildDocumentHtml(data) {
+      const failureReasonRows = data.failureReasons.length
+        ? buildRows(data.failureReasons, row => td(row.reason) + td(row.count + "건"))
+        : '<tr><td>실패 없음</td><td>0건</td></tr>';
+
+      return `
+<main class="document">
+  <header class="doc-header">
+    <h1>로그인 성공/실패 현황 보고서</h1>
+    <p class="subtitle">로그인 로그 데이터를 기준으로 접속 성공/실패, 실패 사유, 시간대별 현황, 장치·운영체제·브라우저 종류별 접속 현황을 정리한 문서입니다.</p>
+
+    <table class="info-table">
+      <tr>
+        <th>분석 기준일</th>
+        <td>${escapeHtml(data.analysisDatetime)}</td>
+        <th>분석 대상</th>
+        <td>로그인 시도 ${data.total}건</td>
+      </tr>
+    </table>
+  </header>
+
+  <section>
+    <h2>1. 주요 요약</h2>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="summary-label">전체 접속 시도</div><div class="summary-value">${data.total}건</div><div class="summary-note">성공 및 실패 합계</div></div>
+      <div class="summary-item"><div class="summary-label">성공</div><div class="summary-value">${data.success}건</div><div class="summary-note">성공률 ${fmtPercent(data.successRate)}</div></div>
+      <div class="summary-item"><div class="summary-label">실패</div><div class="summary-value">${data.failure}건</div><div class="summary-note">실패율 ${fmtPercent(data.failureRate)}</div></div>
+      <div class="summary-item"><div class="summary-label">최다 접속 시간대</div><div class="summary-value">${escapeHtml(data.topHour.label)}</div><div class="summary-note">총 ${data.topHour.total}건</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 전체 성공/실패 현황</h2>
+    <table class="data">
+      <thead><tr><th>상태</th><th>횟수</th><th>비율</th></tr></thead>
+      <tbody>
+        <tr><td class="status-success">성공</td><td>${data.success}건</td><td>${fmtPercent(data.successRate)}</td></tr>
+        <tr><td class="status-fail">실패</td><td>${data.failure}건</td><td>${fmtPercent(data.failureRate)}</td></tr>
+        <tr><td><strong>전체</strong></td><td><strong>${data.total}건</strong></td><td><strong>100.0%</strong></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. 실패 사유별 횟수</h2>
+    <table class="data">
+      <thead><tr><th>실패 사유</th><th>횟수</th></tr></thead>
+      <tbody>
+        ${failureReasonRows}
+        <tr><td><strong>전체 실패</strong></td><td><strong>${data.failure}건</strong></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 시간대별 성공/실패 현황</h2>
+    <table class="data">
+      <thead><tr><th>시간대</th><th>전체</th><th>성공</th><th>실패</th><th>성공률</th></tr></thead>
+      <tbody>
+        ${buildRows(data.timeRows, row => td(row.label) + td(row.total + "건") + td(row.success + "건") + td(row.failure + "건") + td(fmtPercent(row.successRate)))}
+      </tbody>
+    </table>
+    <div class="note">접속이 가장 많았던 시간대는 ${escapeHtml(data.topHour.label)}이며, 해당 시간대의 접속 시도는 총 ${data.topHour.total}건입니다.</div>
+  </section>
+
+  <section class="three-col">
+    <div>
+      <h2>5. 장치별 접속 횟수</h2>
+      <table class="data">
+        <thead><tr><th>장치</th><th>접속 횟수</th><th>비율</th></tr></thead>
+        <tbody>${buildRows(data.deviceRows, row => td(row.device) + td(row.count + "건") + td(fmtPercent(row.ratio)))}</tbody>
+      </table>
+    </div>
+    <div>
+      <h2>6. 운영체제별 접속 횟수</h2>
+      <table class="data">
+        <thead><tr><th>운영체제</th><th>접속 횟수</th><th>비율</th></tr></thead>
+        <tbody>${buildRows(data.osRows, row => td(row.os) + td(row.count + "건") + td(fmtPercent(row.ratio)))}</tbody>
+      </table>
+    </div>
+    <div>
+      <h2>7. 브라우저별 접속 횟수</h2>
+      <table class="data">
+        <thead><tr><th>브라우저</th><th>접속 횟수</th><th>비율</th></tr></thead>
+        <tbody>${buildRows(data.browserRows, row => td(row.browser) + td(row.count + "건") + td(fmtPercent(row.ratio)))}</tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>8. 장치 및 운영체제, 브라우저 조합별 접속 횟수</h2>
+    <table class="data">
+      <thead><tr><th>장치</th><th>운영체제</th><th>브라우저</th><th>접속 횟수</th></tr></thead>
+      <tbody>${buildRows(data.deviceOsBrowserRows, row => td(row.device) + td(row.os) + td(row.browser) + td(row.count + "건"))}</tbody>
+    </table>
+  </section>
+
+  <div class="footer">
+    본 보고서는 제공된 로그인 로그 데이터를 기준으로 작성되었습니다.
+  </div>
+</main>`;
+    }
+
+    function getReportCssForDownload() {
+      let css = "";
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          css += Array.from(sheet.cssRules).map(rule => rule.cssText).join("\n") + "\n";
+        } catch (error) {
+          /* CDN stylesheet 등 접근 불가 시 무시 */
+        }
+      }
+
+      return css;
+    }
+
+    function getDownloadTimestamp() {
+      const now = new Date();
+      return [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+        "_",
+        String(now.getHours()).padStart(2, "0"),
+        String(now.getMinutes()).padStart(2, "0")
+      ].join("");
+    }
+
+    function getDownloadFileName(extension) {
+      return currentFileBaseName + "_" + getDownloadTimestamp() + "." + extension;
+    }
+
+    function sanitizeBaseName(name) {
+      return String(name || "")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "_")
+        .replace(/\s+/g, "_");
+    }
+
+    function downloadReportHtml() {
+      if (!currentReportHtml) {
+        showMessage("먼저 보고서를 생성해주세요.", "error");
+        return;
+      }
+
+      const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 성공/실패 현황 보고서</title>
+  <style>${getReportCssForDownload()}</style>
+</head>
+<body>
+${currentReportHtml}
+</body>
+</html>`;
+
+      downloadBlob(html, getDownloadFileName("html"), "text/html;charset=utf-8");
+    }
+
+    async function downloadReportJpg() {
+      const target = document.querySelector("#reportArea main.document");
+
+      if (!target) {
+        showMessage("먼저 보고서를 생성해주세요.", "error");
+        return;
+      }
+
+      if (typeof html2canvas === "undefined") {
+        showMessage("JPG 생성을 위한 html2canvas 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.", "error");
+        return;
+      }
+
+      try {
+        const originalCanvas = await html2canvas(target, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          useCORS: true
+        });
+
+        const targetWidth = 1000;
+        const ratio = targetWidth / originalCanvas.width;
+        const targetHeight = Math.round(originalCanvas.height * ratio);
+
+        const resizedCanvas = document.createElement("canvas");
+        resizedCanvas.width = targetWidth;
+        resizedCanvas.height = targetHeight;
+
+        const context = resizedCanvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, targetWidth, targetHeight);
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
+        context.drawImage(originalCanvas, 0, 0, targetWidth, targetHeight);
+
+        const dataUrl = resizedCanvas.toDataURL("image/jpeg", 0.85);
+        downloadDataUrl(dataUrl, getDownloadFileName("jpg"));
+      } catch (error) {
+        showMessage("JPG 생성 중 오류가 발생했습니다: " + error.message, "error");
+      }
+    }
+
+    function downloadBlob(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      downloadDataUrl(url, filename);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function downloadDataUrl(url, filename) {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
