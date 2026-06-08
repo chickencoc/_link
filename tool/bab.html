@@ -3,48 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="구디 밥 목록">
-    <meta property="og:description" content="구디에서 점심밥을 찾아 떠도는 영혼들을 위해">
-    <title>구디 밥 목록</title>
+    <title>Document</title>
     <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 24px; font-family: Arial, sans-serif; background: #f6f7f9; color: #222; }
     #wrap { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
-    #wrap .wrap_con { flex: 1 1 360px; max-width: 415px; padding: 20px; border: 1px solid #e1e4e8; border-radius: 10px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .06); }
+    #wrap .wrap_con { flex: 1 1 360px; max-width: 415px; padding: 20px; border: 1px solid #e1e4e8; border-radius: 4px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .06); }
     #wrap .wrap_con h3 { margin: 0 0 12px; font-size: 20px; text-align: center; }
     #wrap .wrap_con a { display: block; margin-bottom: 16px; color: #2563eb; line-height: 1.5; text-decoration: none; word-break: keep-all; }
     #wrap .wrap_con a:hover { text-decoration: underline; }
-    #wrap .wrap_con iframe { display: block; width: 100%; height: 594px; border: 0; border-radius: 8px; background: #fff; overflow: hidden; }
+    #wrap .wrap_con iframe { display: block; width: 100%; height: 594px; border: 0; border-radius: 2px; background: #fff; overflow: hidden; }
 
     @media (max-width: 480px) {
         body { padding: 12px; }
         #wrap { gap: 12px; }
         #wrap .wrap_con { flex-basis: 100%; padding: 16px; }
     }
+
+    #theme_btn { position: fixed; top: 16px; right: 16px; z-index: 10; padding: 8px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff; color: #111827; cursor: pointer; }
+    body.dark-mode { background: linear-gradient(180deg, #1b2838 0%, #0b141f 100%); color: #c7d5e0; }
+    body.dark-mode #theme_btn { background: #2a475e; color: #c7d5e0; border-color: #66c0f4; box-shadow: 0 0 12px rgba(102, 192, 244, .18); }
+    body.dark-mode #wrap .wrap_con { background: linear-gradient(180deg, #223447 0%, #16202d 100%); border-color: #2a475e; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+    body.dark-mode #wrap .wrap_con h3 { color: #ffffff; }
+    body.dark-mode #wrap .wrap_con a { color: #66c0f4; }
+    body.dark-mode #wrap .wrap_con a:hover { color: #9fd8ff; }
+    body.dark-mode #wrap .wrap_con iframe { background: #0b141f; border: 1px solid #2a475e; }
+
+    #wrap .wrap_con .iframe_box { position: relative; width: 100%; height: 594px; overflow: hidden; border-radius: 8px; }
+    #wrap .wrap_con .iframe_box iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+    #wrap .wrap_con .iframe_box .iframe_overlay { display: none; }
+
+    body.dark-mode #wrap .wrap_con .iframe_box .iframe_overlay { display: block; position: absolute; inset: 0; pointer-events: none; background: #0b141f; opacity: .18; mix-blend-mode: multiply; }
 </style>
 </head>
 <body>
+    <button id="theme_btn">theme</button>
     <div id="wrap">
         <div class="wrap_con">
             <h3>아티스테이블</h3>
             <a href="https://place.map.kakao.com/117651899?t_src=kakaotalk&t_ch=talkchannel&t_obj=card_address" target="_blank"><small>서울 구로구 디지털로31길 62 아티스포럼 지하1층 B104호</small></a>
-            <iframe src="https://pf.kakao.com/_ixetln/posts" frameborder="0" scrolling="no"></iframe>
+            <div class="iframe_box">
+                <iframe src="https://pf.kakao.com/_ixetln/posts" scrolling="no" frameborder="0"></iframe>
+                <div class="iframe_overlay"></div>
+            </div>
         </div>
         <div class="wrap_con">
             <h3>건강한밥상</h3>
             <a href="https://kko.to/2mq81qeGYa" target="_blank"><small>서울 구로구 디지털로31길 41 이앤씨벤처드림타워6차 2층</small></a>
-            <iframe src="https://pf.kakao.com/_kssxin/109995356" frameborder="0" scrolling="no"></iframe>
+            <div class="iframe_box">
+                <iframe src="https://pf.kakao.com/_kssxin/109995356" scrolling="no" frameborder="0"></iframe>
+                <div class="iframe_overlay"></div>
+            </div>
         </div>
         <div class="wrap_con">
             <h3>마이푸드 홈스타일 뷔페</h3>
             <a href="https://map.kakao.com/?itemId=19631457" target="_blank"><small>서울 구로구 디지털로 300 지밸리비즈플라자 지하1층</small></a>
-            <iframe src="https://pf.kakao.com/_FDxoan/posts" frameborder="0" scrolling="no"></iframe>
+            <div class="iframe_box">
+                <iframe src="https://pf.kakao.com/_FDxoan/posts" scrolling="no" frameborder="0"></iframe>
+                <div class="iframe_overlay"></div>
+            </div>
         </div>
         <div class="wrap_con">
             <h3>왕의밥상</h3>
             <a href="https://kko.to/pAnje5lH_s" target="_blank"><small>서울 구로구 디지털로27길 36 이스페이스빌딩 B04호</small></a>
-            <iframe src="https://pf.kakao.com/_EZzpG/posts" frameborder="0" scrolling="no"></iframe>
+            <div class="iframe_box">
+                <iframe src="https://pf.kakao.com/_EZzpG/posts" scrolling="no" frameborder="0"></iframe>
+                <div class="iframe_overlay"></div>
+            </div>
         </div>
     </div>
+<script>
+    const themeBtn = document.getElementById('theme_btn');
+    const THEME_COOKIE = 'page_theme';
+
+    function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
+    }
+
+    function getCookie(name) {
+        const cookies = document.cookie.split('; ');
+        const target = cookies.find(cookie => cookie.startsWith(name + '='));
+        return target ? target.split('=')[1] : null;
+    }
+
+    function applyTheme(theme) {
+        const isDark = theme === 'dark';
+
+        document.body.classList.toggle('dark-mode', isDark);
+        themeBtn.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    function toggleTheme() {
+        const isDark = document.body.classList.contains('dark-mode');
+        const nextTheme = isDark ? 'light' : 'dark';
+
+        applyTheme(nextTheme);
+        setCookie(THEME_COOKIE, nextTheme, 365);
+    }
+
+    const savedTheme = getCookie(THEME_COOKIE) || 'dark';
+
+    applyTheme(savedTheme);
+    themeBtn.addEventListener('click', toggleTheme);
+</script>
 </body>
 </html>
