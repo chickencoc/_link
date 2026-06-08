@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font-family: Arial, sans-serif; background: #f6f7f9; color: #222; }
+    #wrap { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
+    #wrap .wrap_con { flex: 1 1 360px; max-width: 415px; padding: 20px; border: 1px solid #e1e4e8; border-radius: 10px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .06); }
+    #wrap .wrap_con h3 { margin: 0 0 12px; font-size: 20px; text-align: center; }
+    #wrap .wrap_con a { display: block; margin-bottom: 16px; color: #2563eb; line-height: 1.5; text-decoration: none; word-break: keep-all; }
+    #wrap .wrap_con a:hover { text-decoration: underline; }
+    #wrap .wrap_con iframe { display: block; width: 100%; height: 594px; border: 0; border-radius: 8px; background: #fff; overflow: hidden; }
+
+    @media (max-width: 480px) {
+        body { padding: 12px; }
+        #wrap { gap: 12px; }
+        #wrap .wrap_con { flex-basis: 100%; padding: 16px; }
+    }
+</style>
+</head>
+<body>
+    <div id="wrap">
+        <div class="wrap_con">
+            <h3>아티스테이블</h3>
+            <a href="https://place.map.kakao.com/117651899?t_src=kakaotalk&t_ch=talkchannel&t_obj=card_address" target="_blank"><small>서울 구로구 디지털로31길 62 아티스포럼 지하1층 B104호</small></a>
+            <iframe src="https://pf.kakao.com/_ixetln/posts" frameborder="0" scrolling="no"></iframe>
+        </div>
+        <div class="wrap_con">
+            <h3>건강한밥상</h3>
+            <a href="https://kko.to/2mq81qeGYa" target="_blank"><small>서울 구로구 디지털로31길 41 이앤씨벤처드림타워6차 2층</small></a>
+            <iframe src="https://pf.kakao.com/_kssxin/109995356" frameborder="0" scrolling="no"></iframe>
+        </div>
+        <div class="wrap_con">
+            <h3>마이푸드 홈스타일 뷔페</h3>
+            <a href="https://map.kakao.com/?itemId=19631457" target="_blank"><small>서울 구로구 디지털로 300 지밸리비즈플라자 지하1층</small></a>
+            <iframe src="https://pf.kakao.com/_FDxoan/posts" frameborder="0" scrolling="no"></iframe>
+        </div>
+        <div class="wrap_con">
+            <h3>왕의밥상</h3>
+            <a href="https://kko.to/pAnje5lH_s" target="_blank"><small>서울 구로구 디지털로27길 36 이스페이스빌딩 B04호</small></a>
+            <iframe src="https://pf.kakao.com/_EZzpG/posts" frameborder="0" scrolling="no"></iframe>
+        </div>
+    </div>
+</body>
+</html>
