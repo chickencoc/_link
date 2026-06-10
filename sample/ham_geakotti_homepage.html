@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ham Geakotti | Geako Outlier V1</title>
+  <style>
+    :root {
+      --bg: #050711;
+      --bg-soft: #0b1020;
+      --card: rgba(255,255,255,.075);
+      --line: rgba(255,255,255,.14);
+      --text: #f7f8ff;
+      --muted: #b8bfd8;
+      --primary: #8b5cf6;
+      --primary-2: #22d3ee;
+      --success: #38d996;
+      --warning: #fbbf24;
+      --danger: #fb7185;
+      --shadow: 0 24px 80px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(139,92,246,.35), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(34,211,238,.24), transparent 28%),
+        linear-gradient(180deg, #050711 0%, #07101c 52%, #050711 100%);
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+
+    header {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(18px);
+      background: rgba(5,7,17,.72);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav { height: 76px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:-.03em; }
+    .logo {
+      width: 38px; height: 38px; border-radius: 12px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 34px rgba(34,211,238,.22);
+      font-weight: 900;
+    }
+    .nav-links { display:flex; align-items:center; gap:28px; color: var(--muted); font-size:14px; }
+    .nav-actions { display:flex; align-items:center; gap:12px; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border-radius: 999px; padding: 12px 20px; font-weight:800;
+      border: 1px solid var(--line); transition:.2s ease; cursor:pointer;
+      background: rgba(255,255,255,.04);
+    }
+    .btn:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.35); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color:white; border:0; }
+    .btn-dark { background: #fff; color:#080a14; border:0; }
+
+    .hero { padding: 94px 0 80px; overflow:hidden; }
+    .hero-grid { display:grid; grid-template-columns: 1.05fr .95fr; align-items:center; gap:56px; }
+    .eyebrow {
+      display:inline-flex; align-items:center; gap:8px; color:#dfe7ff;
+      border:1px solid var(--line); background: rgba(255,255,255,.06);
+      padding:8px 12px; border-radius:999px; font-size:13px; font-weight:800;
+    }
+    .pulse { width:8px; height:8px; border-radius:999px; background:var(--success); box-shadow:0 0 0 8px rgba(56,217,150,.14); }
+    h1 { font-size: clamp(42px, 7vw, 82px); line-height:.98; letter-spacing:-.07em; margin:28px 0 24px; }
+    .gradient { background: linear-gradient(135deg, #fff 20%, #b8c7ff 48%, #67e8f9 76%); -webkit-background-clip:text; color:transparent; }
+    .hero p { font-size: 19px; color: var(--muted); max-width: 660px; margin: 0 0 30px; }
+    .hero-actions { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:34px; }
+    .trust-row { display:flex; gap:24px; flex-wrap:wrap; color:var(--muted); font-size:14px; }
+    .trust-row strong { color:white; display:block; font-size:22px; }
+
+    .radar-wrap { position:relative; min-height:520px; }
+    .radar-card {
+      position:relative; height:520px; border:1px solid var(--line); border-radius:34px;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      box-shadow: var(--shadow); overflow:hidden;
+    }
+    .radar-card:before {
+      content:""; position:absolute; inset:-40%;
+      background: conic-gradient(from 0deg, transparent 0 68%, rgba(34,211,238,.32), transparent 76% 100%);
+      animation: spin 7s linear infinite;
+    }
+    .radar-inner {
+      position:absolute; inset:28px; border-radius:28px; background: rgba(5,7,17,.88);
+      border:1px solid var(--line); overflow:hidden;
+    }
+    .grid-bg {
+      position:absolute; inset:0;
+      background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 34px 34px; opacity:.45;
+    }
+    .ring { position:absolute; inset:58px; border:1px solid rgba(34,211,238,.25); border-radius:50%; }
+    .ring.r2 { inset:118px; } .ring.r3 { inset:178px; }
+    .dot { position:absolute; width:10px; height:10px; border-radius:50%; background:var(--success); box-shadow:0 0 20px var(--success); }
+    .dot.d1 { top:28%; left:62%; } .dot.d2 { top:54%; left:35%; background:var(--warning); box-shadow:0 0 20px var(--warning); }
+    .dot.d3 { top:72%; left:68%; background:var(--danger); box-shadow:0 0 20px var(--danger); }
+    .panel {
+      position:absolute; left:26px; right:26px; bottom:26px; padding:20px;
+      border:1px solid var(--line); border-radius:22px; background:rgba(255,255,255,.08); backdrop-filter:blur(14px);
+    }
+    .panel-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-weight:900; }
+    .risk { color:var(--danger); }
+    .bar { height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden; margin:10px 0; }
+    .bar span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--success), var(--warning), var(--danger)); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    section { padding: 82px 0; }
+    .section-head { max-width:760px; margin-bottom:36px; }
+    .section-head h2 { font-size: clamp(34px, 4.5vw, 58px); line-height:1.05; letter-spacing:-.055em; margin:0 0 18px; }
+    .section-head p { color:var(--muted); font-size:18px; margin:0; }
+    .cards { display:grid; grid-template-columns: repeat(4, 1fr); gap:18px; }
+    .card {
+      padding:26px; border:1px solid var(--line); border-radius:26px;
+      background: var(--card); box-shadow: 0 16px 50px rgba(0,0,0,.18);
+    }
+    .icon { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:rgba(34,211,238,.12); margin-bottom:18px; font-size:22px; }
+    .card h3 { margin:0 0 10px; font-size:20px; letter-spacing:-.02em; }
+    .card p { color:var(--muted); margin:0; font-size:15px; }
+
+    .split { display:grid; grid-template-columns: .9fr 1.1fr; gap:40px; align-items:center; }
+    .feature-list { display:grid; gap:14px; }
+    .feature-item { padding:18px 20px; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.055); }
+    .feature-item strong { display:block; margin-bottom:5px; }
+    .feature-item span { color:var(--muted); }
+    .dashboard {
+      border:1px solid var(--line); border-radius:30px; padding:22px; background:rgba(255,255,255,.07); box-shadow:var(--shadow);
+    }
+    .dash-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; color:var(--muted); }
+    .chart { height:250px; border-radius:22px; background: linear-gradient(180deg, rgba(34,211,238,.15), rgba(139,92,246,.08)); position:relative; overflow:hidden; }
+    .wave { position:absolute; left:-5%; right:-5%; bottom:50px; height:96px; border-radius:50%; border-top:4px solid rgba(34,211,238,.85); transform: rotate(-5deg); }
+    .alert { margin-top:16px; padding:16px; border-radius:18px; background:rgba(251,113,133,.13); border:1px solid rgba(251,113,133,.32); }
+
+    .usecases { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; }
+    .usecase { padding:22px; border-radius:22px; border:1px solid var(--line); background:rgba(255,255,255,.055); }
+
+    .cta {
+      text-align:center; padding:74px 30px; border-radius:38px;
+      background: linear-gradient(135deg, rgba(139,92,246,.34), rgba(34,211,238,.22));
+      border:1px solid var(--line); box-shadow:var(--shadow);
+    }
+    .cta h2 { font-size: clamp(34px, 5vw, 62px); letter-spacing:-.06em; line-height:1.05; margin:0 0 16px; }
+    .cta p { color:#dbe4ff; max-width:700px; margin:0 auto 28px; font-size:18px; }
+
+    footer { padding: 46px 0; border-top:1px solid var(--line); color:var(--muted); }
+    .footer-grid { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+
+    @media (max-width: 900px) {
+      .nav-links { display:none; }
+      .hero-grid, .split { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .usecases { grid-template-columns: 1fr; }
+      .radar-wrap, .radar-card { min-height:420px; height:420px; }
+    }
+    @media (max-width: 560px) {
+      .container { width:min(100% - 28px, 1180px); }
+      .nav-actions .btn:first-child { display:none; }
+      .cards { grid-template-columns: 1fr; }
+      .hero { padding-top:58px; }
+      h1 { font-size:44px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#top"><span class="logo">G</span><span>Ham Geakotti</span></a>
+      <nav class="nav-links">
+        <a href="#solution">솔루션</a>
+        <a href="#platform">플랫폼</a>
+        <a href="#usecases">적용 영역</a>
+        <a href="#contact">문의</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn" href="#solution">제품 보기</a>
+        <a class="btn btn-primary" href="#contact">데모 요청</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow"><span class="pulse"></span> Geako Outlier V1 · AI 이상탐지 보안</div>
+          <h1><span class="gradient">당신의 인프라를 지키는</span><br/>가장 스마트한 레이더</h1>
+          <p>
+            보이지 않는 빈틈까지 완벽하게, 데이터 레이더로 기업의 안전을 책임지는 이상탐지 전문 기업 <strong>Ham Geakotti</strong>입니다.
+          </p>
+          <p>
+            독자적인 머신러닝 알고리즘으로 알려지지 않은 위협까지 예측하고, 이상 징후를 선제적으로 포착해 디지털 비즈니스의 중단 없는 성장을 지원합니다.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#contact">무료 데모 요청</a>
+            <a class="btn" href="#platform">플랫폼 살펴보기</a>
+          </div>
+          <div class="trust-row">
+            <div><strong>24/7</strong>실시간 탐지</div>
+            <div><strong>ML</strong>정상 패턴 학습</div>
+            <div><strong>Zero</strong>Unknown Attack 대응</div>
+          </div>
+        </div>
+        <div class="radar-wrap" aria-label="Geako radar dashboard visual">
+          <div class="radar-card">
+            <div class="radar-inner">
+              <div class="grid-bg"></div>
+              <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
+              <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+              <div class="panel">
+                <div class="panel-head"><span>Outlier Signal</span><span class="risk">High Risk</span></div>
+                <div>API 호출량 급증 · 비정상 권한 접근 · 야간 데이터 이동</div>
+                <div class="bar"><span style="width:82%"></span></div>
+                <small style="color:var(--muted)">Recommended action: isolate session and request admin approval</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="solution">
+      <div class="container">
+        <div class="section-head">
+          <h2>Unknown Attack까지 감지하는 차세대 보안 레이더</h2>
+          <p>Geako Outlier V1은 네트워크, 서버, 계정, 애플리케이션 로그에서 발생하는 비정상 패턴을 실시간으로 분석합니다.</p>
+        </div>
+        <div class="cards">
+          <article class="card"><div class="icon">📡</div><h3>실시간 이상탐지</h3><p>대량의 인프라 데이터를 즉시 분석해 평소와 다른 움직임을 빠르게 감지합니다.</p></article>
+          <article class="card"><div class="icon">🧠</div><h3>머신러닝 위협 예측</h3><p>기업별 정상 행위를 학습하고 알려지지 않은 공격 가능성을 조기에 식별합니다.</p></article>
+          <article class="card"><div class="icon">🛡️</div><h3>통합 보안 가시성</h3><p>클라우드, API, 계정, 네트워크 이벤트를 하나의 화면에서 확인합니다.</p></article>
+          <article class="card"><div class="icon">⚡</div><h3>대응 자동화</h3><p>위험도에 따라 알림, 격리, 접근 차단, 승인 요청을 자동화합니다.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="platform">
+      <div class="container split">
+        <div>
+          <div class="section-head">
+            <h2>기존 보안의 한계를 넘다</h2>
+            <p>패턴 매칭은 이미 알려진 위협에는 강하지만, 새롭게 변형되는 공격에는 늦게 반응합니다. Geako는 정상 흐름을 기준으로 이상을 판단합니다.</p>
+          </div>
+          <div class="feature-list">
+            <div class="feature-item"><strong>정상 행위 기반 분석</strong><span>사용자, 서버, 서비스별 기준선을 자동 생성합니다.</span></div>
+            <div class="feature-item"><strong>위험도 스코어링</strong><span>단순 알림이 아닌 우선순위 기반 대응을 지원합니다.</span></div>
+            <div class="feature-item"><strong>원인·영향 범위 제시</strong><span>보안팀이 빠르게 판단할 수 있도록 맥락을 제공합니다.</span></div>
+          </div>
+        </div>
+        <div class="dashboard">
+          <div class="dash-top"><strong>Geako Security Console</strong><span>Live</span></div>
+          <div class="chart"><div class="wave"></div></div>
+          <div class="alert"><strong>이상 징후 감지</strong><br/>평균 대비 4.8배 높은 데이터 접근과 신규 위치 로그인 동시 발생</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="usecases">
+      <div class="container">
+        <div class="section-head">
+          <h2>Ham Geakotti가 지키는 영역</h2>
+          <p>복잡한 하이브리드 환경에서도 핵심 인프라와 데이터 흐름을 선명하게 감시합니다.</p>
+        </div>
+        <div class="usecases">
+          <div class="usecase"><h3>클라우드 인프라</h3><p>워크로드, 접근 로그, 권한 변경 이벤트를 통합 분석합니다.</p></div>
+          <div class="usecase"><h3>계정 및 권한</h3><p>계정 탈취, 비정상 로그인, 권한 오남용을 탐지합니다.</p></div>
+          <div class="usecase"><h3>API 및 데이터베이스</h3><p>비정상 API 호출과 민감 데이터 접근 패턴을 포착합니다.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="container">
+        <div class="cta">
+          <h2>보이지 않는 위협은 이미 움직이고 있습니다</h2>
+          <p>이제 기업의 인프라에도 더 똑똑한 레이더가 필요합니다. Ham Geakotti와 함께 이상 징후를 먼저 발견하세요.</p>
+          <a class="btn btn-dark" href="mailto:sales@hamgeakotti.com?subject=Geako%20Outlier%20V1%20Demo%20Request">상담 문의하기</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-grid">
+      <div class="brand"><span class="logo">G</span><span>Ham Geakotti</span></div>
+      <div>© 2026 Ham Geakotti. Smart anomaly detection for secure infrastructure.</div>
+    </div>
+  </footer>
+</body>
+</html>
