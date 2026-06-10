@@ -37,7 +37,11 @@
     #wrap .wrap_con .iframe_box iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
     #wrap .wrap_con .iframe_box .iframe_overlay { display: none; }
 
-    body.dark-mode #wrap .wrap_con .iframe_box .iframe_overlay { display: block; position: absolute; inset: 0; pointer-events: none; background: #0b141f; opacity: .18; mix-blend-mode: multiply; }
+    body.dark-mode #wrap .wrap_con .iframe_box .iframe_overlay { display: block; position: absolute; inset: 0; /* pointer-events: none; */ background: #0b141f; opacity: .18; mix-blend-mode: multiply; }
+
+    /* modal style */
+    body #wrap .wrap_con .iframe_box.on {width: 373px; height: 566px; position: fixed; top: calc(50% - 349px); left: calc(50% - 186.5px); z-index: 999; scale: 1.875;}
+    div#back_panel {position: fixed; width: 100%; height: 100vh; top: 0; left: 0; z-index: 888; background-color: #0000004d; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);}
 </style>
 </head>
 <body>
@@ -92,6 +96,7 @@
             </div>
         </div>
     </div>
+    <div id="back_panel" style="display: none;"></div>
 <script>
     const themeBtn = document.getElementById('theme_btn');
     const THEME_COOKIE = 'page_theme';
@@ -112,7 +117,7 @@
         const isDark = theme === 'dark';
 
         document.body.classList.toggle('dark-mode', isDark);
-        themeBtn.textContent = isDark ? '☀️' : '🌙';
+        themeBtn.textContent = isDark ? '🌙' : '☀️';
     }
 
     function toggleTheme() {
@@ -127,6 +132,58 @@
 
     applyTheme(savedTheme);
     themeBtn.addEventListener('click', toggleTheme);
+
+    // 이벤트
+    const initIframeEventListeners = () => {
+        const iframeBoxes = document.querySelectorAll('.iframe_box');
+        const backPanel = document.querySelector('#back_panel');
+
+        // --- [공통 함수] 모든 상태를 원래대로 되돌리는 함수 (원복) ---
+        const closeAndReset = () => {
+            // 1. 모든 .iframe_box에서 .on 클래스 제거
+            iframeBoxes.forEach(el => el.classList.remove('on'));
+            
+            // 2. #back_panel 숨기기
+            if (backPanel) {
+                backPanel.style.display = 'none';
+            }
+        };
+
+        // --- .iframe_box 클릭 시 활성화 ---
+        iframeBoxes.forEach((box) => {
+            box.addEventListener('click', (event) => {
+
+                if (backPanel.style.display === 'block') return;
+
+                event.currentTarget.classList.add('on');
+
+                if (backPanel) {
+                    backPanel.style.display = 'block';
+                }
+            });
+        });
+
+        // --- #back_panel을 클릭하면 원복 ---
+        if (backPanel) {
+            backPanel.addEventListener('click', () => {
+                // 현재 back_panel이 보여지고 있는 상태(block)일 때만 실행
+                if (backPanel.style.display === 'block') {
+                    closeAndReset();
+                }
+            });
+        }
+
+        // --- ESC 키를 누르면 원복 ---
+        window.addEventListener('keydown', (event) => {
+            // ESC 키가 눌렸고, 동시에 #back_panel이 열려있는 상태(block)일 때만 실행
+            if ( (event.keyCode === 27 || event.key === 'Escape') && backPanel && backPanel.style.display === 'block') {
+                closeAndReset();
+            }
+        });
+    };
+
+        // 함수 실행
+    initIframeEventListeners();
 </script>
 </body>
 </html>
