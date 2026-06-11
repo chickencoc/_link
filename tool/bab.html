@@ -37,7 +37,8 @@
     #wrap .wrap_con .iframe_box iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
     #wrap .wrap_con .iframe_box .iframe_overlay { display: none; }
 
-    body.dark-mode #wrap .wrap_con .iframe_box .iframe_overlay { display: block; position: absolute; inset: 0; /* pointer-events: none; */ background: #0b141f; opacity: .18; mix-blend-mode: multiply; }
+    body #wrap .wrap_con .iframe_box .iframe_overlay { display: block; position: absolute; inset: 0; /* pointer-events: none; */}
+    body.dark-mode #wrap .wrap_con .iframe_box .iframe_overlay { background: #0b141f; opacity: .18; mix-blend-mode: multiply; }
 
     /* modal style */
     body #wrap .wrap_con .iframe_box.on {width: 373px; height: 566px; position: fixed; top: calc(50% - 349px); left: calc(50% - 186.5px); z-index: 999; scale: 1.875;}
