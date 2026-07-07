@@ -127,6 +127,8 @@
                         <label for="rnd_length">문자열 길이</label>
                         <input type="number" name="rnd_length" id="rnd_length" min="0" max="1024" value="128" oninput="clampNumber(this)">
                         <button id="s2_btn">생성<span></span></button>
+                        <label for="rnd_strcase">대문자</label>
+                        <input type="checkbox" name="rnd_strcase" id="rnd_strcase">
                     </div>
                 </div>
                 <h4>🔸output<small id="s2_copy_alert"></small></h4>
@@ -289,7 +291,8 @@
     })
 
     const generateRandom = (length, range, offset) => {
-        const arr = [[26, 'a'.charCodeAt()], [26, 'A'.charCodeAt()], [10, '0'.charCodeAt()]];
+        // const arr = [[26, 'a'.charCodeAt()], [26, 'A'.charCodeAt()], [10, '0'.charCodeAt()]];
+        const arr = [[26, 'a'.charCodeAt()], [26, 'a'.charCodeAt()], [10, '0'.charCodeAt()]];
 
         let result = '';
 
@@ -297,6 +300,12 @@
             const idx = Math.floor(Math.random() * range) + offset;
             const charCode = Math.floor(Math.random() * arr[idx][0]) + arr[idx][1];
             result += String.fromCharCode(charCode);
+        }
+
+        const isUpperCase = document.getElementById('rnd_strcase').checked;
+
+        if( isUpperCase ) {
+            result = result.toLocaleUpperCase();
         }
 
         return result;
