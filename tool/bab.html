@@ -13,8 +13,10 @@
     #wrap { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
     #wrap .wrap_con { flex: 1 1 360px; max-width: 415px; padding: 20px; border: 1px solid #e1e4e8; border-radius: 4px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, .06); }
     #wrap .wrap_con h3 { margin: 0 0 12px; font-size: 20px; text-align: center; }
-    #wrap .wrap_con a { display: block; margin-bottom: 16px; color: #2563eb; line-height: 1.5; text-decoration: none; word-break: keep-all; }
+    #wrap .wrap_con h3 a { display: inline-block; margin-bottom: unset; }
+    #wrap .wrap_con a { display: block; margin-bottom: 16px; color: #2563eb; line-height: 1.5; text-decoration: none; word-break: keep-all; text-align: center; }
     #wrap .wrap_con a:hover { text-decoration: underline; }
+    #wrap .wrap_con a small { font-size: 12px; }
     #wrap .wrap_con iframe { display: block; width: 100%; height: 594px; border: 0; border-radius: 2px; background: #fff; overflow: hidden; }
 
     @media (max-width: 480px) {
@@ -30,7 +32,6 @@
     body.dark-mode #wrap .wrap_con h3 { color: #ffffff; }
     body.dark-mode #wrap .wrap_con a { color: #66c0f4; }
     body.dark-mode #wrap .wrap_con a:hover { color: #9fd8ff; }
-    body.dark-mode #wrap .wrap_con a small { font-size: 12px; }
     body.dark-mode #wrap .wrap_con iframe { background: #0b141f; border: 1px solid #2a475e; }
 
     #wrap .wrap_con .iframe_box { position: relative; width: 100%; height: 594px; overflow: hidden; border-radius: 8px; }
@@ -48,54 +49,103 @@
 <body>
     <button id="theme_btn">theme</button>
     <div id="wrap">
+
         <div class="wrap_con">
-            <h3>마이푸드 홈스타일 뷔페</h3>
+            <h3>마이푸드 홈스타일 뷔페
+                <a href="https://pf.kakao.com/_FDxoan/posts" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                    </svg>
+                </a>
+            </h3>
             <a href="https://map.kakao.com/?itemId=19631457" target="_blank"><small>서울 구로구 디지털로 300 지밸리비즈플라자 지하1층</small></a>
             <div class="iframe_box">
                 <iframe src="https://pf.kakao.com/_FDxoan/posts" scrolling="no" frameborder="0"></iframe>
                 <div class="iframe_overlay"></div>
             </div>
         </div>
+
         <div class="wrap_con">
-            <h3>왕의밥상</h3>
+            <h3>왕의밥상
+                <a href="https://pf.kakao.com/_EZzpG/posts" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                    </svg>
+                </a>
+            </h3>
             <a href="https://kko.to/pAnje5lH_s" target="_blank"><small>서울 구로구 디지털로27길 36 이스페이스빌딩 B04호</small></a>
             <div class="iframe_box">
                 <iframe src="https://pf.kakao.com/_EZzpG/posts" scrolling="no" frameborder="0"></iframe>
                 <div class="iframe_overlay"></div>
             </div>
         </div>
-        <div class="wrap_con">
-            <h3>아티스테이블</h3>
+
+        <!-- <div class="wrap_con">
+            <h3>아티스테이블
+                <a href="https://pf.kakao.com/_ixetln/posts" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                    </svg>
+                </a>
+            </h3>
             <a href="https://place.map.kakao.com/117651899?t_src=kakaotalk&t_ch=talkchannel&t_obj=card_address" target="_blank"><small>서울 구로구 디지털로31길 62 아티스포럼 지하1층 B104호</small></a>
             <div class="iframe_box">
                 <iframe src="https://pf.kakao.com/_ixetln/posts" scrolling="no" frameborder="0"></iframe>
                 <div class="iframe_overlay"></div>
             </div>
-        </div>
+        </div> -->
+
         <div class="wrap_con">
-            <h3>건강한밥상</h3>
+            <h3>건강한밥상
+                <a href="https://pf.kakao.com/_kssxin/109995356" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                    </svg>
+                </a>
+            </h3>
             <a href="https://kko.to/u1XpkaNzvS" target="_blank"><small>서울 구로구 디지털로31길 41 이앤씨벤쳐드림타워6차 2층 201호</small></a>
             <div class="iframe_box">
                 <iframe src="https://pf.kakao.com/_kssxin/109995356" scrolling="no" frameborder="0"></iframe>
                 <div class="iframe_overlay"></div>
             </div>
         </div>
+
         <div class="wrap_con">
-            <h3>벽산더이룸구내식당</h3>
+            <h3>벽산더이룸구내식당
+                <a href="https://naver.me/GI3KX18v" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                    </svg>
+                </a>
+            </h3>
             <a href="https://naver.me/GI3Jwc4m" target="_blank"><small>서울 구로구 디지털로27길 24 지하1층 지101호</small></a>
             <div class="iframe_box">
                 <iframe src="https://pcmap.place.naver.com/restaurant/1387200125/feed" scrolling="no" frameborder="0"></iframe>
                 <div class="iframe_overlay"></div>
             </div>
         </div>
+
         <div class="wrap_con">
-            <h3>봄봄 구로디지털단지점</h3>
+            <h3>봄봄 구로디지털단지점
+                <a href="https://naver.me/G9ppcd6l" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                    </svg>
+                </a>
+            </h3>
             <a href="https://naver.me/G9ppcd6l" target="_blank"><small>서울 구로구 디지털로33길 11 지하1층</small></a>
             <div class="iframe_box">
                 <iframe src="https://pcmap.place.naver.com/restaurant/2096511528/feed" scrolling="no" frameborder="0"></iframe>
                 <div class="iframe_overlay"></div>
             </div>
         </div>
+
     </div>
     <div id="back_panel" style="display: none;"></div>
 <script>
