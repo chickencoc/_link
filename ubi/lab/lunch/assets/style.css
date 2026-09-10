@@ -6,7 +6,7 @@ button:focus-visible { outline: 3px solid #ba842f; outline-offset: 3px; }
 main { height: 100dvh; min-height: 650px; display: flex; flex-direction: column; padding: 0 24px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 96px; }
 .brand { display: flex; align-items: center; gap: 13px; }
-.brand-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; color: white; background: #24745b; font-size: 26px; }
+.brand-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; color: white; background: #24745b; font-size: 26px; background-image: url(https://www.ubintis.com/pages/assets/img/ubi-icon.svg); background-repeat: no-repeat; background-position: center; background-size: 32px; background-position-x: 5px; background-blend-mode: hard-light; }
 .eyebrow { font-size: 10px; letter-spacing: 2px; margin: 0 0 3px; color: #58766c; font-weight: bold; }
 h1 { margin: 0; font-size: 23px; letter-spacing: -1px; }
 .week { display: flex; align-items: center; gap: 18px; font-size: 12px; }
