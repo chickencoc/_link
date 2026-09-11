@@ -1,4 +1,3 @@
-// Client ID와 Web 서비스 URL을 등록하면 실제 지도로 전환됩니다. 빈 값은 skeleton 모드입니다.
 const NAVER_MAP_CLIENT_ID = "a1hdrm1ahc";
 const STORAGE_KEY = "restaurantState";
 const MAX_RESTAURANTS_PER_DAY = 5;
@@ -38,7 +37,7 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     storageError = "";
   } catch {
-    storageError = "저장할 수 없어 현재 화면에만 반영됩니다. 재접속 시 기록이 사라질 수 있습니다.";
+    storageError = "저장할 수 없어 현재 화면에만 선택 표시됩니다. 재접속 시 기록이 사라질 수 있습니다.";
   }
 }
 
@@ -49,7 +48,7 @@ function initializeWeeklyState(date = new Date()) {
   const validIds = ids => Array.isArray(ids)
     ? [...new Set(ids.filter(id => restaurants.some(restaurant => restaurant.id === id)))] : [];
   const visitsByDay = DAYS.map((_, day) => validIds(current.visitsByDay?.[day]).slice(0, MAX_RESTAURANTS_PER_DAY));
-  // 이전 기록에는 요일이 없었습니다. 방문 요일을 임의로 만들지 않고 보존합니다.
+  // 이전 기록에 저장된 요일이 없어서 방문 요일을 임의로 만들지 않고 선택을 유지함.
   const undatedRestaurantIds = validIds(current.undatedRestaurantIds ?? current.selectedRestaurantIds)
     .filter(id => !visitsByDay.some(ids => ids.includes(id)));
   state = { weekStart, visitsByDay, undatedRestaurantIds };
@@ -70,7 +69,7 @@ function selectRestaurant(id, day) {
     ids.push(id);
     state.undatedRestaurantIds = state.undatedRestaurantIds.filter(value => value !== id);
   } else {
-    render(DAYS[day] + "요일은 최대 " + MAX_RESTAURANTS_PER_DAY + "곳까지 방문 기록을 선택할 수 있습니다.");
+    render(DAYS[day] + "요일은 " + MAX_RESTAURANTS_PER_DAY + "곳을 모두 선택했습니다.");
     return;
   }
   saveState();
@@ -83,7 +82,7 @@ function resetState() {
   render("이번 주 방문 기록을 초기화했습니다.");
 }
 
-// 구면상 두 좌표 사이의 직선거리(m). 도보 경로나 이동 시간이 아닙니다.
+// 구면상 두 좌표 사이의 직선거리(m)
 function distanceFromCompany(restaurant) {
   const radians = degrees => degrees * Math.PI / 180;
   const a = Math.sin(radians(restaurant.lat - COMPANY.lat) / 2) ** 2
@@ -99,7 +98,7 @@ function createRestaurantList() {
     row.className = "restaurant-row";
     row.tabIndex = -1;
     row.setAttribute("aria-label", restaurant.name);
-    // JSON 값은 textContent로 넣어 HTML로 해석되지 않게 합니다.
+    // JSON 값은 textContent로 넣음
     row.innerHTML = '<div class="row-heading"><h3></h3><span class="category"></span><span class="distance"></span></div><p class="foods"><span class="main-food"></span><span class="sub-food"></span></p><div class="visit-line"><span class="visit-summary"></span><div class="day-picker" role="group"></div></div>';
     row.querySelector("h3").textContent = restaurant.name;
     row.querySelector(".category").textContent = restaurant.category;
@@ -159,7 +158,7 @@ function createMarker(restaurant) {
 }
 
 function placeSkeletonMarker(element, position) {
-  // 실제 지형이 아닌, 회사와 음식점 좌표의 상대 배치입니다.
+  // 실제 지형이 아닌, 회사와 음식점 좌표의 상대적 배치 샘플
   const points = [...restaurants, COMPANY];
   const lats = points.map(item => item.lat);
   const lngs = points.map(item => item.lng);
@@ -195,13 +194,13 @@ function render(message = "") {
   document.getElementById("week-label").textContent = getWeekLabel(new Date(year, month - 1, date));
   document.getElementById("selection-count").textContent = restaurants.filter(item => isRestaurantSelected(item.id)).length + " 곳 방문";
   document.getElementById("daily-limit").textContent = MAX_RESTAURANTS_PER_DAY;
-  document.getElementById("status").textContent = storageError || message || "방문 기록은 자동 저장됩니다. 요일별 최대 " + MAX_RESTAURANTS_PER_DAY + "곳까지 선택할 수 있습니다.";
+  document.getElementById("status").textContent = storageError || message || "방문 기록은 자동 저장되며 요일별 최대 " + MAX_RESTAURANTS_PER_DAY + "곳까지 선택할 수 있습니다.";
 }
 
 function createCompanyMarker() {
   const label = document.createElement("span");
   label.className = "company-marker";
-  label.textContent = "▣ 회사";
+  label.textContent = "⊙ 회사";
   if (map) {
     new naver.maps.Marker({ map, position: new naver.maps.LatLng(COMPANY.lat, COMPANY.lng),
       icon: { content: label, anchor: new naver.maps.Point(32, 16) }, title: "회사" });
@@ -238,7 +237,7 @@ async function start() {
       || new Set(data.map(item => item.id)).size !== data.length) throw new Error("음식점 데이터 형식 오류");
     restaurants = data;
   } catch {
-    document.getElementById("status").textContent = "음식점 데이터를 읽지 못했습니다. 정적 웹 서버로 실행하고 restaurants.json을 확인하세요.";
+    document.getElementById("status").textContent = "음식점 데이터를 읽지 못했습니다. 정적 웹 서버로 실행하거나 restaurants.json을 확인하세요.";
     document.getElementById("reset-button").disabled = true;
     return;
   }
@@ -252,7 +251,7 @@ async function start() {
   const showMapError = (message = "지도 로드 실패 · 네트워크 연결을 확인하세요") => {
     mapLoadFailed = true;
     document.getElementById("map-mode").textContent = message;
-    // 인증 실패 시 SDK가 지도 내부를 해제하므로 destroy()를 다시 호출하지 않습니다.
+    // 인증 실패 시 SDK가 지도를 삭제하므로 destroy()를 다시 호출하지 않음.
     map = null;
     markers.clear();
     const previousContainer = document.getElementById("map");

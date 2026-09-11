@@ -1,34 +1,55 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>이번 주, 점심 지도</title>
+  <title>이번 주 점심</title>
   <link rel="stylesheet" href="assets/style.css">
   <script src="assets/app.js" defer></script>
 </head>
+
 <body>
   <main>
     <header class="topbar">
-      <div class="brand"><span class="brand-icon" aria-hidden="true"><!--↗--></span><div><p class="eyebrow">WEEKLY LUNCH MAP</p><h1>이번 주, 점심 지도</h1></div></div>
-      <div class="week"><span id="week-label"></span><strong id="selection-count">0 곳 방문</strong><button id="reset-button" type="button">초기화</button></div>
+      <div class="brand"><span class="brand-icon" aria-hidden="true"><!--↗--></span>
+        <div>
+          <p class="eyebrow">WEEKLY LUNCH MAP</p>
+          <h1>이번 주 점심</h1>
+        </div>
+      </div>
+      <div class="week"><span id="week-label"></span><strong id="selection-count">0 곳 방문</strong><button
+          id="reset-button" type="button">초기화</button></div>
     </header>
     <div class="workspace">
-    <section class="list-panel" aria-labelledby="list-title">
-      <div class="list-heading"><div><p class="eyebrow">RESTAURANTS</p><h2 id="list-title">음식점 목록 <span id="restaurant-count"></span></h2></div><span class="sample-badge">회사 주변</span></div>
-      <p class="list-help">방문한 요일을 선택하세요. 요일별 최대 <span id="daily-limit"></span>곳입니다.<br>선택한 요일을 다시 누르면 방문 기록이 취소됩니다.</p>
-      <div id="restaurant-list"></div>
-      <p class="list-note">회사 기준 직선거리 · 한 주는 일요일부터 토요일까지</p>
-    </section>
-    <section class="empty-line"></section>
-    <section class="map-shell" aria-label="음식점 지도">
-      <div id="map" class="skeleton-map" aria-label="음식점 배치도"></div>
-      <div class="map-caption"><span class="status-dot"></span><span id="map-mode">네이버 지도를 불러오는 중입니다.</span></div>
-      <div class="map-guide"><strong>회사 주변, 이번 주 점심</strong><p>마커를 누르면 음식점 목록으로 이동합니다.</p><div class="legend"><span><i></i>미방문</span><span><i class="chosen"></i>이번 주 방문</span><span><i class="office-dot"></i>회사</span></div></div>
-      <div class="sample-note" id="sample-note">지도 로드 전에는 좌표의 상대 배치만 표시됩니다.</div>
-    </section>
+      <section class="list-panel" aria-labelledby="list-title">
+        <div class="list-heading">
+          <div>
+            <p class="eyebrow">RESTAURANTS</p>
+            <h2 id="list-title">음식점 목록 <span id="restaurant-count"></span></h2>
+          </div>
+          <span class="sample-badge">쩝쩝박사가 엄선함</span>
+        </div>
+        <p class="list-help">음식점에 방문한 요일을 선택하세요.<br>요일별 최대 <span id="daily-limit"></span>곳을 선택할 수 있습니다.</p>
+        <div id="restaurant-list"></div>
+        <p class="list-note">회사 기준 직선거리</p>
+      </section>
+      <section class="empty-line"></section>
+      <section class="map-shell" aria-label="음식점 지도">
+        <div id="map" class="skeleton-map" aria-label="음식점 배치도"></div>
+        <div class="map-caption"><span class="status-dot"></span><span id="map-mode">네이버 지도를 불러오는 중입니다.</span></div>
+        <div class="map-guide">
+          <p><strong>마커를 누르면 음식점 목록으로 이동합니다.</strong></p>
+          <div class="legend"><span><i></i>미방문</span><span><i class="chosen"></i>이번 주 방문</span><span><i
+                class="office-dot"></i>회사</span></div>
+        </div>
+        <div class="sample-note" id="sample-note">지도 로드 전에는 좌표의 상대 배치만 표시됩니다.</div>
+      </section>
     </div>
-    <footer><p id="status" role="status" aria-live="polite"></p><span>브라우저에 정보 저장됨</span></footer>
+    <footer>
+      <p id="status" role="status" aria-live="polite"></p><span>브라우저에 정보 저장됨</span>
+    </footer>
   </main>
 </body>
+
 </html>
