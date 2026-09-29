@@ -13,20 +13,41 @@
         * {padding: 0; margin: 0; box-sizing: border-box;}
 
         img, div#cover {width: 320px; top: calc(50vh - 160px); position: fixed;}
-        div#cover {height: 273px;}
+        div#cover {height: 285px;}
         img.alter_ego {width: 183px; top: calc(50vh - 99px); left: 91px; transition: 0.5s cubic-bezier(0.29, 0.48, 0, 0.99);}
+
+        div#signpost_box {font-size: 13px; text-align: center;}
+        div#signpost_box * {color: #dad6c8;}
+        div#signpost_box > div {margin-top: 0.8em; display: flex; flex-flow: column; gap: .8em;}
+        div#signpost_box > div > a:is(:hover, :active) {color: #d5ba2f;}
     </style>
 </head>
 <body>
-    <img id="i2" src="./assets/images/duckies2.jpg">
-
-    <img id="i3" class="alter_ego" src="./assets/images/duckies3.png">
-    <img id="i4" class="alter_ego" src="./assets/images/duckies3.png">
-    <img id="i5" class="alter_ego" src="./assets/images/duckies3.png">
-    <img id="i6" class="alter_ego" src="./assets/images/duckies3.png">
-
-    <img id="i9" class="alter_ego" src="./assets/images/duckies3.png">
-    <div id="cover" onmouseenter="action.enter()" onmouseleave="action.leave()"></div>
+    <div id="signpost_box" style="display: none;">
+        <section style="display: inline-flex;">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#d5ba2f"><path d="M440-80v-160H240L120-360l120-120h200v-80H160v-240h280v-80h80v80h200l120 120-120 120H520v80h280v240H520v160h-80ZM240-640h447l40-40-40-40H240v80Zm33 320h447v-80H273l-40 40 40 40Zm-33-320v-80 80Zm480 320v-80 80Z"/></svg>
+            <h3>Signpost</h3>
+            <span id="signpost_timeout" style="margin-left: 0.4em; color: #d53a2f83;"></span>
+        </section>
+        <div>
+            <a href="/tool/bab.html">bab</a>
+            <a href="/tool/birtheffect.html">birtheffect</a>
+            <a href="/tool/ddong.html">ddong</a>
+            <a href="/tool/etc.html">etc</a>
+            <a href="/tool/pdfjpg.html">pdfjpg</a>
+        </div>
+    </div>
+    <div>
+        <img id="i2" src="./assets/images/duckies2.jpg">
+    
+        <img id="i3" class="alter_ego" src="./assets/images/duckies3.png">
+        <img id="i4" class="alter_ego" src="./assets/images/duckies3.png">
+        <img id="i5" class="alter_ego" src="./assets/images/duckies3.png">
+        <img id="i6" class="alter_ego" src="./assets/images/duckies3.png">
+    
+        <img id="i9" class="alter_ego" src="./assets/images/duckies3.png">
+        <div id="cover" onmouseenter="action.enter()" onmouseleave="action.leave()" onclick="action.beep()"></div>
+    </div>
 </body>
 <script>
     const action = {
@@ -68,6 +89,27 @@
                 (con1 ? 1 : -1) * 60,
                 (con2 ? -1 : 1) * 33
             ];
+        },
+        beep: function () {
+            if(this.slap) return;
+
+            this.slap = true;
+
+            const car = document.getElementById("signpost_box");
+            const time = document.getElementById("signpost_timeout");
+            const distance = 5200;
+            car.style.display = 'block';
+            time.innerText = distance / 4;
+
+            const boom = setInterval(() => {
+                time.innerText = parseInt(time.innerText) - 1;
+            }, 1);
+
+            setTimeout(() => {
+                car.style.display = 'none';
+                clearInterval(boom);
+                this.slap = false;
+            }, distance);
         }
     }
 
