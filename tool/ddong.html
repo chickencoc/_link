@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>작은 상자</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{background:#050509;color:#d6cbb2;font-family:system-ui,sans-serif}.stage{position:relative;isolation:isolate;width:100%;height:100%;min-height:320px;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#24212b55,transparent 52%),#06060b}.curtain{position:absolute;inset:0 0 32%;background:repeating-linear-gradient(91deg,#030308 0%,#111019 3%,#1b1924 5%,#090910 8%,#05050b 11%);mask-image:linear-gradient(#000, #000 65%,transparent);opacity:.7}.floor{position:absolute;inset:60% -40% -60%;transform:perspective(500px) rotateX(57deg);transform-origin:center top;background:repeating-linear-gradient(90deg,transparent 0 118px,#030205aa 119px 121px),repeating-linear-gradient(0deg,#231713 0px,#352219 3px,#281b16 6px,#201512 71px,#0c0909 73px,#211713 75px);mask-image:radial-gradient(ellipse at 50% 8%,#000 0%,transparent 60%);opacity:.65}.beam{position:absolute;inset:-15% 0 33%;background:linear-gradient(180deg,#fff2cb09,#fff0bc10 70%,#fff3cd04);clip-path:polygon(47% 0,53% 0,73% 100%,27% 100%);filter:blur(12px);pointer-events:none}.pool{position:absolute;left:50%;top:64%;width:min(650px,85vw);height:150px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse,#f4c27732 0%,#e1ae6320 30%,#d9a45b09 57%,transparent 72%);filter:blur(8px)}.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 54%,transparent 15%,#02020755 65%,#020207cc);pointer-events:none}.box-anchor{position:absolute;left:50%;top:60%;width:156px;height:160px;transform:translate(-50%,-75%)}.shadow{position:absolute;left:12%;bottom:-10px;width:145%;height:32px;transform:rotate(-9deg);border-radius:50%;background:#000b;filter:blur(10px)}button{position:relative;display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .22s;filter:drop-shadow(0 0 22px #e9af2a09)}button:hover{transform:translateY(-4px)}button:active{transform:translateY(2px) scale(.97)}button:focus-visible{outline:1px solid #f5d985;outline-offset:14px;border-radius:6px}svg{width:100%;height:100%;overflow:visible}.lid{transform-origin:78px 26px}.burst .lid{animation:open .8s cubic-bezier(.2,.7,.3,1)}.burst svg{animation:bump .4s ease-out}.hint{position:absolute;top:calc(60% + 89px);width:100%;text-align:center;font-size:10px;font-weight:400;letter-spacing:.3em;color:#a69c8880;pointer-events:none;transition:opacity .5s}.used .hint{opacity:0}canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}@keyframes open{0%,100%{transform:translateY(0) rotate(0);opacity:1}30%{transform:translate(8px,-68px) rotate(15deg);opacity:1}60%{transform:translate(12px,-48px) rotate(10deg);opacity:.8}}@keyframes bump{0%{transform:scale(1)}22%{transform:scale(1.06,.92)}60%{transform:scale(.97,1.04)}100%{transform:scale(1)}}@media(max-width:600px){.box-anchor{width:125px;height:128px}.pool{height:105px}.hint{top:calc(60% + 72px)}}@media(prefers-reduced-motion:reduce){button{transition:none}.burst .lid,.burst svg{animation:none}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="스포트라이트 아래 작은 상자가 놓인 어두운 무대">
+  <div class="curtain"></div><div class="floor"></div><div class="beam"></div><div class="pool"></div><div class="vignette"></div>
+  <div class="box-anchor">
+    <div class="shadow"></div>
+    <button aria-label="상자를 열어 똥 이모지 터뜨리기">
+      <svg viewBox="0 0 180 185" aria-hidden="true">
+        <defs>
+          <linearGradient id="front" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e8a522"/><stop offset=".5" stop-color="#ce8510"/><stop offset="1" stop-color="#bd730b"/></linearGradient>
+          <linearGradient id="side"><stop stop-color="#ac6608"/><stop offset="1" stop-color="#8b4e06"/></linearGradient>
+          <linearGradient id="top" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffe778"/><stop offset="1" stop-color="#f7c633"/></linearGradient>
+          <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".045"/></feComponentTransfer><feBlend in="SourceGraphic" mode="soft-light"/></filter>
+        </defs>
+        <g filter="url(#grain)">
+          <path d="M17 34 125 43 125 171 17 150Z" fill="url(#front)"/>
+          <path d="M125 43 164 27 162 147 125 171Z" fill="url(#side)"/>
+          <path d="M125 44V169" stroke="#f6b632" stroke-opacity=".3"/>
+        </g>
+        <g class="lid">
+          <path d="M17 34 60 21 164 27 125 43Z" fill="url(#top)"/>
+          <path d="M17 34 125 43 164 27" fill="none" stroke="#ffdc65" stroke-width="1"/>
+          <path d="M18 36 124 45 163 29" fill="none" stroke="#8c5409" stroke-opacity=".25"/>
+        </g>
+      </svg>
+    </button>
+  </div>
+  <p class="hint">CLICK THE BOX</p>
+  <canvas aria-hidden="true"></canvas>
+</main>
+<script>
+const stage = document.querySelector('.stage');
+const button = document.querySelector('button');
+const canvas = document.querySelector('canvas');
+const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+let particles = [];
+let frame = 0;
+let last = 0;
+let closeTimer;
+
+let width = innerWidth;
+let height = innerHeight;
+let dpr = 1;
+
+const EMOJI_SIZE = 48;
+const emojiCanvas = document.createElement('canvas');
+
+emojiCanvas.width = EMOJI_SIZE;
+emojiCanvas.height = EMOJI_SIZE;
+
+const emojiCtx = emojiCanvas.getContext('2d');
+
+emojiCtx.font = '40px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+emojiCtx.textAlign = 'center';
+emojiCtx.textBaseline = 'middle';
+emojiCtx.fillText('💩', EMOJI_SIZE / 2, EMOJI_SIZE / 2);
+
+function resize() {
+    width = innerWidth;
+    height = innerHeight;
+    dpr = Math.min(devicePixelRatio || 1, 1.5);
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+addEventListener('resize', resize);
+resize();
+
+function advance(p, dt) {
+    p.vy += 850 * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.rotation += p.spin * dt;
+    p.life -= dt;
+
+    return p.life > 0;
+}
+
+function draw(time) {
+    const dt = Math.min((time - last) / 1000, 0.033);
+    last = time;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    let writeIndex = 0;
+
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        if (!advance(p, dt)) {
+            continue;
+        }
+
+        particles[writeIndex++] = p;
+
+        if (p.x < -50 || p.x > width + 50 || p.y < -50 || p.y > height + 50) {
+            continue;
+        }
+
+        const cos = Math.cos(p.rotation);
+        const sin = Math.sin(p.rotation);
+
+        ctx.globalAlpha = Math.min(1, p.life * 2);
+        ctx.setTransform(dpr * cos, dpr * sin, -dpr * sin, dpr * cos, dpr * p.x, dpr * p.y);
+
+        const size = p.size;
+
+        ctx.drawImage(emojiCanvas, -size / 2, -size / 2, size, size);
+    }
+
+    particles.length = writeIndex;
+
+    ctx.globalAlpha = 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (particles.length) {
+        frame = requestAnimationFrame(draw);
+    } else {
+        frame = 0;
+    }
+}
+
+button.addEventListener('click', () => {
+    stage.classList.add('used');
+
+    button.classList.remove('burst');
+    void button.offsetWidth;
+    button.classList.add('burst');
+
+    clearTimeout(closeTimer);
+
+    closeTimer = setTimeout(() => {
+        button.classList.remove('burst');
+    }, 800);
+
+    const r = button.getBoundingClientRect();
+    const reducedMotion = reduced.matches;
+    const count = reducedMotion ? 8 : 65;
+
+    const startX = r.left + r.width * 0.5;
+    const startY = r.top + r.height * 0.24;
+
+    for (let i = 0; i < count; i++) {
+        const angle = -Math.PI + Math.random() * Math.PI;
+        const speed = reducedMotion ? 60 : 220 + Math.random() * 490;
+
+        particles.push({
+            x: startX,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 90,
+            size: 18 + Math.random() * 23,
+            rotation: Math.random() - 0.5,
+            spin: reducedMotion ? 0 : (Math.random() - 0.5) * 9,
+            life: reducedMotion ? 0.35 : 1.3 + Math.random() * 1.1
+        });
+    }
+
+    if (particles.length > 300) {
+        particles.splice(0, particles.length - 300);
+    }
+
+    if (!frame) {
+        last = performance.now();
+        frame = requestAnimationFrame(draw);
+    }
+});
+
+if (new URLSearchParams(location.search).has('selftest')) {
+    const p = { x: 0, y: 0, vx: 10, vy: 0, rotation: 0, spin: 2, life: 1 };
+
+    if (!advance(p, 0.1) || p.x !== 1 || Math.abs(p.y - 8.5) > 1e-9 || p.rotation !== 0.2 || advance(p, 1)) {
+        throw Error('Particle self-check failed');
+    }
+
+    console.info('Particle self-check passed');
+}
+</script>
+</body>
+</html>
