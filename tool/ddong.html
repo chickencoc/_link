@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>작은 상자</title>
 <style>
-*{box-sizing:border-box}
+@font-face{font-family:'DenkiChipHangul';src:url('assets/x10y12pxDenkiChipHangul.otf') format('opentype');font-weight:400;font-display:swap}
+*{box-sizing:border-box; letter-spacing: 1px;}
 html,body{margin:0;width:100%;height:100%;overflow:hidden}
-body{background:#050506;color:#d6cbb2;font-family:system-ui,sans-serif}
+body{background:#050506;color:#d6cbb2;font-family:'DenkiChipHangul',system-ui,sans-serif}
+button{font-family:inherit}
 .stage{--ground:69%;position:relative;isolation:isolate;width:100%;height:100%;min-height:320px;overflow:hidden;background:radial-gradient(ellipse at 50% 38%,#302d252e,transparent 55%),#050506}
 .curtain{position:absolute;inset:0 0 29%;background:repeating-linear-gradient(92deg,#040406 0%,#101014 3%,#19181c 4.5%,#0b0b0e 7%,#030305 10%);mask-image:linear-gradient(#0009,#000 75%,transparent);opacity:.75}
 .floor{position:absolute;inset:60% -40% -60%;transform:perspective(500px) rotateX(57deg);transform-origin:center top;background:repeating-linear-gradient(90deg,transparent 0 118px,#030205aa 119px 121px),repeating-linear-gradient(0deg,#231713 0px,#352219 3px,#281b16 6px,#201512 71px,#0c0909 73px,#211713 75px);mask-image:radial-gradient(ellipse at 50% 8%,#000 0%,transparent 60%);opacity:.65}
@@ -25,25 +27,39 @@ svg{width:100%;height:100%;overflow:visible}
 .lid{transform-origin:78px 26px}
 .burst .lid{animation:open .8s cubic-bezier(.2,.7,.3,1)}
 .burst svg{animation:bump .4s ease-out}
-.hint{position:absolute;top:calc(var(--ground) + 47px);width:100%;margin:10px 0;text-align:center;font-size:12px;font-weight:400;letter-spacing:.3em;color:#b7ab9470;pointer-events:none;transition:opacity .5s}
-.counts{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin:12px 16px 0;font-size:12px;letter-spacing:.03em;color:#b7ab94}
+.hint{position:absolute;top:calc(var(--ground) + 47px);width:100%;margin:10px 0;text-align:center;font-size:13px;font-weight:400;letter-spacing:.3em;color:#b7ab9470;pointer-events:none;transition:opacity .5s}
+.counts{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin:12px 16px 0;font-size:13px;letter-spacing:.03em;color:#b7ab94}
 .counts span{white-space:nowrap}
 .hint-row{display:flex;align-items:center;justify-content:center;gap:24px}
+.hint #main-title {letter-spacing:.3em;}
 .collection-open{pointer-events:auto;padding:6px 0;border:0;background:none;color:#b7ab94;font:inherit;letter-spacing:.03em;cursor:pointer}
 .collection-open:hover{text-decoration:underline}
-.collection{width:min(320px,calc(100vw - 32px));max-height:80vh;margin:auto;padding:20px;border:0;border-radius:10px;background:#fff;color:#202124;box-shadow:0 18px 80px #0008;font-size:12px;overflow:auto}
+.collection{width:min(400px,calc(100vw - 32px));max-height:80vh;margin:auto;padding:14px;border:4px solid #b58850;border-radius:2px;background:#393140;color:#eee9e1;box-shadow:inset 0 0 0 2px #211c28,0 18px 80px #000b;font-size:13px;overflow:auto}
 .collection::backdrop{background:#0009}
 .collection header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:6px}
-.collection h2{margin:0;font-size:15px;font-weight:600}
-.collection-close{padding:6px 8px;border:0;border-radius:4px;background:none;color:#555;font:inherit;cursor:pointer}
+.collection h2{margin:0;font-size:16px;font-weight:400}
+.collection-close{padding:6px 8px;border:0;border-radius:4px;background:none;color:#d8d1dd;font:inherit;cursor:pointer}
 .collection button:focus-visible{outline:2px solid #3B82F6;outline-offset:2px}
-.collection section{min-height:70px;padding:14px 0;border-bottom:1px solid #f0f0f0}
-.collection h3{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:12px;font-weight:600}
+.collection section{min-height:74px;margin-top:10px;padding:12px 8px;border:3px solid #70657a;background:#342b3d;box-shadow:inset 0 0 0 2px #211a2b,2px 3px 0 #211a2b}
+.collection h3{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:13px;font-weight:400}
 .grade-dot{width:10px;height:10px;border-radius:3px;flex:none}
 .collection-items{display:flex;flex-wrap:wrap;gap:10px 16px;margin:0;padding-left:3px;list-style:none}
 .collection-items li{display:flex;align-items:center;gap:8px}
-.collection-icon{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex:none;object-fit:contain;font-size:18px;line-height:1}
-.collection-empty{margin:0;color:#999;font-size:11px}
+.collection-icon{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex:none;object-fit:contain;font-size:19px;line-height:1}
+.collection-empty{margin:0;color:#b6adbf;font-size:12px}
+.upgrade-balance{
+    text-align: right; padding:12px 0 14px;font-size:16px;font-weight:400;font-variant-numeric:tabular-nums;border-bottom:3px solid #7ec979;margin-bottom:16px}
+.skill-row{display:grid;grid-template-columns:42px minmax(0,1fr) 34px;align-items:center;gap:10px;padding:12px 8px;border:3px solid #70657a;background:#342b3d;box-shadow:inset 0 0 0 2px #211a2b,2px 3px 0 #211a2b}
+.skill-icon{display:grid;place-items:center;width:42px;height:46px;background:#665538;border:2px solid #aa9771;font-size:28px}
+.skill-row h3{margin:0 0 8px;font-size:15px;color:#ffe28a}
+.skill-level{font-size:12px;white-space:nowrap}
+.skill-row p{margin:2px 0;color:#d2cad9;font-size:12px;line-height:1.5}
+.skill-add{width:34px;height:36px;border:2px solid #a092b1;border-radius:0;background:#655573;color:#fff;font-size:25px;cursor:pointer;box-shadow:2px 2px 0 #211a2b}
+.skill-add:disabled{opacity:.35;cursor:not-allowed}
+.skill-locked{margin-top:4px;min-height:74px;background:#25202b;border-color:#4c4354;color:#89818f}
+.skill-locked .skill-icon{background:#211b27;border-color:#463d4f;filter:grayscale(1);font-size:21px}
+.upgrade-note{font-size:12px;color:#b6adbf;line-height:1.7;margin:16px 0 0}
+@media(max-width:420px){.hint-row{gap:12px}.hint-row>span{letter-spacing:.12em}}
 canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 @keyframes open{0%,100%{transform:translateY(0) rotate(0);opacity:1}30%{transform:translate(8px,-68px) rotate(15deg);opacity:1}60%{transform:translate(12px,-48px) rotate(10deg);opacity:.8}}
 @keyframes bump{0%,100%{transform:scale(1)}22%{transform:scale(1.025,.97)}60%{transform:scale(.99,1.015)}}
@@ -105,7 +121,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     </button>
   </div>
   <div class="hint">
-    <div class="hint-row"><span>CLICK THE BOX</span><button class="collection-open" type="button" aria-haspopup="dialog" aria-controls="collection">아이템 도감</button></div>
+    <div class="hint-row"><span id="main-title">CLICK THE BOX</span><button class="collection-open" type="button" aria-haspopup="dialog" aria-controls="collection">아이템 도감</button><button class="collection-open upgrade-open" type="button" aria-haspopup="dialog" aria-controls="upgrade">업그레이드</button></div>
     <div class="counts" role="status" aria-live="polite"><span>클릭 수: 0</span></div>
   </div>
   <canvas aria-hidden="true"></canvas>
@@ -114,8 +130,447 @@ canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   <header><h2 id="collection-title">아이템 도감</h2><button class="collection-close" type="button" autofocus>닫기</button></header>
   <div class="collection-list"></div>
 </dialog>
+<dialog class="collection" id="upgrade" aria-labelledby="upgrade-title">
+  <header><h2 id="upgrade-title">스킬 업그레이드</h2><button class="collection-close upgrade-close" type="button" autofocus>닫기</button></header>
+  <div class="upgrade-status" role="status" aria-live="polite">
+    <div class="upgrade-balance">똥 : 0000</div>
+    <div class="skill-row"><span class="skill-icon" aria-hidden="true">⚡</span><div><h3>클릭 속도 <span class="skill-level">0 / 50</span></h3><p class="skill-delay"></p><p class="skill-cost"></p></div><button class="skill-add" type="button" aria-label="클릭 속도 업그레이드" disabled>+</button></div>
+  </div>
+  <div class="skill-row skill-locked"><span class="skill-icon" aria-hidden="true">🔒</span><span>잠금</span></div>
+  <div class="skill-row skill-locked"><span class="skill-icon" aria-hidden="true">🔒</span><span>잠금</span></div>
+  <div class="skill-row skill-locked"><span class="skill-icon" aria-hidden="true">🔒</span><span>잠금</span></div>
+  <div class="skill-row skill-locked"><span class="skill-icon" aria-hidden="true">🔒</span><span>잠금</span></div>
+  <p class="upgrade-note">* 자동 환산:<br>똥 : 1 똥 | 사슴벌레 : 4 똥 | 거북이 : 11 똥 | 책보이 : 25 똥<br>* 매주 일요일 00시에 초기화</p>
+  <p class="upgrade-note save-status" role="status"></p>
+</dialog>
 <script>
-const _0x261e66=_0x2d8b;(function(_0x31c076,_0x4a45ac){const _0x52e26a=_0x2d8b,_0x4d2c29=_0x31c076();while(!![]){try{const _0xa537cc=-parseInt(_0x52e26a(0x206))/0x1+parseInt(_0x52e26a(0x18b))/0x2+-parseInt(_0x52e26a(0x1cb))/0x3*(-parseInt(_0x52e26a(0x1a9))/0x4)+-parseInt(_0x52e26a(0x186))/0x5*(-parseInt(_0x52e26a(0x203))/0x6)+-parseInt(_0x52e26a(0x18d))/0x7*(parseInt(_0x52e26a(0x1fe))/0x8)+-parseInt(_0x52e26a(0x1bc))/0x9*(parseInt(_0x52e26a(0x1e5))/0xa)+parseInt(_0x52e26a(0x213))/0xb;if(_0xa537cc===_0x4a45ac)break;else _0x4d2c29['push'](_0x4d2c29['shift']());}catch(_0x4e7d2d){_0x4d2c29['push'](_0x4d2c29['shift']());}}}(_0x4d2b,0x31bcb));const counts=document[_0x261e66(0x19a)+'tor'](_0x261e66(0x1b7)),button=document['querySelec'+_0x261e66(0x191)]('.box-ancho'+_0x261e66(0x1f2)),canvas=document[_0x261e66(0x19a)+_0x261e66(0x191)]('canvas'),ctx=canvas[_0x261e66(0x1a8)]('2d',{'alpha':!![],'desynchronized':!![]}),pp=new URLSearchParams(location[_0x261e66(0x19c)])[_0x261e66(0x1c0)]('p'),reduced=matchMedia(_0x261e66(0x1f3)+_0x261e66(0x1b3)+'ion:\x20reduc'+'e)');let particles=[],frame=0x0,last=0x0,closeTimer,lastClick=-Infinity,width=innerWidth,height=innerHeight,dpr=0x1;const EMOJI_SIZE=0x60,emojiCanvas=document[_0x261e66(0x1e6)+_0x261e66(0x1cf)]('canvas');emojiCanvas[_0x261e66(0x1cc)]=EMOJI_SIZE,emojiCanvas[_0x261e66(0x1f9)]=EMOJI_SIZE;const emojiCtx=emojiCanvas[_0x261e66(0x1a8)]('2d');emojiCtx[_0x261e66(0x20e)]=_0x261e66(0x1e3)+'e\x20UI\x20Emoji'+_0x261e66(0x204)+_0x261e66(0x20f)+_0x261e66(0x1b5)+'if',emojiCtx[_0x261e66(0x1aa)]=_0x261e66(0x1f4),emojiCtx[_0x261e66(0x1a2)+'ne']=_0x261e66(0x20a),emojiCtx[_0x261e66(0x208)+'r']=_0x261e66(0x1d2),emojiCtx[_0x261e66(0x1a3)]=0x5,emojiCtx[_0x261e66(0x1ad)+_0x261e66(0x217)]=0x4,emojiCtx[_0x261e66(0x1e8)]('💩',EMOJI_SIZE/0x2,EMOJI_SIZE/0x2);function _0x4d2b(){const _0x39d5d8=['n-close','grade-dot','#9CA3AF','keys','못했습니다.\x20새로고','educed-mot','#3B82F6','\x22,sans-ser','globalComp','.counts','true','tion','addEventLi','indexOf','9tSJDCC','min','onload','bottom','get','sort','.collectio','all','ositeOpera','resize','stener','collection','gClientRec','disabled','target','110589FwiYZy','width','Particle\x20s','file','ent','spin','className','#160c08aa','이\x20없습니다.','alt','error','left','sin','img','ldren','map','n-list','prepend','image_2026','0930_11030','spread','failed','이미지\x20로드\x20실패:','0930_11025','76px\x20\x22Sego','now','3018320SktNmO','createElem','fillRect','fillText','drawImage','section','glow','click','rotation','splice','style','assets/ima','minSize','r\x20button','(prefers-r','center','remove','grade','cos','color','height','사슴벌레','max','length','sprite','291520dPdDoz','globalAlph','append','info','src','46554UBxyKQ','\x22,\x22Apple\x20C','amount','394717byKsTh','random','shadowColo','fillStyle','middle','책보이','abs','setTransfo','font','olor\x20Emoji','close','SQRT2','then','9284396NwsoJL','거북이','textConten','canvas','etY','-empty','45dRWPKj','source-ove','add','elf-check\x20','#collectio','43152REUZfo','life','28KRXvDb','클릭\x20수:\x20','아직\x20발견한\x20아이템','getBoundin','tor','background','#22C55E','round','1_250px.pn','count','selftest','7_250px.pn','span','querySelec','name','search','catch','burst','clientX','filter','replaceChi','textBaseli','shadowBlur','ges/','최상급','Color','top','getContext','12nmYyCQ','textAlign','#14B8A6','classList','shadowOffs'];_0x4d2b=function(){return _0x39d5d8;};return _0x4d2b();}const items=[{'name':_0x261e66(0x1fa),'grade':'중급','file':_0x261e66(0x1dd)+_0x261e66(0x1e2)+_0x261e66(0x195)+'g','count':0x0},{'name':_0x261e66(0x214),'grade':'상급','file':_0x261e66(0x1dd)+_0x261e66(0x1e2)+_0x261e66(0x198)+'g','count':0x0},{'name':_0x261e66(0x20b),'grade':_0x261e66(0x1a5),'file':_0x261e66(0x1dd)+_0x261e66(0x1de)+'1_250px.pn'+'g','count':0x0},{'name':'똥','grade':'하급','sprite':emojiCanvas,'count':0x0}],grades={'하급':{'color':_0x261e66(0x1b0),'amount':0x41,'minSize':0x10,'glow':0x0,'spread':Math['PI'],'spin':0x1e},'중급':{'color':_0x261e66(0x193),'amount':0x28,'minSize':27.9,'glow':0xa,'spread':Math['PI'],'spin':0xf},'상급':{'color':_0x261e66(0x1ab),'amount':0x19,'minSize':38.61,'glow':0xe,'spread':Math['PI']*0.65,'spin':0x9},'최상급':{'color':_0x261e66(0x1b4),'amount':0xf,'minSize':48.249,'glow':0x14,'spread':Math['PI']*0.65,'spin':0x2}},gradeOrder=Object[_0x261e66(0x1b1)](grades),collection=document[_0x261e66(0x19a)+'tor'](_0x261e66(0x18a)+'n'),collectionList=document[_0x261e66(0x19a)+_0x261e66(0x191)]('.collectio'+_0x261e66(0x1db));document[_0x261e66(0x19a)+_0x261e66(0x191)](_0x261e66(0x1c2)+'n-open')[_0x261e66(0x1ba)+_0x261e66(0x1c6)](_0x261e66(0x1ec),()=>{const _0x1a5f5=_0x261e66;collectionList[_0x1a5f5(0x1a1)+_0x1a5f5(0x1d9)](...gradeOrder['map'](_0x3a70cf=>{const _0x20a01d=_0x1a5f5,_0x4b5beb=document[_0x20a01d(0x1e6)+'ent'](_0x20a01d(0x1ea)),_0x533a99=document[_0x20a01d(0x1e6)+'ent']('h3'),_0x37b9d1=document['createElem'+_0x20a01d(0x1cf)](_0x20a01d(0x199));_0x37b9d1[_0x20a01d(0x1d1)]=_0x20a01d(0x1af),_0x37b9d1['style'][_0x20a01d(0x192)+_0x20a01d(0x1a6)]=grades[_0x3a70cf][_0x20a01d(0x1f8)],_0x533a99[_0x20a01d(0x200)](_0x37b9d1,_0x3a70cf),_0x4b5beb[_0x20a01d(0x200)](_0x533a99);const _0x3b9176=items[_0x20a01d(0x1a0)](_0x28ce3f=>_0x28ce3f[_0x20a01d(0x1f6)]===_0x3a70cf&&_0x28ce3f[_0x20a01d(0x196)]>0x0),_0x547590=document[_0x20a01d(0x1e6)+'ent'](_0x3b9176[_0x20a01d(0x1fc)]?'ul':'p');_0x547590[_0x20a01d(0x1d1)]=_0x3b9176['length']?_0x20a01d(0x1c7)+'-items':_0x20a01d(0x1c7)+_0x20a01d(0x218);if(_0x3b9176[_0x20a01d(0x1fc)])for(const _0x4d9b5c of _0x3b9176){const _0x322bce=document['createElem'+_0x20a01d(0x1cf)]('li'),_0x5ee1c1=document[_0x20a01d(0x1e6)+_0x20a01d(0x1cf)](_0x4d9b5c[_0x20a01d(0x1ce)]?_0x20a01d(0x1d8):_0x20a01d(0x199));_0x5ee1c1['className']=_0x20a01d(0x1c7)+'-icon',_0x5ee1c1['setAttribu'+'te']('aria-hidde'+'n',_0x20a01d(0x1b8)),_0x4d9b5c[_0x20a01d(0x1ce)]?(_0x5ee1c1[_0x20a01d(0x202)]=_0x20a01d(0x1f0)+'ges/'+_0x4d9b5c[_0x20a01d(0x1ce)],_0x5ee1c1[_0x20a01d(0x1d4)]='',_0x5ee1c1[_0x20a01d(0x1cc)]=_0x5ee1c1[_0x20a01d(0x1f9)]=0x18):_0x5ee1c1[_0x20a01d(0x215)+'t']='💩',_0x322bce[_0x20a01d(0x215)+'t']=_0x4d9b5c[_0x20a01d(0x19b)],_0x322bce[_0x20a01d(0x1dc)](_0x5ee1c1),_0x547590[_0x20a01d(0x200)](_0x322bce);}else _0x547590['textConten'+'t']=_0x20a01d(0x18f)+_0x20a01d(0x1d3);return _0x4b5beb[_0x20a01d(0x200)](_0x547590),_0x4b5beb;})),collection['showModal']();}),document['querySelec'+_0x261e66(0x191)](_0x261e66(0x1c2)+_0x261e66(0x1ae))['addEventLi'+_0x261e66(0x1c6)](_0x261e66(0x1ec),()=>collection[_0x261e66(0x210)]()),collection['addEventLi'+_0x261e66(0x1c6)]('click',_0x8562e6=>{const _0x21186f=_0x261e66,_0x1916d2=collection[_0x21186f(0x190)+_0x21186f(0x1c8)+'t']();if(_0x8562e6[_0x21186f(0x1ca)]===collection&&(_0x8562e6[_0x21186f(0x19f)]<_0x1916d2[_0x21186f(0x1d6)]||_0x8562e6[_0x21186f(0x19f)]>_0x1916d2['right']||_0x8562e6['clientY']<_0x1916d2[_0x21186f(0x1a7)]||_0x8562e6['clientY']>_0x1916d2[_0x21186f(0x1bf)]))collection[_0x21186f(0x210)]();});function gradeSprite(_0x1fa04c,_0x1d20bb){const _0x445988=_0x261e66,_0x51e50c=document[_0x445988(0x1e6)+_0x445988(0x1cf)](_0x445988(0x216));_0x51e50c[_0x445988(0x1cc)]=_0x51e50c[_0x445988(0x1f9)]=0x100;const _0x1382e6=_0x51e50c[_0x445988(0x1a8)]('2d');for(let _0x46c4d4=0x0;_0x46c4d4<0xc;_0x46c4d4++){const _0x51db17=_0x46c4d4*Math['PI']/0x6;_0x1382e6[_0x445988(0x1e9)](_0x1fa04c,0x20+Math[_0x445988(0x1f7)](_0x51db17)*0x6,0x20+Math[_0x445988(0x1d7)](_0x51db17)*0x6,0xc0,0xc0);}return _0x1382e6[_0x445988(0x1b6)+_0x445988(0x1c4)+_0x445988(0x1b9)]='source-in',_0x1382e6[_0x445988(0x209)]=_0x1d20bb[_0x445988(0x1f8)],_0x1382e6[_0x445988(0x1e7)](0x0,0x0,0x100,0x100),_0x1382e6[_0x445988(0x1b6)+_0x445988(0x1c4)+_0x445988(0x1b9)]=_0x445988(0x187)+'r',_0x1382e6['shadowColo'+'r']=_0x1d20bb[_0x445988(0x1f8)],_0x1382e6[_0x445988(0x1a3)]=_0x1d20bb[_0x445988(0x1eb)],_0x1382e6[_0x445988(0x1e9)](_0x1fa04c,0x20,0x20,0xc0,0xc0),_0x51e50c;}let clicks=0x0;function pickItem(_0x245dc5=Math[_0x261e66(0x207)]()){return items[_0x245dc5<0.15?0x0:_0x245dc5<0.22?0x1:_0x245dc5<0.25?0x2:0x3];}function updateCounts(){const _0x57d8cd=_0x261e66;counts['replaceChi'+_0x57d8cd(0x1d9)](...[_0x57d8cd(0x18e)+clicks,...items[_0x57d8cd(0x1a0)](_0xc71c0e=>_0xc71c0e['count']>0x0)[_0x57d8cd(0x1c1)]((_0x1fc824,_0x421a66)=>gradeOrder[_0x57d8cd(0x1bb)](_0x1fc824[_0x57d8cd(0x1f6)])-gradeOrder[_0x57d8cd(0x1bb)](_0x421a66['grade']))[_0x57d8cd(0x1da)](_0x4be97d=>_0x4be97d['name']+':\x20'+_0x4be97d[_0x57d8cd(0x196)])][_0x57d8cd(0x1da)](_0x54dbc8=>{const _0x9d6647=_0x57d8cd,_0x3209b5=document[_0x9d6647(0x1e6)+_0x9d6647(0x1cf)](_0x9d6647(0x199));return _0x3209b5[_0x9d6647(0x215)+'t']=_0x54dbc8,_0x3209b5;}));}Promise[_0x261e66(0x1c3)](items[_0x261e66(0x1a0)](_0x56d9eb=>_0x56d9eb[_0x261e66(0x1ce)])['map'](_0x417ce3=>new Promise((_0x439af7,_0x3fc47d)=>{const _0x5b63c2=_0x261e66,_0x245593=new Image();_0x245593[_0x5b63c2(0x1be)]=()=>{const _0x255635=_0x5b63c2;_0x417ce3[_0x255635(0x1fd)]=_0x245593,_0x439af7();},_0x245593['onerror']=()=>_0x3fc47d(new Error(_0x5b63c2(0x1e1)+'\x20'+_0x417ce3['file'])),_0x245593[_0x5b63c2(0x202)]=_0x5b63c2(0x1f0)+_0x5b63c2(0x1a4)+_0x417ce3[_0x5b63c2(0x1ce)];})))[_0x261e66(0x212)](()=>{const _0x326826=_0x261e66;for(const _0x508d1c of items)_0x508d1c[_0x326826(0x1fd)]=gradeSprite(_0x508d1c[_0x326826(0x1fd)],grades[_0x508d1c['grade']]);button[_0x326826(0x1c9)]=![];})[_0x261e66(0x19d)](_0x2d0204=>{const _0x15387e=_0x261e66,_0x528a2b=document[_0x15387e(0x1e6)+'ent'](_0x15387e(0x199));_0x528a2b[_0x15387e(0x215)+'t']='이미지를\x20불러오지\x20'+_0x15387e(0x1b2)+'침해\x20주세요.',counts[_0x15387e(0x200)](_0x528a2b),console[_0x15387e(0x1d5)](_0x2d0204);});function resize(){const _0x4a8317=_0x261e66;width=innerWidth,height=innerHeight,dpr=Math['min'](devicePixelRatio||0x1,1.5),canvas['width']=Math[_0x4a8317(0x194)](width*dpr),canvas[_0x4a8317(0x1f9)]=Math['round'](height*dpr),canvas[_0x4a8317(0x1ef)][_0x4a8317(0x1cc)]=width+'px',canvas[_0x4a8317(0x1ef)][_0x4a8317(0x1f9)]=height+'px',ctx[_0x4a8317(0x20d)+'rm'](dpr,0x0,0x0,dpr,0x0,0x0);}addEventListener(_0x261e66(0x1c5),resize),resize();function advance(_0x1cb443,_0x5bfccf){const _0x14cfbf=_0x261e66;return _0x1cb443['vy']+=0x352*_0x5bfccf,_0x1cb443['x']+=_0x1cb443['vx']*_0x5bfccf,_0x1cb443['y']+=_0x1cb443['vy']*_0x5bfccf,_0x1cb443[_0x14cfbf(0x1ed)]+=_0x1cb443[_0x14cfbf(0x1d0)]*_0x5bfccf,_0x1cb443['life']-=_0x5bfccf,_0x1cb443[_0x14cfbf(0x18c)]>0x0;}function draw(_0x35718f){const _0x407b16=_0x261e66,_0x5853ff=Math['min']((_0x35718f-last)/0x3e8,0.033);last=_0x35718f,ctx[_0x407b16(0x20d)+'rm'](dpr,0x0,0x0,dpr,0x0,0x0),ctx['clearRect'](0x0,0x0,width,height);let _0x3a96e1=0x0;for(let _0x368cd8=0x0;_0x368cd8<particles[_0x407b16(0x1fc)];_0x368cd8++){const _0x11ddc9=particles[_0x368cd8];if(!advance(_0x11ddc9,_0x5853ff))continue;particles[_0x3a96e1++]=_0x11ddc9;const _0x12ea85=_0x11ddc9['size']*0x100/0xc0,_0x188df7=_0x12ea85/Math[_0x407b16(0x211)];if(_0x11ddc9['x']<-_0x188df7||_0x11ddc9['x']>width+_0x188df7||_0x11ddc9['y']<-_0x188df7||_0x11ddc9['y']>height+_0x188df7)continue;const _0x1039c2=Math[_0x407b16(0x1f7)](_0x11ddc9[_0x407b16(0x1ed)]),_0x31ecfe=Math[_0x407b16(0x1d7)](_0x11ddc9['rotation']);ctx[_0x407b16(0x1ff)+'a']=Math[_0x407b16(0x1bd)](0x1,_0x11ddc9['life']*0x2),ctx[_0x407b16(0x20d)+'rm'](dpr*_0x1039c2,dpr*_0x31ecfe,-dpr*_0x31ecfe,dpr*_0x1039c2,dpr*_0x11ddc9['x'],dpr*_0x11ddc9['y']),ctx[_0x407b16(0x1e9)](_0x11ddc9[_0x407b16(0x1fd)],-_0x12ea85/0x2,-_0x12ea85/0x2,_0x12ea85,_0x12ea85);}particles[_0x407b16(0x1fc)]=_0x3a96e1,ctx[_0x407b16(0x1ff)+'a']=0x1,ctx[_0x407b16(0x20d)+'rm'](dpr,0x0,0x0,dpr,0x0,0x0),particles[_0x407b16(0x1fc)]?frame=requestAnimationFrame(draw):frame=0x0;}button['addEventLi'+_0x261e66(0x1c6)](_0x261e66(0x1ec),()=>{const _0x1b5172=_0x261e66;if(button[_0x1b5172(0x1c9)])return;const _0x5a4c1d=performance[_0x1b5172(0x1e4)]();if(_0x5a4c1d-lastClick<0x3e8)return;lastClick=_0x5a4c1d;const _0x1a2eb3=!pp?pickItem():pickItem(pp),_0x3fc1e2=grades[_0x1a2eb3['grade']];clicks++,_0x1a2eb3[_0x1b5172(0x196)]++,updateCounts(),button[_0x1b5172(0x1ac)]['remove'](_0x1b5172(0x19e)),void button['offsetWidt'+'h'],button[_0x1b5172(0x1ac)][_0x1b5172(0x188)](_0x1b5172(0x19e)),clearTimeout(closeTimer),closeTimer=setTimeout(()=>{const _0x4638b0=_0x1b5172;button[_0x4638b0(0x1ac)][_0x4638b0(0x1f5)](_0x4638b0(0x19e));},0x320);const _0x4299e2=button[_0x1b5172(0x190)+_0x1b5172(0x1c8)+'t'](),_0x194483=reduced['matches'],_0xb4743=_0x194483?Math[_0x1b5172(0x1fb)](0x1,Math['round'](_0x3fc1e2[_0x1b5172(0x205)]/0x8)):_0x3fc1e2[_0x1b5172(0x205)],_0x4044ee=_0x4299e2[_0x1b5172(0x1d6)]+_0x4299e2[_0x1b5172(0x1cc)]*0.5,_0x3de352=_0x4299e2[_0x1b5172(0x1a7)]+_0x4299e2[_0x1b5172(0x1f9)]*0.24;for(let _0x4acfb5=0x0;_0x4acfb5<_0xb4743;_0x4acfb5++){const _0x4b9aef=-Math['PI']/0x2+(Math['random']()-0.5)*_0x3fc1e2[_0x1b5172(0x1df)],_0x127e30=_0x194483?0x3c:0xdc+Math[_0x1b5172(0x207)]()*0x1ea;particles['push']({'sprite':_0x1a2eb3[_0x1b5172(0x1fd)],'x':_0x4044ee,'y':_0x3de352,'vx':Math[_0x1b5172(0x1f7)](_0x4b9aef)*_0x127e30,'vy':Math[_0x1b5172(0x1d7)](_0x4b9aef)*_0x127e30-0x5a,'size':_0x3fc1e2[_0x1b5172(0x1f1)]+Math[_0x1b5172(0x207)]()*0xf,'rotation':Math[_0x1b5172(0x207)]()-0.5,'spin':_0x194483?0x0:(Math[_0x1b5172(0x207)]()-0.5)*_0x3fc1e2[_0x1b5172(0x1d0)],'life':_0x194483?0.35:1.3+Math[_0x1b5172(0x207)]()*1.1});}particles[_0x1b5172(0x1fc)]>0x12c&&particles[_0x1b5172(0x1ee)](0x0,particles['length']-0x12c),!frame&&(last=performance[_0x1b5172(0x1e4)](),frame=requestAnimationFrame(draw));});function _0x2d8b(_0x1fc344,_0x456105){_0x1fc344=_0x1fc344-0x186;const _0x4d2b29=_0x4d2b();let _0x2d8bec=_0x4d2b29[_0x1fc344];return _0x2d8bec;}if(new URLSearchParams(location['search'])['has'](_0x261e66(0x197))){const p={'x':0x0,'y':0x0,'vx':0xa,'vy':0x0,'rotation':0x0,'spin':0x2,'life':0x1};if(!advance(p,0.1)||p['x']!==0x1||Math[_0x261e66(0x20c)](p['y']-8.5)>1e-9||p[_0x261e66(0x1ed)]!==0.2||advance(p,0x1))throw Error(_0x261e66(0x1cd)+_0x261e66(0x189)+_0x261e66(0x1e0));console[_0x261e66(0x201)]('Particle\x20s'+_0x261e66(0x189)+'passed');}
+const counts = document.querySelector('.counts');
+const button = document.querySelector('.box-anchor button');
+const canvas = document.querySelector('canvas');
+const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+let particles = [];
+let frame = 0;
+let last = 0;
+let closeTimer;
+let lastClick = -Infinity;
+
+let width = innerWidth;
+let height = innerHeight;
+let dpr = 1;
+
+const pp = new URLSearchParams(location.search).get('p');
+
+const itemBaseSize = 13;
+const itemSizeRange = 10;
+
+const EMOJI_SIZE = 96;
+const emojiCanvas = document.createElement('canvas');
+
+emojiCanvas.width = EMOJI_SIZE;
+emojiCanvas.height = EMOJI_SIZE;
+
+const emojiCtx = emojiCanvas.getContext('2d');
+
+emojiCtx.font = '76px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+emojiCtx.textAlign = 'center';
+emojiCtx.textBaseline = 'middle';
+emojiCtx.shadowColor = '#160c08aa';
+emojiCtx.shadowBlur = 5;
+emojiCtx.shadowOffsetY = 4;
+emojiCtx.fillText('💩', EMOJI_SIZE / 2, EMOJI_SIZE / 2);
+
+const items = [
+    { name: '사슴벌레', grade: '중급', file: 'image_20260930_110251_250px.png', count: 0 },
+    { name: '거북이', grade: '상급', file: 'image_20260930_110257_250px.png', count: 0 },
+    { name: '책보이', grade: '최상급', file: 'image_20260930_110301_250px.png', count: 0 },
+    { name: '똥', grade: '하급', sprite: emojiCanvas, count: 0 },
+    { name: '장풍이', grade: '특급', file: 'image_20260930_110255_250px.png', count: 0 },
+];
+const grades = {
+    하급: { color: '#9CA3AF', amount: 65, minSize: 16, glow: 0, spread: Math.PI, spin: 30 },
+    중급: { color: '#22C55E', amount: 40, minSize: 27.9, glow: 10, spread: Math.PI, spin: 15 },
+    상급: { color: '#14B8A6', amount: 25, minSize: 38.61, glow: 14, spread: Math.PI * .65, spin: 9 },
+    최상급: { color: '#3B82F6', amount: 15, minSize: 48.249, glow: 20, spread: Math.PI * .65, spin: 2 },
+    특급: { color: '#A855F7', amount: 8, minSize: 56.9241, glow: 24, spread: Math.PI * .45, spin: 1 }
+};
+const gradeOrder = Object.keys(grades);
+const speedReductions = [
+    50, 20, 15, 12, 10, 9, 8, 8, 8, 8,
+    7, 7, 7, 7, 7,
+    6, 6, 6, 6, 6, 6, 6, 6, 6,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    4, 4, 4, 4, 4, 3
+];
+const speedCosts = Array.from({ length: 50 }, (_, i) => Math.round(70 + 260 * i / 49));
+let poopBalance = 0;
+let speedLevel = 0;
+let clickDelay = 1000;
+const upgrade = document.querySelector('#upgrade');
+const upgradeBalance = document.querySelector('.upgrade-balance');
+const skillLevel = document.querySelector('.skill-level');
+const skillDelay = document.querySelector('.skill-delay');
+const skillCost = document.querySelector('.skill-cost');
+const skillAdd = document.querySelector('.skill-add');
+
+function poopValue(grade) {
+    const n = gradeOrder.indexOf(grade);
+    return n === 0 ? 1 : Math.floor((2 + n) * (1.1 + 0.44 * n ** 2));
+}
+
+function updateUpgrade() {
+    const max = speedLevel === speedReductions.length;
+    upgradeBalance.textContent = `똥 : ${String(poopBalance).padStart(4, '0')}`;
+    skillLevel.textContent = max ? 'MAX' : `${speedLevel} / 50`;
+    skillDelay.textContent = max ? `클릭 간격 ${clickDelay}ms` : `클릭 간격 ${clickDelay}ms → ${clickDelay - speedReductions[speedLevel]}ms`;
+    skillCost.textContent = max ? '최고 단계에 도달했습니다.' : `필요한 똥 : ${speedCosts[speedLevel]}${poopBalance < speedCosts[speedLevel] ? ' (부족)' : ''}`;
+    skillAdd.disabled = max || poopBalance < speedCosts[speedLevel];
+}
+
+skillAdd.addEventListener('click', () => {
+    ensureWeek();
+    if (speedLevel >= speedReductions.length || poopBalance < speedCosts[speedLevel]) return;
+    poopBalance -= speedCosts[speedLevel];
+    clickDelay -= speedReductions[speedLevel];
+    speedLevel++;
+    updateUpgrade();
+    saveProgress();
+});
+document.querySelector('.upgrade-open').addEventListener('click', () => {
+    ensureWeek();
+    updateUpgrade();
+    upgrade.showModal();
+});
+document.querySelector('.upgrade-close').addEventListener('click', () => upgrade.close());
+upgrade.addEventListener('click', event => {
+    const rect = upgrade.getBoundingClientRect();
+    if (event.target === upgrade && (event.clientX < rect.left || event.clientX > rect.right ||
+        event.clientY < rect.top || event.clientY > rect.bottom)) upgrade.close();
+});
+updateUpgrade();
+const collection = document.querySelector('#collection');
+const collectionList = document.querySelector('.collection-list');
+
+function renderCollection() {
+    collectionList.replaceChildren(...gradeOrder.filter((name, index) =>
+        index <= gradeOrder.indexOf('최상급') || items.some(item => item.grade === name && item.count > 0)
+    ).map(name => {
+        const section = document.createElement('section');
+        const heading = document.createElement('h3');
+        const dot = document.createElement('span');
+        dot.className = 'grade-dot';
+        dot.style.backgroundColor = grades[name].color;
+        heading.append(dot, name);
+        section.append(heading);
+        const discovered = items.filter(item => item.grade === name && item.count > 0);
+        const list = document.createElement(discovered.length ? 'ul' : 'p');
+        list.className = discovered.length ? 'collection-items' : 'collection-empty';
+        if (discovered.length) {
+            for (const item of discovered) {
+                const entry = document.createElement('li');
+                const icon = document.createElement(item.file ? 'img' : 'span');
+                icon.className = 'collection-icon';
+                icon.setAttribute('aria-hidden', 'true');
+                if (item.file) {
+                    icon.src = `assets/${item.file}`;
+                    icon.alt = '';
+                    icon.width = icon.height = 24;
+                } else {
+                    icon.textContent = '💩';
+                }
+                entry.textContent = item.name;
+                entry.prepend(icon);
+                list.append(entry);
+            }
+        } else {
+            list.textContent = '아직 발견한 아이템이 없습니다.';
+        }
+        section.append(list);
+        return section;
+    }));
+}
+document.querySelector('.collection-open').addEventListener('click', () => {
+    ensureWeek();
+    renderCollection();
+    collection.showModal();
+});
+document.querySelector('.collection-close').addEventListener('click', () => collection.close());
+collection.addEventListener('click', event => {
+    const rect = collection.getBoundingClientRect();
+    if (event.target === collection && (event.clientX < rect.left || event.clientX > rect.right ||
+        event.clientY < rect.top || event.clientY > rect.bottom)) collection.close();
+});
+
+// Bake the alpha outline and glow once, leaving room around the original image.
+function gradeSprite(source, grade) {
+    const sprite = document.createElement('canvas');
+    sprite.width = sprite.height = 256;
+    const paint = sprite.getContext('2d');
+    for (let i = 0; i < 12; i++) {
+        const angle = i * Math.PI / 6;
+        paint.drawImage(source, 32 + Math.cos(angle) * 6, 32 + Math.sin(angle) * 6, 192, 192);
+    }
+    paint.globalCompositeOperation = 'source-in';
+    paint.fillStyle = grade.color;
+    paint.fillRect(0, 0, 256, 256);
+    paint.globalCompositeOperation = 'source-over';
+    paint.shadowColor = grade.color;
+    paint.shadowBlur = grade.glow;
+    paint.drawImage(source, 32, 32, 192, 192);
+    return sprite;
+}
+let clicks = 0;
+
+// One draw per click; all particles in that burst show the selected item.
+function pickItem(roll = Math.random()) {
+    return items[roll < 0.15 ? 0 : roll < 0.22 ? 1 : roll < 0.25 ? 2 : roll < 0.26 ? 4 : 3];
+}
+
+function updateCounts() {
+    counts.replaceChildren(...[`클릭 수: ${clicks}`, ...items
+        .filter(item => item.count > 0)
+        .sort((a, b) => gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade))
+        .map(item => `${item.name}: ${item.count}`)].map(text => {
+            const span = document.createElement('span');
+            span.textContent = text;
+            return span;
+        }));
+}
+
+const progressCookie = 'ddong_progress_v1';
+const saveStatus = document.querySelector('.save-status');
+function nextSunday(now = Date.now()) {
+    const kst = new Date(now + 9 * 60 * 60 * 1000);
+    return Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(),
+        kst.getUTCDate() + 7 - kst.getUTCDay()) - 9 * 60 * 60 * 1000;
+}
+let resetAt = nextSunday();
+let resetTimer;
+
+function saveProgress() {
+    // Only ASCII keys and numbers are stored, so JSON is directly Base64-safe.
+    const data = { v: 1, resetAt, balance: poopBalance, level: speedLevel,
+        clicks, counts: items.map(item => item.count) };
+    const value = btoa(JSON.stringify(data));
+    try {
+        document.cookie = `${progressCookie}=${value}; Expires=${new Date(resetAt - 1000).toUTCString()}; Path=/; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+        const saved = document.cookie.split('; ').includes(`${progressCookie}=${value}`);
+        saveStatus.textContent = saved ? '' : '쿠키 저장이 차단되었습니다. HTTP/HTTPS에서 열고 쿠키를 허용해 주세요.';
+    } catch {
+        saveStatus.textContent = '쿠키를 저장할 수 없습니다. 브라우저의 쿠키 설정을 확인해 주세요.';
+    }
+}
+
+function loadProgress() {
+    try {
+        const cookie = document.cookie.split('; ').find(part => part.startsWith(`${progressCookie}=`));
+        if (!cookie) return;
+        const data = JSON.parse(atob(cookie.slice(progressCookie.length + 1)));
+        const validNumber = value => Number.isSafeInteger(value) && value >= 0;
+        if (!data || data.v !== 1 || data.resetAt !== resetAt ||
+            !validNumber(data.balance) || !validNumber(data.level) || data.level > 50 ||
+            !validNumber(data.clicks) || !Array.isArray(data.counts) ||
+            (data.counts.length !== 4 && data.counts.length !== items.length) || !data.counts.every(validNumber) ||
+            data.counts.reduce((sum, value) => sum + value, 0) !== data.clicks) return;
+        poopBalance = data.balance;
+        speedLevel = data.level;
+        clicks = data.clicks;
+        // Keep the original four item positions compatible with existing weekly cookies.
+        items.forEach((item, i) => { item.count = data.counts[i] ?? 0; });
+        clickDelay = 1000 - speedReductions.slice(0, speedLevel).reduce((sum, value) => sum + value, 0);
+    } catch { /* Ignore malformed or inaccessible cookies and start with empty progress. */ }
+}
+
+function ensureWeek() {
+    const currentReset = nextSunday();
+    if (resetAt === currentReset) return;
+    resetAt = currentReset;
+    poopBalance = speedLevel = clicks = 0;
+    clickDelay = 1000;
+    lastClick = -Infinity;
+    items.forEach(item => { item.count = 0; });
+    particles.length = 0;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    updateCounts();
+    updateUpgrade();
+    if (collection.open) renderCollection();
+    saveProgress();
+}
+
+function scheduleReset() {
+    ensureWeek();
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(scheduleReset, Math.max(1, resetAt - Date.now()));
+}
+loadProgress();
+updateCounts();
+updateUpgrade();
+scheduleReset();
+addEventListener('focus', scheduleReset);
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) scheduleReset();
+});
+if (location.protocol === 'file:') saveStatus.textContent = '쿠키 저장은 HTTP/HTTPS에서 사용할 수 있습니다.';
+
+Promise.all(items.filter(item => item.file).map(item => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => { item.sprite = image; resolve(); };
+    image.onerror = () => reject(new Error(`이미지 로드 실패: ${item.file}`));
+    image.src = `assets/${item.file}`;
+}))).then(() => {
+    for (const item of items) item.sprite = gradeSprite(item.sprite, grades[item.grade]);
+    button.disabled = false;
+}).catch(error => {
+    const message = document.createElement('span');
+    message.textContent = '이미지를 불러오지 못했습니다. 새로고침해 주세요.';
+    counts.append(message);
+    console.error(error);
+});
+
+function resize() {
+    width = innerWidth;
+    height = innerHeight;
+    dpr = Math.min(devicePixelRatio || 1, 1.5);
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+addEventListener('resize', resize);
+resize();
+
+function advance(p, dt) {
+    p.vy += 850 * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.rotation += p.spin * dt;
+    p.life -= dt;
+
+    return p.life > 0;
+}
+
+function draw(time) {
+    const dt = Math.min((time - last) / 1000, 0.033);
+    last = time;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    let writeIndex = 0;
+
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        if (!advance(p, dt)) {
+            continue;
+        }
+
+        particles[writeIndex++] = p;
+
+        const size = p.size * 256 / 192;
+        const margin = size / Math.SQRT2;
+        if (p.x < -margin || p.x > width + margin || p.y < -margin || p.y > height + margin) {
+            continue;
+        }
+
+        const cos = Math.cos(p.rotation);
+        const sin = Math.sin(p.rotation);
+
+        ctx.globalAlpha = Math.min(1, p.life * 2);
+        ctx.setTransform(dpr * cos, dpr * sin, -dpr * sin, dpr * cos, dpr * p.x, dpr * p.y);
+
+        ctx.drawImage(p.sprite, -size / 2, -size / 2, size, size);
+    }
+
+    particles.length = writeIndex;
+
+    ctx.globalAlpha = 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (particles.length) {
+        frame = requestAnimationFrame(draw);
+    } else {
+        frame = 0;
+    }
+}
+
+button.addEventListener('click', () => {
+    if (button.disabled) return;
+    ensureWeek();
+    const now = performance.now();
+    if (now - lastClick < clickDelay) return;
+    lastClick = now;
+    const item = !pp ? pickItem() : pickItem(pp);
+    const grade = grades[item.grade];
+    clicks++;
+    item.count++;
+    poopBalance += poopValue(item.grade);
+    updateCounts();
+    updateUpgrade();
+    saveProgress();
+
+    button.classList.remove('burst');
+    void button.offsetWidth;
+    button.classList.add('burst');
+
+    clearTimeout(closeTimer);
+
+    closeTimer = setTimeout(() => {
+        button.classList.remove('burst');
+    }, 800);
+
+    const r = button.getBoundingClientRect();
+    const reducedMotion = reduced.matches;
+    const count = reducedMotion ? Math.max(1, Math.round(grade.amount / 8)) : grade.amount;
+
+    const startX = r.left + r.width * 0.5;
+    const startY = r.top + r.height * 0.24;
+
+    for (let i = 0; i < count; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - .5) * grade.spread;
+        const speed = reducedMotion ? 60 : 220 + Math.random() * 490;
+
+        particles.push({
+            sprite: item.sprite,
+            x: startX,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 90,
+            size: grade.minSize + Math.random() * 15,
+            rotation: Math.random() - 0.5,
+            spin: reducedMotion ? 0 : (Math.random() - 0.5) * grade.spin,
+            life: reducedMotion ? 0.35 : 1.3 + Math.random() * 1.1
+        });
+    }
+
+    if (particles.length > 300) {
+        particles.splice(0, particles.length - 300);
+    }
+
+    if (!frame) {
+        last = performance.now();
+        frame = requestAnimationFrame(draw);
+    }
+});
+
+if (new URLSearchParams(location.search).has('selftest')) {
+    const p = { x: 0, y: 0, vx: 10, vy: 0, rotation: 0, spin: 2, life: 1 };
+
+    if (!advance(p, 0.1) || p.x !== 1 || Math.abs(p.y - 8.5) > 1e-9 || p.rotation !== 0.2 || advance(p, 1)) {
+        throw Error('Particle self-check failed');
+    }
+
+    console.info('Particle self-check passed');
+}
 </script>
 </body>
 </html>
