@@ -583,9 +583,9 @@
         addEvent: function() {
             this.textarea.addEventListener( "input", () => this.eventFn() );
             // 코드 블록 클릭 복사
-            this.displayTag.addEventListener( "click", () => this.copyFn() );
+            // this.displayTag.addEventListener( "click", () => this.copyFn() );
             // 우측 상단 복사 아이콘
-            this.copyButton.addEventListener( "click", () => this.copyFn() );
+            // this.copyButton.addEventListener( "click", () => this.copyFn() );
             // 최초 실행
             this.eventFn();
         }
