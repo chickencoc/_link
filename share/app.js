@@ -3,23 +3,13 @@
 const body = document.body;
 const navigation = document.querySelector('.navigation');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const mobileApply = document.querySelector('.mobile-apply');
 const hero = document.querySelector('.hero');
-const info = document.querySelector('#info');
-const closing = document.querySelector('.closing');
 // Navigation arrives after the opening scene.
 let updatePending = false;
 function updateNavigation() {
   const pastHero = hero.getBoundingClientRect().bottom < 80;
   navigation.classList.toggle('is-visible', pastHero);
   body.classList.toggle('has-navigation', pastHero);
-  const infoBounds = info.getBoundingClientRect();
-  const closingBounds = closing.getBoundingClientRect();
-  const infoOnScreen = infoBounds.top < innerHeight * .8 && infoBounds.bottom > 80;
-  const closingOnScreen = closingBounds.top < innerHeight * .8;
-  const showApply = pastHero && !infoOnScreen && !closingOnScreen;
-  mobileApply.classList.toggle('is-visible', showApply);
-  body.classList.toggle('has-mobile-apply', showApply);
   updatePending = false;
 }
 function scheduleNavigation() {
@@ -44,7 +34,7 @@ if ('IntersectionObserver' in window) {
       });
     }
   }, { rootMargin: '-15% 0px -60% 0px' });
-  document.querySelectorAll('main>section[id]').forEach(section => activeObserver.observe(section));
+  document.querySelectorAll('main>section[id], #location').forEach(section => activeObserver.observe(section));
 }
 document.addEventListener('visibilitychange', () => body.classList.toggle('page-hidden', document.hidden));
 
@@ -63,21 +53,7 @@ function showToast(message) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toast.classList.remove('is-visible'), 3200);
 }
-document.querySelector('.copy-address').addEventListener('click', async () => {
-  const address = document.querySelector('#venue-address');
-  try {
-    if (!navigator.clipboard) throw new Error('Clipboard unavailable');
-    await navigator.clipboard.writeText(address.textContent.trim());
-    showToast('주소를 복사했습니다.');
-  } catch {
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(address);
-    selection.removeAllRanges();
-    selection.addRange(range);
-    showToast('선택된 주소를 길게 누르거나 복사해 주세요.');
-  }
-});
+
 
 // SVG source images are loaded as their scenes approach the viewport.
 // Every lazy SVG has a noscript copy so the original lettering works without JS.
@@ -102,3 +78,22 @@ if ('IntersectionObserver' in window) {
 }
 window.addEventListener('beforeprint', () => loadArtwork(document));
 
+
+// Native modal keeps keyboard focus inside and closes with Escape.
+const previewDialog = document.querySelector('#preview-dialog');
+const previewButton = document.querySelector('.preview-action');
+previewButton.addEventListener('click', () => {
+  if (previewDialog.open) return;
+  previewDialog.showModal();
+  document.documentElement.classList.add('preview-open');
+});
+previewDialog.querySelector('.preview-close').addEventListener('click', () => previewDialog.close());
+previewDialog.addEventListener('click', event => {
+  if (event.target !== previewDialog) return;
+  const bounds = previewDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) previewDialog.close();
+});
+previewDialog.addEventListener('close', () => {
+  document.documentElement.classList.remove('preview-open');
+  previewButton.focus({ preventScroll: true });
+});
