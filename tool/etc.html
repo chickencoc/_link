@@ -63,8 +63,6 @@
 
     /* section3 input style */
 
-
-    
         @media screen and (max-width: 700px) {
             div#section_box { display: block; }
         }
@@ -81,6 +79,35 @@
         @media screen and (max-width: 700px) {
             .s3_grid { grid-template-columns: 1fr; }
         }
+
+    /* section 5 pre code */
+        #s5 .chat_code_block { background: #e8e8e8; border: 1px solid #dedede; border-radius: 4px; overflow: hidden; color: #171717; }
+
+        /* 헤더 */
+        #s5 .chat_code_header { height: 44px; padding: 0 16px 0 20px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
+        #s5 .chat_code_lang { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #171717; }
+        #s5 .code_icon { font-family: monospace; font-size: 15px; }
+
+        /* 복사 버튼 */
+        #s5 .chat_code_copy { width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 7px; background: transparent; color: #171717; cursor: pointer; transition: background .2s; }
+        #s5 .chat_code_copy:hover { background: rgba(0, 0, 0, .08); }
+
+        /* 코드 본문 */
+        #s5 #s5_o1 { margin: 0; padding: 12px; background: transparent; border: 0; border-radius: 0; box-shadow: none; color: #171717; overflow: auto; white-space: pre; tab-size: 2; font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.5; text-align: left; }
+        #s5 #s5_o1 code { font: inherit; white-space: inherit; }
+
+        /* JSON Syntax Highlighting */
+        #s5 .json_key { color: #7c3aed; }
+        #s5 .json_string { color: #15803d; }
+        #s5 .json_number { color: #c2410c; }
+        #s5 .json_boolean { color: #2563eb; }
+        #s5 .json_null { color: #9333ea; }
+        #s5 .json_error { color: #dc2626; }
+
+        /* 스크롤바 */
+        #s5 #s5_o1::-webkit-scrollbar { width: 8px; height: 8px; }
+        #s5 #s5_o1::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 10px; }
+
     </style>
 </head>
 
@@ -178,6 +205,33 @@
                 </div>
                 <h4>🔸result<small id="s4_copy_alert"></small></h4>
                 <div id="s4_o1" class="obox pointer"></div>
+            </div>
+        </section>
+        <section id="s5">
+            <h2>🔹Json Prettier</h2>
+            <div class="content_box">
+                <div class="s2_ibox">
+                    <textarea name="" id="s5_i1"></textarea>
+                </div>
+                <h4>🔸result<small id="s5_copy_alert"></small></h4>
+
+                <div class="chat_code_block">
+                    <!-- <div class="chat_code_header">
+                        <div class="chat_code_lang">
+                            <span class="code_icon">〈/〉</span>
+                            <span>JSON</span>
+                        </div>
+
+                        <button type="button" id="s5_copy_btn" class="chat_code_copy" aria-label="코드 복사" title="코드 복사">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="8" y="8" width="13" height="13" rx="2"/>
+                                <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                        </button>
+                    </div> -->
+
+                    <pre id="s5_o1" class="obox pointer"><code></code></pre>
+                </div>
             </div>
         </section>
     </div>
@@ -464,6 +518,80 @@
 
     section4.addEvent();
 
+    // section 5
+    const section5 = {
+        displayTag: document.querySelector("#s5_o1 code"),
+        textarea: document.querySelector("#s5_i1"),
+        copyButton: document.querySelector("#s5_copy_btn"),
+        // HTML 특수문자 이스케이프
+        escapeHtml: (str) => {
+            return str .replace(/&/g, "&amp;") .replace(/</g, "&lt;") .replace(/>/g, "&gt;");
+        },
+        // JSON Syntax Highlighting
+        syntaxHighlight: function(json) {
+            const escaped = this.escapeHtml(json);
+
+            return escaped.replace(
+                /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"\s*:?)|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
+                (match) => {
+                    let cls = "json_number";
+
+                    if (/^"/.test(match)) {
+                        cls = /:$/.test(match.trim()) ? "json_key" : "json_string";
+                    } else if (/true|false/.test(match)) {
+                        cls = "json_boolean";
+                    } else if (match === "null") {
+                        cls = "json_null";
+                    }
+
+                    return `<span class="${cls}">${match}</span>`;
+                }
+            );
+        },
+        // JSON Pretty Print
+        eventFn: function() {
+            const value = this.textarea.value.trim();
+
+            if (!value) {
+                this.displayTag.textContent = "";
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(value);
+                const result = JSON.stringify(parsed, null, 4);
+
+                this.displayTag.innerHTML = this.syntaxHighlight(result);
+
+            } catch (error) {
+                this.displayTag.textContent = error.message;
+
+                this.displayTag.classList.add("json_error");
+                return;
+            }
+
+            this.displayTag.classList.remove("json_error");
+        },
+        // 코드 복사
+        copyFn: function() {
+            const value = this.displayTag.textContent;
+            if (value && !this.displayTag.classList.contains("json_error")) {
+                copyText(value, "#s5_copy_alert");
+            }
+        },
+        // 이벤트 등록
+        addEvent: function() {
+            this.textarea.addEventListener( "input", () => this.eventFn() );
+            // 코드 블록 클릭 복사
+            this.displayTag.addEventListener( "click", () => this.copyFn() );
+            // 우측 상단 복사 아이콘
+            this.copyButton.addEventListener( "click", () => this.copyFn() );
+            // 최초 실행
+            this.eventFn();
+        }
+    };
+
+    section5.addEvent();
 
 </script>
 </html>
