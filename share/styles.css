@@ -182,9 +182,9 @@ button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 6px; }
 
 .prose { max-width: 690px; margin: auto; font-size: clamp(17px, 2.1vw, 22px); line-height: 1.9; letter-spacing: -.025em; } 
 
-.prose p:first-child { text-align: center; } 
+.prose p { text-align: center; } 
 
-.prose p+p { margin-top: 1.7em; } 
+.prose p+p { margin-top: 1.5em; } 
 
 .prose strong { background: linear-gradient(transparent 64%, #fccc004d 64% 93%, transparent 93%); padding: 0 1px; } 
 
