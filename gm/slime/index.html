@@ -81,7 +81,10 @@
   .reset { color: #f1eaff; background: #30273fea; border: 1px solid #7d6b9b; font-size: 11px; font-weight: 800; min-height: 42px; padding: 10px 13px; cursor: pointer; white-space: nowrap; }
   .reset:hover, .reset:focus-visible { background: #504064; outline-color: #e5cbff; }
   .reset:active { transform: translateY(1px); }
-  .toast { position: absolute; z-index: 12; left: 50%; top: calc(var(--ground-position) - 104px); transform: translate(-50%, -100%); max-width: calc(100% - 32px); padding: 8px 12px; text-align: center; color: #fff; font-weight: 800; font-size: 12px; background: #161025ee; border: 1px solid #c4b2ec99; opacity: 0; pointer-events: none; transition: opacity .12s; }
+  .toast { position: absolute; z-index: 12; right: 12px; top: var(--toast-top, calc(50% + 24px)); max-width: calc(100% - 32px); padding: 4px 10px; text-align: right; color: #fff; font-weight: 800; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .12s; }
+  .stage-status { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: #d8caee; font-size: 10px; font-variant-numeric: tabular-nums; }
+  #stage-time[data-urgent="true"] { color: #ff8198; }
+  #timeout-dialog .modal-actions { flex-wrap: wrap; }
   .toast.visible { opacity: 1; }
   .overlay { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: #090811d9; }
   .finish-card { width: min(330px, 100%); text-align: center; background: #171225; border: 1px solid #9582c6; padding: 30px 20px; box-shadow: 0 16px 70px #000b; }
@@ -170,6 +173,7 @@
         <div class="stat"><span class="key">누적 적중</span><span id="hits" class="val">0</span></div>
       </div>
       <div id="stages" class="stage-meter" aria-label="단계 색상 진행"></div>
+      <div class="stage-status"><span id="stage-number">스테이지 1</span><span id="stage-time">시간제한 없음</span></div>
       <div class="details-row"><span id="size-detail">1단계 적 크기 : 32px / 현재 단계 적 크기 : 32px</span><span id="view-detail">VIEW 100% / 나란히</span></div>
     </aside>
     <details id="test-tools" class="panel" hidden>
@@ -225,11 +229,18 @@
     <button id="reset" class="reset danger" type="button">↺ 초기화</button>
     <p>단계, 코인, 패시브 레벨, 구매한 스킬을 모두 초기화합니다.</p>
     <p>설정과 스킬 창이 열려 있는 동안 전투가 일시 정지됩니다.</p>
+    <p id="save-status" role="status">진행 상태가 자동 저장됩니다.</p>
   </dialog>
   <dialog id="reset-dialog" aria-labelledby="reset-title">
     <div class="modal-header"><h2 id="reset-title">처음부터 시작할까요?</h2></div>
     <p>현재 진행, 보유 코인, 모든 스킬이 초기화됩니다.</p>
     <div class="modal-actions"><button id="reset-cancel" class="reset" type="button">취소</button><button id="reset-confirm" class="reset danger" type="button">초기화 확인</button></div>
+  </dialog>
+  <dialog id="timeout-dialog" aria-labelledby="timeout-title">
+    <div class="modal-header"><h2 id="timeout-title">시간 초과</h2></div>
+    <p id="timeout-message"></p>
+    <p>500코인을 지불하면 스킬과 남은 코인, 누적 기록을 유지하고 1스테이지부터 다시 시작합니다.</p>
+    <div class="modal-actions"><button id="timeout-keep" class="reset" type="button">500 코인 / 정보 유지</button><button id="timeout-reset" class="reset danger" type="button">전체 초기화</button></div>
   </dialog>
   <dialog id="skills-dialog" aria-labelledby="skills-title">
     <div class="modal-header"><h2 id="skills-title">스킬</h2><button class="modal-close" data-close="skills-dialog" type="button">닫기</button></div>
@@ -258,7 +269,8 @@ const CONFIG = Object.freeze({
   HP_PER_CREATURE: 10, SCARECROW_HP: 100, MAX_LEVEL: 7,
   ANIMATION_SPEED: 1, SLIME_HOP: 3, DUMMY_SIZE: 156,
   PASSIVE_MAX_LEVEL: 30, PASSIVE_COST: 16, PASSIVE_STEP: .01,
-  CRITICAL_MULTIPLIER: 2, HIT_STOP_MS: 200
+  CRITICAL_MULTIPLIER: 2, HIT_STOP_MS: 200,
+  UNTIMED_STAGES: 10, STAGE_LIMIT_MS: 60000, CONTINUE_COST: 500
 });
 const PASSIVES = Object.freeze({
   speed1: { name: '공격속도 I', description: '기본 공격, Double Slash 공격속도: 레벨당 +1%' },
@@ -303,7 +315,8 @@ function initialState(seed = 0x12345678) {
     coins: 0, passives: { speed1: 0, speed2: 0, critChance: 0, critDamage: 0 },
     owned: Object.fromEntries(ACTIVE_IDS.map(id => [id, false])),
     lastCast: Object.fromEntries(Object.keys(ATTACKS).map(id => [id, -Infinity])),
-    rng: seed >>> 0 || 1, targetId: null, lastHit: null, criticalHits: 0 };
+    rng: seed >>> 0 || 1, targetId: null, lastHit: null, criticalHits: 0,
+    stage: 1, stageRemaining: CONFIG.STAGE_LIMIT_MS };
   resetEnemies(s); return s;
 }
 function random01(s) {
@@ -334,16 +347,35 @@ function progressState(s) {
   return { next, event, finish };
 }
 function settleState(s, now) {
-  if (!s.transition || now < s.transition.start) return false;
+  if (!s.transition || now + 1e-7 < s.transition.start) return false;
   let started = false;
   if (s.phase === 'waiting') {
     Object.assign(s, s.transition.to); s.phase = 'transforming';
     resetEnemies(s, 0, true); started = true;
   }
-  if (now < s.transition.end) return started;
+  if (now + 1e-7 < s.transition.end) return started;
   const finish = s.transition.finish;
   s.transition = null; s.phase = finish ? 'finished' : 'ready'; resetEnemies(s);
+  s.stage++; s.stageRemaining = CONFIG.STAGE_LIMIT_MS;
   return true;
+}
+function elapseStageTime(s, elapsed) {
+  if (s.phase !== 'ready' || s.stage <= CONFIG.UNTIMED_STAGES) return false;
+  s.stageRemaining = Math.max(0, s.stageRemaining - Math.max(0, elapsed));
+  if (s.stageRemaining > .000001) return false;
+  s.stageRemaining = 0; s.phase = 'failed'; s.generation++; s.pending = 0;
+  s.enemies.forEach(enemy => enemy.reserved = 0);
+  return true;
+}
+function restartAfterFailure(s, keep, seed = 1) {
+  if (s.phase !== 'failed' || (keep && s.coins < CONFIG.CONTINUE_COST)) return null;
+  const next = initialState(seed); next.generation = s.generation + 1;
+  if (keep) {
+    next.coins = s.coins - CONFIG.CONTINUE_COST;
+    next.passives = {...s.passives}; next.owned = {...s.owned};
+    for (const key of ['totalHits', 'acceptedClicks', 'totalCasts', 'criticalHits', 'rng']) next[key] = s[key];
+  }
+  return next;
 }
 function attackTarget(s, order = null) {
   const current = s.enemies[s.targetId];
@@ -430,6 +462,103 @@ function groupLayout(count, size, availableWidth, availableHeight, kind = 'slime
   return { mode, points, camera: Math.max(.01, camera), boundsWidth, boundsHeight, bodyWidth };
 }
 
+// Every scalar (including null/booleans) is JSON -> UTF-8 -> repeating-key XOR -> hex.
+// All scalar entries in one atomic save must carry the same, newly generated key.
+const SAVE_KEY = 'smash-slime.progress.v1';
+function freshSaveKey(previous = '') {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let key;
+  do {
+    key = '';
+    while (key.length < 6) {
+      const bytes = crypto.getRandomValues(new Uint8Array(12));
+      for (const byte of bytes) if (byte < 208 && key.length < 6) key += alphabet[byte % 52];
+    }
+  } while (key === previous);
+  return key;
+}
+function encodeSave(data, key) {
+  if (!/^[A-Za-z]{6}$/.test(key)) throw new Error('Invalid save key');
+  const encode = value => {
+    if (Array.isArray(value)) return value.map(encode);
+    if (value !== null && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k,v]) => [k,encode(v)]));
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    return {value: Array.from(bytes, (byte,i) => (byte ^ key.charCodeAt(i % 6)).toString(16).padStart(2,'0')).join(''), back: key};
+  };
+  return btoa(JSON.stringify(encode(data)));
+}
+function decodeSave(raw) {
+  if (typeof raw !== 'string' || raw.length > 256000) throw new Error('Invalid save size');
+  let key = null, count = 0;
+  const decode = (node, depth = 0) => {
+    if (++count > 5000 || depth > 20 || !node || typeof node !== 'object') throw new Error('Invalid save structure');
+    if (Array.isArray(node)) return node.map(item => decode(item, depth + 1));
+    if (Object.hasOwn(node,'value') || Object.hasOwn(node,'back')) {
+      if (Object.keys(node).length !== 2 || !/^[A-Za-z]{6}$/.test(node.back) || typeof node.value !== 'string' || !/^(?:[0-9a-f]{2})+$/.test(node.value)) throw new Error('Invalid save entry');
+      if (key !== null && key !== node.back) throw new Error('Mismatched save keys');
+      key = node.back;
+      const bytes = Uint8Array.from(node.value.match(/../g), (hex,i) => parseInt(hex,16) ^ key.charCodeAt(i % 6));
+      const value = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+      if (value !== null && !['string','number','boolean'].includes(typeof value)) throw new Error('Invalid scalar');
+      return value;
+    }
+    return Object.fromEntries(Object.entries(node).map(([k,v]) => {
+      if (['__proto__','prototype','constructor'].includes(k)) throw new Error('Invalid field');
+      return [k,decode(v,depth + 1)];
+    }));
+  };
+  const data = decode(JSON.parse(atob(raw)));
+  if (!key) throw new Error('Missing save key');
+  return {data,key};
+}
+function validateSave(data) {
+  const require = ok => {if (!ok) throw new Error('Invalid progress data');};
+  const number = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isFinite(n) && n >= min && n <= max;
+  const integer = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && number(n,min,max);
+  require(data?.version === 1 && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
+  const s = data.state;
+  require(s && typeof s === 'object' && Object.keys(s).sort().join() === Object.keys(initialState()).sort().join());
+  const shape = v => v && ['slime','scarecrow'].includes(v.kind) && integer(v.level,1,CONFIG.MAX_LEVEL) && integer(v.count,1,v.kind === 'slime' ? 4 : 1) && number(v.baseSize,CONFIG.BASE_SLIME_SIZE,CONFIG.SLIME_LIMIT * CONFIG.BASE_GROWTH) && integer(v.cycles);
+  require(shape(s) && ['ready','waiting','transforming','finished','failed'].includes(s.phase));
+  for (const id of ['coins','totalHits','acceptedClicks','totalCasts','generation','criticalHits','pending']) require(integer(s[id]));
+  require(integer(s.stage,1) && number(s.stageRemaining,0,CONFIG.STAGE_LIMIT_MS) && integer(s.rng,1,0xffffffff));
+  require(s.phase !== 'failed' || (s.stage > CONFIG.UNTIMED_STAGES && s.stageRemaining === 0));
+  require(s.phase !== 'ready' || s.stage <= CONFIG.UNTIMED_STAGES || s.stageRemaining > 0);
+  for (const [obj,ids,check] of [[s.passives,Object.keys(PASSIVES),v=>integer(v,0,CONFIG.PASSIVE_MAX_LEVEL)],[s.owned,ACTIVE_IDS,v=>typeof v==='boolean'],[s.lastCast,Object.keys(ATTACKS),v=>v===null||number(v,0,data.gameNow)]]) {
+    require(obj && Object.keys(obj).sort().join() === [...ids].sort().join() && Object.values(obj).every(check));
+  }
+  require(s.lastAcceptedAt === null || number(s.lastAcceptedAt,0,data.gameNow));
+  require(Array.isArray(s.enemies) && s.enemies.length === s.count);
+  s.enemies.forEach((e,id) => require(e.id === id && number(e.hp,0,hpPerBarOf(s)) && number(e.reserved) && typeof e.dead === 'boolean' && (s.phase === 'transforming' ? !e.dead && e.hp === 0 : e.dead === (e.hp <= 0))));
+  require(number(s.hp,0,maxHpOf(s)) && Math.abs(s.hp - s.enemies.reduce((sum,e)=>sum+e.hp,0)) < .001);
+  require(s.targetId === null || integer(s.targetId,0,s.count-1));
+  if (['waiting','transforming'].includes(s.phase)) {
+    const tr = s.transition;
+    require(tr && shape(tr.from) && shape(tr.to) && ['level','spawn','compress','scarecrow'].includes(tr.event) && typeof tr.finish === 'boolean');
+    require(number(tr.start) && number(tr.end) && Math.abs(tr.end-tr.start-CONFIG.EVOLUTION_LOCK_MS)<.001 && tr.end > data.gameNow && s.hp === 0);
+    const current = s.phase === 'waiting' ? tr.from : tr.to;
+    require(['kind','level','count','baseSize','cycles'].every(k=>s[k]===current[k]));
+    const next = progressState(tr.from);
+    require(Object.keys(next.next).every(k=>next.next[k]===tr.to[k]) && next.finish===tr.finish && next.event===tr.event);
+  } else require(s.transition === null);
+  require(s.phase !== 'finished' || (s.kind === 'scarecrow' && s.level === CONFIG.MAX_LEVEL));
+  require(Array.isArray(data.casts) && data.casts.length <= 5);
+  const sources = new Set(), reserved = s.enemies.map(()=>0);
+  for (const a of data.casts) {
+    const t = a.ticket;
+    require(s.phase === 'ready' && Object.hasOwn(ATTACKS,a.source) && !sources.has(a.source) && (a.source === 'basic' || s.owned[a.source])); sources.add(a.source);
+    // Another critical in the same simulation step can stop this already-due hit.
+    require(number(a.t,0,ATTACKS[a.source].hitAt+1/120+1e-7) && integer(a.seed,1) && t && t.source === a.source && t.generation === s.generation && t.consumed === false && integer(t.targetId,0,s.count-1) && typeof t.critical === 'boolean');
+    // A passive may have changed since casting, so accept the configured damage range.
+    require(number(t.damage,ATTACKS[a.source].damage,roundHp(ATTACKS[a.source].damage * CONFIG.CRITICAL_MULTIPLIER * 1.3)));
+    reserved[t.targetId] += t.damage;
+  }
+  require(s.pending === data.casts.length && reserved.every((n,id)=>Math.abs(n-s.enemies[id].reserved)<.001));
+  s.lastAcceptedAt ??= -Infinity;
+  for (const id of Object.keys(ATTACKS)) s.lastCast[id] ??= -Infinity;
+  return data;
+}
+
 // GAME_RULES_END
     const COLORS = [
       { name: '그린', palette: ['#061412','#0b2f2b','#12594a','#1f8f4f','#47c752','#a6f06a','#f0ffd2'] },
@@ -466,12 +595,68 @@ let core, slimeModule, healthModule, critModule, damageModule, coinModule, ready
 let effectModules = {}, effectBuffers = new Map();
 let state = initialState(freshSeed()), units = [], healthRows = [], attacks = [], serial = 0;
 let gameNow = 0, hitStopUntil = 0, flash = 0, shakeTime = 0, toastUntil = 0;
+let stageWall = performance.now(), pageVisible = !document.hidden, lastSaveAt = -Infinity, saveKey = '', savedSignature = '';
 let cssWidth = 1, cssHeight = 1, width = 1, height = 1;
 let background, backgroundFrame, backgroundImage, visualSize = 32, view = null, hudDirty = true;
 const formatNumber = n => Number(n.toFixed(2)).toString();
 const formatSize = n => Number(n.toFixed(1)).toString();
 const seconds = ms => `${formatNumber(ms / 1000)}s`;
 const modalOpen = () => !!document.querySelector('dialog[open]');
+function saveProgress(force = false) {
+  if (!ready) return;
+  try {
+    const data = {version:1,maxLevel:CONFIG.MAX_LEVEL,state,gameNow,hitStopRemaining:Math.max(0,hitStopUntil-performance.now()),
+      casts:attacks.filter(a=>a.ticket && !a.ticket.consumed && a.ticket.generation===state.generation && state.phase==='ready')
+        .map(a=>({source:a.source,t:a.fx.t,seed:a.fx.options.seed,ticket:a.ticket}))};
+    const signature = JSON.stringify(data);
+    if (!force && signature === savedSignature) return;
+    const key = freshSaveKey(saveKey);
+    localStorage.setItem(SAVE_KEY,encodeSave(JSON.parse(signature),key));
+    saveKey=key;savedSignature=signature;lastSaveAt=performance.now();
+    $('save-status').textContent='진행 상태가 자동 저장됩니다.';
+  } catch (error) {
+    lastSaveAt=performance.now();
+    $('save-status').textContent='브라우저 저장 공간에 접근할 수 없어 기록을 저장하지 못했습니다.';
+  }
+}
+function loadProgress() {
+  try {
+    const raw=localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const decoded=decodeSave(raw),data=validateSave(decoded.data);
+    saveKey=decoded.key;state=data.state;gameNow=data.gameNow;
+    return data;
+  } catch (error) {
+    // No partial recovery: a single mismatched key or malformed item resets all progress.
+    state=initialState(freshSeed());gameNow=0;
+    try {localStorage.removeItem(SAVE_KEY);} catch {}
+    $('save-status').textContent='저장 기록을 확인할 수 없어 진행을 초기화했습니다.';
+    return null;
+  }
+}
+function updateStageUi() {
+  $('stage-number').textContent=`스테이지 ${state.stage}`;
+  const limited=state.stage>CONFIG.UNTIMED_STAGES,paused=modalOpen()||!pageVisible;
+  $('stage-time').textContent=state.phase==='finished'?'완료':!limited?'시간제한 없음':`남은 시간 ${Math.ceil(state.stageRemaining/1000)}s${paused&&state.phase!=='failed'?' / 일시 정지':''}`;
+  $('stage-time').dataset.urgent=String(limited&&state.stageRemaining<=10000);
+}
+function showTimeout() {
+  $('timeout-message').textContent=`스테이지 ${state.stage}의 제한시간이 끝났습니다. 보유 코인: ${state.coins}${state.coins<CONFIG.CONTINUE_COST?' / 코인이 부족합니다.':''}`;
+  $('timeout-keep').disabled=state.coins<CONFIG.CONTINUE_COST;
+  if (!$('timeout-dialog').open) $('timeout-dialog').showModal();
+}
+function syncStageTimer(now=performance.now()) {
+  const elapsed=Math.max(0,now-Math.max(stageWall,hitStopUntil));stageWall=now;
+  if (ready && pageVisible && !modalOpen() && elapseStageTime(state,elapsed)) {
+    attacks=[];hitStopUntil=0;hudDirty=true;showTimeout();saveProgress(true);
+  }
+  updateStageUi();
+}
+function showFinished() {
+  $('finish-message').textContent=`허수아비가 ${CONFIG.MAX_LEVEL}단계에 도달했습니다.`;
+  $('finish-stats').textContent=`누적 적중 ${state.totalHits.toLocaleString('ko-KR')}회 / 코인 ${state.coins}`;
+  $('finish').hidden=false;$('finish-reset').focus({preventScroll:true});
+}
 function mixPalette(a, b, u) {
   const from = core.fit(a, b.length), to = core.fit(b, b.length);
   return from.map((c, i) => core.toHex(core.mix(c, to[i], u)));
@@ -532,6 +717,7 @@ function updateHud() {
   stageDots.forEach((dot, i) => dot.classList.toggle('active', i + 1 === state.level));
   app.dataset.phase = state.phase; app.dataset.kind = state.kind; hudDirty = false;
   updateSkillUi();
+  updateStageUi();
 }
 function showToast(text) { $('toast').textContent = text; $('toast').classList.add('visible'); toastUntil = gameNow + 1200; }
 function settle() {
@@ -542,15 +728,14 @@ function settle() {
     showToast(tr.finish ? `허수아비 ${CONFIG.MAX_LEVEL}단계 도달!` : tr.event === 'scarecrow' ? '허수아비 등장' : tr.event === 'compress' ? `기본 크기 ×1.5 / ${formatSize(state.baseSize)}px` : tr.event === 'spawn' ? `${state.count}마리로 증가` : `LEVEL ${state.level}`);
   }
   if (state.phase === 'finished') {
-    $('finish-message').textContent = `허수아비가 ${CONFIG.MAX_LEVEL}단계에 도달했습니다.`;
-    $('finish-stats').textContent = `누적 적중 ${state.totalHits.toLocaleString('ko-KR')}회 / 코인 ${state.coins}`;
-    $('finish').hidden = false; $('finish-reset').focus({preventScroll:true});
+    showFinished();
   }
+  stageWall=performance.now();saveProgress();
 }
 function updateLayout() {
   if (!ready) return;
   const statHeight = document.querySelector('.stats-panel').getBoundingClientRect().height;
-  document.querySelector('.header-panel').style.height = `${statHeight}px`;
+  document.querySelector('.header-panel').style.height = cssWidth<650?'auto':`${statHeight}px`;
   const visual = visualState(); visualSize = visual.size;
   const top = app.getBoundingClientRect().top, hudBottom = $('hud').getBoundingClientRect().bottom - top;
   app.style.setProperty('--hud-bottom', `${hudBottom}px`);
@@ -559,8 +744,10 @@ function updateLayout() {
   const raised = groundUiBottom + 8 > cssHeight - footerHeight - 16;
   app.classList.toggle('footer-above-ground', raised);
   const coinRect = $('coin-dock').getBoundingClientRect();
+  app.style.setProperty('--toast-top', `${coinRect.bottom-top+4}px`);
+  const toastBottom=$('toast').getBoundingClientRect().bottom-top;
   let footerTop = hudBottom + 8;
-  if (raised && footerTop < coinRect.bottom - top + 8 && footerTop + footerHeight > coinRect.top - top - 8) footerTop = coinRect.bottom - top + 8;
+  if (raised && footerTop < toastBottom + 8 && footerTop + footerHeight > coinRect.top - top - 8) footerTop = toastBottom + 8;
   app.style.setProperty('--footer-top', `${footerTop}px`);
   const occupied = raised ? footerTop + footerHeight : hudBottom;
   view = groupLayout(state.count, visual.size, Math.max(40, cssWidth - 32), Math.max(36, cssHeight * CONFIG.GROUND_RATIO - occupied - 16), state.kind);
@@ -587,6 +774,7 @@ function updateInputStatus() {
   else if (paused) label = '관리 창 / 전투 일시 정지';
   else if (stopped) label = 'CRITICAL / HIT STOP';
   else if (state.phase === 'finished') label = '완료 / 설정에서 다시 시작';
+  else if (state.phase === 'failed') label = '시간 초과';
   else if (state.phase === 'waiting') label = `적 변화 준비 / ${seconds(Math.max(0,state.transition.start-gameNow))}`;
   else if (state.phase === 'transforming') label = `적 변화 중 / ${seconds(Math.max(0,state.transition.end-gameNow))}`;
   else if (gate === 'pending') label = '대상에게 공격이 도착하는 중';
@@ -635,13 +823,14 @@ function makeEffect(source, targetId, critical, ticket = null, options = {}) {
   return {id:serial,source,module,fx,ticket,targetId,critical,impact:def.impact,scale:source==='damage'||source==='coins'?.5:CONFIG.ATTACK_EFFECT_SCALE*(source==='lightning'?CONFIG.LIGHTNING_SCALE:1),keepInView:source==='damage'||source==='coins',anchorX:unit.x/cssWidth,anchorY:(unit.y-bodyOffset)/cssHeight};
 }
 function strike(source = 'basic') {
+  syncStageTimer();
   if (!ready || !background || modalOpen() || performance.now()<hitStopUntil) return false;
   settle();updateLayout();
   // Screen order chooses the next target; an existing living target stays selected.
   const order=[...units].sort((a,b)=>b.x-a.x || view.points[b.index].z-view.points[a.index].z || b.index-a.index).map(u=>u.index);
   const ticket=reserveAttack(state,gameNow,source,order);
   if (!ticket) {updateInputStatus();return false;}
-  attacks.push(makeEffect(source,ticket.targetId,ticket.critical,ticket));updateInputStatus();return true;
+  attacks.push(makeEffect(source,ticket.targetId,ticket.critical,ticket));updateInputStatus();saveProgress();return true;
 }
 function onHit(attack, wallNow) {
   const result=applyHit(state,attack.ticket,gameNow);
@@ -661,19 +850,21 @@ function onHit(attack, wallNow) {
   $('combat-feedback').textContent=`${result.critical?'크리티컬 / ':''}피해 ${formatNumber(result.damage)}${result.coins?` / ${result.coins} 코인 획득`:''}`;
   if (result.transition) showToast(`${result.critical?'CRITICAL! / ':''}성장 준비`);
   else if (result.critical) showToast('CRITICAL!');
+  saveProgress();
 }
-function resetGame() {
+function resetGame(next = null) {
   const generation=state.generation+1;
-  state=initialState(freshSeed());state.generation=generation;gameNow=0;hitStopUntil=0;
+  state=next||initialState(freshSeed());state.generation=generation;gameNow=0;hitStopUntil=0;stageWall=performance.now();
   attacks=[];flash=shakeTime=toastUntil=0;
   $('combat-feedback').textContent='';
   document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
   $('toast').classList.remove('visible');$('finish').hidden=true;$('scene').style.transform='';$('flash').style.opacity='0';
   if(ready){syncUnits(true);setHealthEffect(false,null,true);}
   updateHud();updateInputStatus();if(ready){updateLayout();render();}
+  saveProgress(true);
 }
 function update(dt, wallNow) {
-  if(modalOpen() || document.hidden) {updateInputStatus();return;}
+  if(modalOpen() || document.hidden || state.phase==='failed') {updateInputStatus();return;}
   if(wallNow<hitStopUntil){updateInputStatus();return;}
   // Every animation shares this clock. No per-effect or normal-hit hit-stop is applied.
   for(let remaining=dt;remaining>1e-8;){
@@ -726,7 +917,9 @@ function startLoop(){
   let last=performance.now(),drawAge=0;
   function tick(now){
     const elapsed=Math.max(0,now-Math.max(last,hitStopUntil));last=now;
+    syncStageTimer(now);
     update(Math.min(elapsed/1000,.07),now);drawAge+=elapsed;
+    if(now-lastSaveAt>=1000)saveProgress();
     if(drawAge>=1000/30 || now<hitStopUntil){render();drawAge=0;}
     requestAnimationFrame(tick);
   }
@@ -764,7 +957,7 @@ function updateSkillUi(){
     button.textContent=state.owned[id]?'구매 완료 / 사용 가능':`구매 / ${ATTACKS[id].cost} 코인`;
   }
 }
-function openModal(id){if(ready){$(id).showModal();updateInputStatus();}}
+function openModal(id){syncStageTimer();if(ready&&state.phase!=='failed'){$(id).showModal();updateInputStatus();updateStageUi();saveProgress();}}
 function requestReset(){$('reset-dialog').showModal();$('reset-cancel').focus();}
 function selectTab(name){
   for(const id of ['passive','active']){const selected=id===name;$(`${id}-tab`).setAttribute('aria-selected',String(selected));$(`${id}-tab`).tabIndex=selected?0:-1;$(`${id}-panel`).hidden=!selected;}
@@ -776,26 +969,40 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 $('reset').addEventListener('click',requestReset);$('finish-reset').addEventListener('click',requestReset);
 $('reset-cancel').addEventListener('click',()=>$('reset-dialog').close());
 $('reset-confirm').addEventListener('click',()=>{resetGame();app.focus({preventScroll:true});});
+$('timeout-keep').addEventListener('click',()=>{
+  const next=restartAfterFailure(state,true,freshSeed());
+  if(next){resetGame(next);app.focus({preventScroll:true});}
+});
+$('timeout-reset').addEventListener('click',()=>{
+  const next=restartAfterFailure(state,false,freshSeed());
+  if(next){resetGame(next);app.focus({preventScroll:true});}
+});
+$('timeout-dialog').addEventListener('cancel',event=>event.preventDefault());
+window.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&$('timeout-dialog').open){event.preventDefault();event.stopPropagation();}
+},true);
+document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('close',()=>{stageWall=performance.now();updateStageUi();saveProgress();}));
 for(const name of ['passive','active']){
   $(`${name}-tab`).addEventListener('click',()=>selectTab(name));
   $(`${name}-tab`).addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();const next=name==='passive'?'active':'passive';selectTab(next);$(`${next}-tab`).focus();}});
 }
 $('skills-dialog').addEventListener('click',event=>{
   const upgrade=event.target.closest('[data-upgrade]'),buy=event.target.closest('[data-buy]');
-  if(upgrade){const id=upgrade.dataset.upgrade;if(upgradePassive(state,id)){$('shop-message').textContent=`${PASSIVES[id].name} ${state.passives[id]}레벨`;updateHud();updateInputStatus();}}
-  if(buy){const id=buy.dataset.buy;if(buySkill(state,id)){$('shop-message').textContent=`${ATTACKS[id].name} 구매 완료`;updateHud();updateInputStatus();}}
+  if(upgrade){const id=upgrade.dataset.upgrade;if(upgradePassive(state,id)){$('shop-message').textContent=`${PASSIVES[id].name} ${state.passives[id]}레벨`;updateHud();updateInputStatus();saveProgress();}}
+  if(buy){const id=buy.dataset.buy;if(buySkill(state,id)){$('shop-message').textContent=`${ATTACKS[id].name} 구매 완료`;updateHud();updateInputStatus();saveProgress();}}
 });
 const SCENARIOS={
   start:{},two:{count:2,level:CONFIG.MAX_LEVEL},three:{count:3,level:CONFIG.MAX_LEVEL},four:{count:4,level:CONFIG.MAX_LEVEL},
   compress:{count:4,level:CONFIG.MAX_LEVEL,hp:1},replace:{count:4,level:CONFIG.MAX_LEVEL,hp:1,baseSize:364.5,cycles:6},
   finish:{kind:'scarecrow',count:1,level:CONFIG.MAX_LEVEL-1,hp:1,baseSize:546.75,cycles:7},
-  shop:{coins:2000,count:4},critical:{coins:2000,count:4,rng:1}
+  shop:{coins:2000,count:4},critical:{coins:2000,count:4,rng:1},
+  timed:{coins:1000,stage:11,count:2,level:4},grace:{stage:10,count:2,level:3,hp:1},poor:{coins:499,stage:11,count:2,level:4}
 };
 function loadScenario(name){
   if(!debugEnabled || !ready || !Object.hasOwn(SCENARIOS,name))return false;
   resetGame();Object.assign(state,SCENARIOS[name]);resetEnemies(state,SCENARIOS[name].hp??maxHpOf(state));
   if(name==='critical')state.passives.critChance=30;
-  syncUnits(true);setHealthEffect(false,null,true);updateHud();render();updateInputStatus();return true;
+  syncUnits(true);setHealthEffect(false,null,true);updateHud();render();updateInputStatus();saveProgress(true);return true;
 }
 function snapshot(){return {...JSON.parse(JSON.stringify(state)),maxHp:maxHpOf(state),logicalSize:sizeOf(state),gameNow,
   input:inputGate(state,gameNow),camera:view?.camera,layout:view?.mode,points:view?.points,activeAttacks:attacks.length,healthBars:healthRows.length,
@@ -820,6 +1027,9 @@ window.addEventListener('keydown',event=>{
 });
 $('reload').addEventListener('click',()=>location.reload());
 window.addEventListener('resize',resize);if('ResizeObserver' in window)new ResizeObserver(resize).observe(app);
+document.addEventListener('visibilitychange',()=>{syncStageTimer();pageVisible=!document.hidden;stageWall=performance.now();saveProgress();updateStageUi();});
+window.addEventListener('pagehide',()=>{syncStageTimer();saveProgress();});
+window.addEventListener('pageshow',()=>{stageWall=performance.now();pageVisible=!document.hidden;});
 updateHud();updateInputStatus();
 async function bootstrap(){
   try{
@@ -829,7 +1039,19 @@ async function bootstrap(){
     // The original frame fits "-27"; add transparent room for fractional critical values.
     damageModule={...damageModule,meta:{...damageModule.meta,size:[160,100],origin:[80,76]}};
     effectModules=Object.fromEntries(ids.map((id,i)=>[id,modules[i+6]]));
+    const restored=loadProgress();
     ready=true;syncUnits();setHealthEffect(false,null,true);updateHud();resize();
+    if(restored){
+      for(const cast of restored.casts){
+        const attack=makeEffect(cast.source,cast.ticket.targetId,cast.ticket.critical,cast.ticket,{seed:cast.seed});
+        attack.fx.update(cast.t);attacks.push(attack);serial=Math.max(serial,cast.seed-200);
+      }
+      hitStopUntil=performance.now()+restored.hitStopRemaining;
+    }
+    stageWall=performance.now();
+    if(state.phase==='failed')showTimeout();
+    if(state.phase==='finished')showFinished();
+    saveProgress(true);updateInputStatus();render();
     $('connection').textContent='PIXELFX LIVE';$('connection').classList.add('ready');startLoop();
   }catch(error){ready=false;console.error(error);$('connection').textContent='FX 연결 실패';$('connection').classList.add('error');$('error-details').textContent=String(error);$('error').hidden=false;}
 }
