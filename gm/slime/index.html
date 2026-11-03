@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10101a">
+<title>pixelfx · Lightning Slime Lab</title>
+<style>
+  :root { color-scheme: dark; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, "Apple SD Gothic Neo", "Malgun Gothic", monospace; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: #090911; color: #f5f0ff; user-select: none; -webkit-user-select: none; }
+  button, select { font: inherit; }
+  button { touch-action: manipulation; }
+  [hidden] { display: none !important; }
+  #app { position: relative; isolation: isolate; width: 100%; max-width: 835px; height: 100vh; height: 100dvh; margin: 0 auto; overflow: hidden; background: #15131d; box-shadow: 0 0 90px #000a; touch-action: manipulation; outline: none; }
+  #scene { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  #world, #vfx { position: absolute; inset: 0; display: block; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; }
+  #world { z-index: 0; }
+  #creatures { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .creature { position: absolute; width: 0; height: 0; }
+  .creature canvas { position: absolute; display: block; image-rendering: pixelated; image-rendering: crisp-edges; will-change: transform; }
+  #vfx { z-index: 3; }
+  #flash { position: absolute; inset: 0; background: #d6eaff; opacity: 0; z-index: 5; pointer-events: none; }
+  #app::after { content: ""; position: absolute; z-index: 6; inset: 0; box-shadow: inset 0 0 70px #03020b50; pointer-events: none; }
+  .hud { position: absolute; z-index: 10; top: max(10px, env(safe-area-inset-top)); left: 12px; right: 12px; display: grid; gap: 6px; pointer-events: none; }
+  .panel { background: #11101de8; border: 1px solid #b4a0d433; box-shadow: 0 5px 20px #08061235; }
+  .header-panel { padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .13em; color: #a39cbb; }
+  h1 { margin: 2px 0 0; font-size: 18px; line-height: 1.2; letter-spacing: -.055em; }
+  h1 em { color: #bbacff; font-style: normal; }
+  .connection { max-width: 110px; color: #b5a9c6; font-size: 10px; text-align: right; line-height: 1.35; }
+  .connection::before { content: "● "; color: #f7c47c; }
+  .connection.ready::before { color: #8debba; }
+  .connection.error::before { color: #ff8198; }
+  .stats-panel { padding: 8px 10px 7px; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .stat .key { display: block; font-size: 10px; color: #a9a0b9; }
+  .stat .val { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .unit { font-size: 10px; color: #aaa0bb; }
+  .stage-meter { display: flex; gap: 4px; margin-top: 6px; }
+  .stage-dot { flex: 1; height: 5px; opacity: .3; border: 1px solid #fff4; }
+  .stage-dot.active { opacity: 1; outline: 1px solid #faf4ff; outline-offset: 1px; }
+  .details-row { margin-top: 7px; display: flex; justify-content: space-between; gap: 4px; flex-wrap: wrap; font-size: 10px; color: #b4aac5; font-variant-numeric: tabular-nums; }
+  .health-panel { overflow: hidden; padding: 5px 0 3px; }
+  .health-caption { display: flex; justify-content: space-between; padding: 0 10px; gap: 4px; font-size: 10px; color: #b4aac5; }
+  #health-bars { display: flex; justify-content: center; flex-wrap: wrap; gap: 0; }
+  .health-unit { position: relative; flex: 0 0 144px; width: 144px; height: 30px; }
+  .health-unit canvas { position: absolute; display: block; width: 160px; height: 64px; left: -8px; top: -14px; image-rendering: pixelated; }
+  .input-status { position: absolute; z-index: 9; top: calc(65% + 23px); left: 50%; width: min(220px, calc(100% - 40px)); transform: translateX(-50%); pointer-events: none; text-align: center; background: #11101dbd; border: 1px solid #b4a0d42e; padding: 8px 12px; }
+  #input-label { font-size: 11px; font-weight: 700; }
+  .input-track { height: 3px; margin-top: 6px; background: #ffffff13; overflow: hidden; }
+  #input-progress { height: 100%; background: #9a8ee3; transform-origin: left; }
+  .input-hint { margin-top: 5px; font-size: 10px; color: #b6abc9; }
+  .footer { position: absolute; z-index: 10; left: 12px; right: 12px; bottom: max(10px, env(safe-area-inset-bottom)); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .instructions { padding: 7px 9px; border-left: 2px solid #b7a5ff; background: #110f1aaa; min-width: 0; }
+  .instructions strong { display: block; font-size: 11px; }
+  .instructions span { display: block; margin-top: 2px; color: #bbb1c9; font-size: 10px; }
+  .reset { color: #f1eaff; background: #30273fea; border: 1px solid #7d6b9b; font-size: 11px; font-weight: 800; min-height: 42px; padding: 10px 13px; cursor: pointer; white-space: nowrap; }
+  .reset:hover, .reset:focus-visible { background: #504064; outline-color: #e5cbff; }
+  .reset:active { transform: translateY(1px); }
+  .toast { position: absolute; z-index: 12; left: 50%; top: calc(65% - 28px); transform: translate(-50%, -100%); max-width: calc(100% - 32px); padding: 8px 12px; text-align: center; color: #fff; font-weight: 800; font-size: 12px; background: #161025ee; border: 1px solid #c4b2ec99; opacity: 0; pointer-events: none; transition: opacity .12s; }
+  .toast.visible { opacity: 1; }
+  .overlay { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: #090811d9; }
+  .finish-card { width: min(330px, 100%); text-align: center; background: #171225; border: 1px solid #9582c6; padding: 30px 20px; box-shadow: 0 16px 70px #000b; }
+  .finish-card h2 { margin: 5px 0 14px; color: #c7baff; font-size: 38px; line-height: 1.1; letter-spacing: -.04em; }
+  .finish-card p { color: #c3b9d1; font-size: 12px; line-height: 1.7; }
+  .finish-card .reset { display: block; width: 100%; margin-top: 18px; }
+  .error-panel { position: absolute; z-index: 40; left: 14px; right: 14px; top: 38%; padding: 18px; background: #211522fa; border: 1px solid #de92a4; }
+  .error-panel h2 { font-size: 16px; margin: 0 0 10px; }
+  .error-panel p { font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+  #test-tools { pointer-events: auto; padding: 7px 9px; font-size: 10px; }
+  #test-tools summary { cursor: pointer; }
+  .test-actions { display: flex; gap: 6px; margin-top: 6px; }
+  #test-scenario { min-width: 0; flex: 1; font-size: 10px; padding: 4px; }
+  #test-apply { font-size: 10px; min-height: 32px; padding: 5px 8px; }
+  @media (min-width: 650px) {
+    .hud { left: 20px; right: 20px; top: 16px; grid-template-columns: 1fr 1.3fr; align-items: start; }
+    .header-panel { min-height: 88px; padding: 12px 14px; }
+    h1 { font-size: 22px; }
+    .health-panel, #test-tools { grid-column: 1 / -1; }
+    .footer { left: 20px; right: 20px; bottom: 16px; }
+  }
+  @media (max-height: 610px) and (max-width: 649px) {
+    .hud { top: max(6px, env(safe-area-inset-top)); gap: 4px; }
+    .header-panel { padding: 5px 10px; }
+    .stats-panel { padding: 5px 10px; }
+    .details-row { margin-top: 5px; }
+    .footer { bottom: max(6px, env(safe-area-inset-bottom)); }
+    .instructions { padding: 5px 7px; }
+    .input-status { top: calc(65% + 15px); }
+  }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<main id="app" tabindex="0" aria-label="슬라임 번개 테스트. 클릭 또는 스페이스 키로 번개를 호출합니다.">
+  <div id="scene">
+    <canvas id="world" aria-hidden="true"></canvas>
+    <div id="creatures" aria-label="슬라임 무리"></div>
+    <canvas id="vfx" aria-hidden="true"></canvas>
+    <div id="flash"></div>
+  </div>
+  <div id="hud" class="hud" aria-label="게임 상태">
+    <header class="panel header-panel">
+      <div><div class="eyebrow">✦ PIXELFX LAB</div><h1>LIGHTNING <em id="kind-name">SLIME</em></h1></div>
+      <div id="connection" class="connection" role="status">FX 연결 중…</div>
+    </header>
+    <aside class="panel stats-panel">
+      <div class="stats">
+        <div class="stat"><span class="key">단계</span><span id="level" class="val">01</span><span class="unit"> /10</span></div>
+        <div class="stat"><span class="key">개체</span><span id="count" class="val">1</span><span class="unit"> 마리</span></div>
+        <div class="stat"><span class="key">공유 HP</span><span id="hp" class="val">10</span><span class="unit"> /<span id="max-hp">10</span></span></div>
+        <div class="stat"><span class="key">누적 적중</span><span id="hits" class="val">0</span></div>
+      </div>
+      <div id="stages" class="stage-meter" aria-label="10단계 색상 진행"></div>
+      <div class="details-row"><span id="size-detail">기본 32px · 현재 32px</span><span id="view-detail">VIEW 100% · 나란히</span></div>
+    </aside>
+    <section id="hp-dock" class="panel health-panel" aria-label="공유 체력 10칸">
+      <div class="health-caption"><span>HEALTH BAR HIT</span><span id="hp-caption">10칸 · 적중당 −1</span></div>
+      <div id="health-bars"></div>
+    </section>
+    <details id="test-tools" class="panel" hidden>
+      <summary>테스트 전용 · 진행 상태로 이동</summary>
+      <div class="test-actions">
+        <select id="test-scenario" aria-label="테스트 시나리오">
+          <option value="start">처음 · 1마리</option>
+          <option value="two">2마리 · 10단계</option>
+          <option value="three">3마리 · 10단계</option>
+          <option value="four">4마리 · 10단계</option>
+          <option value="compress">다음 적중 → 기본 1.5배 / 3마리</option>
+          <option value="replace">다음 적중 → 허수아비</option>
+          <option value="finish">다음 적중 → finish</option>
+        </select>
+        <button id="test-apply" class="reset" type="button">적용</button>
+      </div>
+    </details>
+  </div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <div class="input-status">
+    <div id="input-label">pixelfx 로딩 중</div>
+    <div class="input-track"><div id="input-progress"></div></div>
+    <div class="input-hint">클릭 간격 750ms · 성장 잠금 1000ms</div>
+  </div>
+  <footer class="footer">
+    <div class="instructions"><strong>⚡ 화면 터치 / 클릭 = 번개</strong><span>공유 HP가 0이면 성장 · PC: Space</span></div>
+    <button id="reset" class="reset" type="button">↺ 초기화</button>
+  </footer>
+  <section id="finish" class="overlay" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
+    <div class="finish-card">
+      <div class="eyebrow">ALL STAGES COMPLETE</div>
+      <h2 id="finish-title">finish</h2>
+      <p>허수아비가 10단계에 도달했습니다.<br><span id="finish-stats"></span></p>
+      <button id="finish-reset" class="reset" type="button">↺ 초기화</button>
+    </div>
+  </section>
+  <section id="error" class="error-panel" role="alert" hidden>
+    <h2>pixelfx를 불러오지 못했습니다.</h2>
+    <p>인터넷 연결과 CDN 접근을 확인해 주세요. 파일 직접 실행이 차단되면 로컬 서버에서 열어 주세요.</p>
+    <p id="error-details"></p>
+    <button id="reload" class="reset" type="button">다시 불러오기</button>
+  </section>
+</main>
+<script type="module">
+
+// GAME_RULES_START
+// Pure game rules: shared by the page and the automated tests.
+const CONFIG = Object.freeze({
+  CLICK_DELAY_MS: 750,
+  EVOLUTION_LOCK_MS: 1000,
+  BASE_SLIME_SIZE: 32,
+  LEVEL_GROWTH: 1.18,
+  BASE_GROWTH: 1.5,
+  SLIME_LIMIT: 450,
+  HP_PER_CREATURE: 10,
+  MAX_LEVEL: 10,
+  ANIMATION_SPEED: 1,
+  DUMMY_SIZE: 156 // Original Target: 38×52 pixels, shown initially at 3×.
+});
+const clamp01 = (n) => Math.max(0, Math.min(1, n));
+const easeInOut = (u) => u * u * (3 - 2 * u);
+const maxHpOf = (s) => CONFIG.HP_PER_CREATURE * s.count;
+const sizeOf = (s) => (s.kind === 'slime' ? s.baseSize : CONFIG.DUMMY_SIZE) * CONFIG.LEVEL_GROWTH ** (s.level - 1);
+function initialState() {
+  return { kind: 'slime', level: 1, count: 1, baseSize: CONFIG.BASE_SLIME_SIZE, cycles: 0,
+    hp: 10, totalHits: 0, acceptedClicks: 0, pending: 0, phase: 'ready',
+    generation: 0, lastAcceptedAt: -Infinity, transition: null };
+}
+function progressState(s) {
+  const next = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
+  let event = 'level', finish = false;
+  if (next.kind === 'scarecrow') {
+    next.level = Math.min(CONFIG.MAX_LEVEL, next.level + 1);
+    finish = next.level === CONFIG.MAX_LEVEL; // Finish on ARRIVAL, not after clearing level 10.
+  } else if (next.level < CONFIG.MAX_LEVEL) {
+    next.level++;
+  } else {
+    next.level = 1;
+    next.count++;
+    event = 'spawn';
+    if (next.count >= 5) {
+      next.count = 3;
+      next.baseSize *= CONFIG.BASE_GROWTH;
+      next.cycles++;
+      event = 'compress';
+      // This tests the level-1 logical size, NOT the current level / camera-scaled pixels.
+      if (next.baseSize > CONFIG.SLIME_LIMIT) {
+        next.kind = 'scarecrow';
+        next.count = 1;
+        event = 'scarecrow';
+      }
+    }
+  }
+  return { next, event, finish };
+}
+function settleState(s, now) {
+  if (!s.transition || now < s.transition.end) return false;
+  const finish = s.transition.finish;
+  s.transition = null;
+  s.phase = finish ? 'finished' : 'ready';
+  s.hp = maxHpOf(s);
+  return true;
+}
+function inputGate(s, now) {
+  if (s.phase === 'finished') return 'finished';
+  if (s.phase === 'transforming') return 'transforming';
+  if (now - s.lastAcceptedAt < CONFIG.CLICK_DELAY_MS) return 'cooldown';
+  if (s.hp - s.pending <= 0) return 'pending';
+  return 'ready';
+}
+function reserveAttack(s, now) {
+  if (inputGate(s, now) !== 'ready') return null;
+  s.lastAcceptedAt = now;
+  s.acceptedClicks++;
+  s.pending++;
+  return { generation: s.generation, consumed: false };
+}
+function applyHit(s, ticket, now) {
+  if (ticket.consumed || ticket.generation !== s.generation || s.phase !== 'ready') return null;
+  ticket.consumed = true;
+  s.pending = Math.max(0, s.pending - 1);
+  const previousHp = s.hp;
+  s.hp = Math.max(0, s.hp - 1);
+  s.totalHits++;
+  const result = { previousHp, hp: s.hp, transition: null };
+  if (s.hp === 0) {
+    const from = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
+    const { next, event, finish } = progressState(s);
+    Object.assign(s, next);
+    s.phase = 'transforming';
+    s.generation++;
+    s.pending = 0;
+    s.transition = { from, to: { ...next }, event, finish, start: now, end: now + CONFIG.EVOLUTION_LOCK_MS };
+    result.transition = s.transition;
+  }
+  return result;
+}
+/** Place the group in logical CSS pixels; the camera never changes the growth rules. */
+function groupLayout(count, size, availableWidth, availableHeight, kind = 'slime') {
+  const bodyWidth = kind === 'scarecrow' ? size * 38 / 52 : size * 1.36;
+  const step = bodyWidth + 8;
+  let mode = 'row', points;
+  if (count * bodyWidth + (count - 1) * 8 <= availableWidth || count === 1) {
+    points = Array.from({ length: count }, (_, i) => ({ x: (i - (count - 1) / 2) * step, y: 0, z: count - i }));
+  } else if (count === 2) {
+    mode = 'overlap-left';
+    const offset = bodyWidth * .48;
+    points = [{ x: -offset / 2, y: 0, z: 20 }, { x: offset / 2, y: 0, z: 10 }];
+  } else {
+    mode = 'overlap-center';
+    const offset = bodyWidth * .48;
+    points = [
+      { x: 0, y: 0, z: 40 },                 // foreground: center
+      { x: -offset, y: 0, z: 30 },           // second: left
+      { x: offset, y: 0, z: 20 },            // third: right
+      { x: 0, y: -size * .25, z: 10 }        // optional fourth: behind the middle
+    ].slice(0, count);
+  }
+  const minX = Math.min(...points.map(p => p.x)), maxX = Math.max(...points.map(p => p.x));
+  const rearRise = -Math.min(0, ...points.map(p => p.y));
+  const boundsWidth = maxX - minX + bodyWidth;
+  const boundsHeight = size * (kind === 'scarecrow' ? 1.12 : 1.95) + rearRise;
+  const camera = Math.min(1, availableWidth / boundsWidth, availableHeight / boundsHeight);
+  return { mode, points, camera: Math.max(.01, camera), boundsWidth, boundsHeight, bodyWidth };
+}
+
+// GAME_RULES_END
+    const COLORS = [
+      { name: '그린', palette: ['#061412','#0b2f2b','#12594a','#1f8f4f','#47c752','#a6f06a','#f0ffd2'] },
+      { name: '라임', palette: ['#111a0c','#273a15','#3f6724','#70a52e','#a6d83f','#d7f67b','#f7ffd5'] },
+      { name: '골드', palette: ['#1b1407','#40270e','#79501a','#ba8220','#e6b632','#ffdc77','#fff5d4'] },
+      { name: '코랄', palette: ['#1f1013','#492328','#803b39','#bd6050','#f18c66','#ffbc93','#ffe9ce'] },
+      { name: '레드', palette: ['#200c18','#491426','#7c2440','#bc3656','#ed5475','#ff91a8','#ffdae2'] },
+      { name: '핑크', palette: ['#1c0d22','#3e1b4a','#713070','#ab469f','#e16bd1','#ffa7ed','#ffe5fc'] },
+      { name: '바이올렛', palette: ['#100d25','#29204e','#44377f','#7160b7','#9b8bea','#c6baff','#eee7ff'] },
+      { name: '블루', palette: ['#0a1526','#153252','#205486','#367db9','#5fa8ec','#a4d5ff','#e3f5ff'] },
+      { name: '시안', palette: ['#071d25','#123e4b','#1d6c7b','#269ca9','#49d5d8','#9cfff5','#e2fffc'] },
+      { name: '펄', palette: ['#161525','#30304d','#555675','#8487ac','#b8bce5','#e2e4ff','#ffffff'] }
+    ];
+    // 슬라임용 별도 청백색 팔레트. Target의 원본 픽셀 혼합 알고리즘은 아닙니다.
+    const SHOCK_PALETTE = ['#071420','#15304a','#2d5572','#4f87ae','#8fd6ff','#c7eeff','#ffffff'];
+
+// App adapters: pixelfx renders the artwork; the rules above own input and progression.
+const CDN = 'https://cdn.jsdelivr.net/gh/patch-gg/pixelfx@main/src';
+const $ = id => document.getElementById(id);
+const app = $('app');
+const worldCanvas = $('world'), worldCtx = worldCanvas.getContext('2d', { alpha: false });
+const vfxCanvas = $('vfx'), vfxCtx = vfxCanvas.getContext('2d');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const debugEnabled = new URLSearchParams(location.search).get('debug') === '1';
+const BAR_HOLD_TIME = 1.28;
+const stageDots = COLORS.map((c, i) => {
+  const dot = document.createElement('span');
+  dot.className = 'stage-dot'; dot.style.backgroundColor = c.palette[4];
+  dot.title = `${i + 1}단계 · ${c.name}`; dot.setAttribute('aria-hidden', 'true');
+  $('stages').append(dot); return dot;
+});
+let core, lightningModule, slimeModule, healthModule, ready = false;
+let state = initialState();
+let units = [], healthRows = [], attacks = [], serial = 0;
+let cssWidth = 1, cssHeight = 1, width = 1, height = 1, groundY = 1;
+let background, backFrame, frontFrame, backImage, frontImage;
+let visualSize = 32, view = null, flash = 0, toastUntil = 0;
+let hudDirty = true;
+
+function mixPalette(a, b, u) {
+  return a.map((c, i) => {
+    const ac = parseInt(c.slice(1), 16), bc = parseInt(b[i].slice(1), 16);
+    let out = '#';
+    for (const shift of [16, 8, 0]) out += Math.round(((ac >> shift) & 255) * (1 - u) + ((bc >> shift) & 255) * u).toString(16).padStart(2, '0');
+    return out;
+  });
+}
+function visualState(now) {
+  const tr = state.transition;
+  const p = tr ? clamp01((now - tr.start) / CONFIG.EVOLUTION_LOCK_MS) : 1;
+  const u = easeInOut(p);
+  const fromSize = tr && tr.from.kind === tr.to.kind ? sizeOf(tr.from) : sizeOf(state);
+  const size = fromSize + (sizeOf(state) - fromSize) * u;
+  const palette = tr ? mixPalette(COLORS[tr.from.level - 1].palette, COLORS[state.level - 1].palette, u) : COLORS[state.level - 1].palette;
+  return { size, palette, p };
+}
+function newUnit(index) {
+  const kind = state.kind;
+  const frameSize = kind === 'slime' ? [112, 88] : [160, 140];
+  const origin = kind === 'slime' ? [56, 72] : [64, 112];
+  const element = document.createElement('div'); element.className = 'creature';
+  element.dataset.index = String(index);
+  const canvas = document.createElement('canvas');
+  canvas.width = frameSize[0]; canvas.height = frameSize[1];
+  canvas.style.width = `${frameSize[0]}px`; canvas.style.height = `${frameSize[1]}px`;
+  canvas.style.left = `${-origin[0]}px`; canvas.style.top = `${-origin[1]}px`;
+  canvas.style.transformOrigin = `${origin[0]}px ${origin[1]}px`;
+  canvas.setAttribute('aria-hidden', 'true'); element.append(canvas); $('creatures').append(element);
+  const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  const unit = { index, kind, element, canvas, ctx, origin,
+    frame: core.createFrame(...frameSize), image: ctx.createImageData(...frameSize),
+    freeze: 0, shock: 0, shiver: 0, recoil: 0, lastShockId: -1, x: 0, y: 0 };
+  if (kind === 'slime') {
+    unit.fx = core.createFx(slimeModule, { x: origin[0], y: origin[1], palette: COLORS[state.level - 1].palette, seed: index + 1, light: 1 });
+  } else {
+    // A real, persistent pixelfx Target, not a hand-drawn substitute.
+    unit.target = new core.Target(0, index + 17);
+  }
+  return unit;
+}
+function syncUnits(force = false) {
+  if (force || units.some(u => u.kind !== state.kind)) {
+    units.forEach(u => u.element.remove()); units = [];
+  }
+  while (units.length > state.count) units.pop().element.remove();
+  while (units.length < state.count) units.push(newUnit(units.length));
+  $('creatures').setAttribute('aria-label', `${state.kind === 'slime' ? '슬라임' : '허수아비'} ${state.count}개체`);
+}
+function healthPalette() {
+  const c = COLORS[state.level - 1].palette;
+  return ['#160d19', '#302338', c[2], c[2], c[4], c[4], c[5], '#ffffff'];
+}
+function syncHealthRows() {
+  while (healthRows.length > state.count) healthRows.pop().element.remove();
+  while (healthRows.length < state.count) {
+    const element = document.createElement('div'); element.className = 'health-unit';
+    const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 64;
+    canvas.setAttribute('aria-hidden', 'true'); element.append(canvas); $('health-bars').append(element);
+    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    healthRows.push({ element, canvas, ctx, frame: core.createFrame(160, 64), image: ctx.createImageData(160, 64), fx: null, age: 0 });
+  }
+}
+function setHealthEffect(from, to, animate = true, force = false) {
+  syncHealthRows();
+  healthRows.forEach((row, i) => {
+    const a = Math.max(0, Math.min(10, from - i * 10));
+    const b = Math.max(0, Math.min(10, to - i * 10));
+    if (!force && row.fx && a === b) return;
+    row.fx = core.createFx(healthModule, {
+      x: 80, y: 30, from: a / 10, to: b / 10, palette: healthPalette(),
+      seed: i + 17 + state.totalHits, light: .9
+    });
+    row.age = animate && a !== b ? .205 : BAR_HOLD_TIME;
+    row.fx.update(row.age);
+  });
+}
+function updateHud() {
+  $('level').textContent = String(state.level).padStart(2, '0');
+  $('count').textContent = String(state.count);
+  $('hp').textContent = String(state.hp); $('max-hp').textContent = String(maxHpOf(state));
+  $('hits').textContent = String(state.totalHits);
+  $('kind-name').textContent = state.kind === 'slime' ? 'SLIME' : 'TARGET';
+  $('size-detail').textContent = state.kind === 'slime'
+    ? `기본 ${formatSize(state.baseSize)}px · 현재 ${formatSize(sizeOf(state))}px`
+    : `허수아비 · 현재 ${formatSize(sizeOf(state))}px`;
+  $('hp-caption').textContent = `${maxHpOf(state)}칸 · 적중당 −1`;
+  $('hp-dock').setAttribute('aria-label', `공유 체력 ${maxHpOf(state)}칸 중 ${state.hp}칸 남음`);
+  stageDots.forEach((dot, i) => dot.classList.toggle('active', i + 1 === state.level));
+  app.dataset.phase = state.phase; app.dataset.kind = state.kind;
+  hudDirty = false;
+}
+function formatSize(n) { return Number(n.toFixed(1)).toString(); }
+function showToast(text, now = performance.now()) {
+  $('toast').textContent = text; $('toast').classList.add('visible'); toastUntil = now + 1200;
+}
+function finishGame() {
+  $('finish-stats').textContent = `누적 적중 ${state.totalHits.toLocaleString('ko-KR')}회`;
+  $('finish').hidden = false;
+  $('finish-reset').focus({ preventScroll: true });
+}
+function settle(now) {
+  if (!settleState(state, now)) return;
+  syncUnits();
+  // Previous-stage act callbacks are intentionally invalidated. Clear any lingering
+  // Target skin here, since the old act's skin:null release must not reach this stage.
+  for (const unit of units) {
+    unit.freeze = unit.shock = unit.shiver = unit.recoil = 0;
+    unit.lastShockId = -1;
+    if (unit.target) { unit.target.skin = null; unit.target.shiver = 0; }
+  }
+  setHealthEffect(state.hp, state.hp, false, true);
+  hudDirty = true;
+  if (state.phase === 'finished') finishGame();
+}
+function beginTransition(tr, now) {
+  syncUnits();
+  const message = tr.finish ? '허수아비 10단계 도달!'
+    : tr.event === 'scarecrow' ? '기본 크기 450px 초과 · 허수아비 등장'
+    : tr.event === 'compress' ? `기본 크기 ×1.5 · ${formatSize(state.baseSize)}px · 3마리`
+    : tr.event === 'spawn' ? `${state.count}마리로 증가 · 1단계부터 다시 시작`
+    : `LEVEL ${String(state.level).padStart(2, '0')} · ${COLORS[state.level - 1].name}`;
+  showToast(message, now);
+}
+function updateLayout(now) {
+  const visual = visualState(now); visualSize = visual.size;
+  const hudBottom = $('hud').getBoundingClientRect().bottom - app.getBoundingClientRect().top;
+  const availableWidth = Math.max(40, cssWidth - 32);
+  const availableHeight = Math.max(36, cssHeight * .65 - hudBottom - 16);
+  view = groupLayout(state.count, visual.size, availableWidth, availableHeight, state.kind);
+  const baseline = cssHeight * .65;
+  for (let i = 0; i < units.length; i++) {
+    const unit = units[i], pos = view.points[i];
+    unit.x = cssWidth / 2 + pos.x * view.camera;
+    unit.y = baseline + pos.y * view.camera;
+    unit.element.style.left = `${unit.x.toFixed(2)}px`;
+    unit.element.style.top = `${unit.y.toFixed(2)}px`;
+    unit.element.style.zIndex = String(pos.z);
+    const tr = state.transition;
+    unit.element.style.opacity = String(tr && (tr.from.kind !== state.kind || i >= tr.from.count) ? Math.max(.05, visual.p) : 1);
+    const scale = (visual.size / (state.kind === 'slime' ? 32 : 52)) * view.camera;
+    const kickX = reducedMotion || unit.kind !== 'slime' ? 0 : Math.sin(now * .083) * Math.min(4, unit.shiver * 3) + unit.recoil * .5;
+    const kickY = reducedMotion || unit.kind !== 'slime' ? 0 : -Math.min(3, unit.recoil * .24);
+    unit.canvas.style.transform = `translate3d(${kickX.toFixed(2)}px,${kickY.toFixed(2)}px,0) scale(${scale.toFixed(6)})`;
+    if (unit.fx) unit.fx.options.palette = unit.shock > 0 ? SHOCK_PALETTE : visual.palette;
+  }
+  const layoutLabel = view.mode === 'row' ? '나란히' : view.mode === 'overlap-left' ? '왼쪽 우선' : '중앙 우선';
+  $('view-detail').textContent = `VIEW ${Math.round(view.camera * 100)}% · ${layoutLabel}`;
+  app.dataset.layout = view.mode;
+}
+function updateInputStatus(now) {
+  const gate = ready ? inputGate(state, now) : 'loading';
+  let label, progress = 1;
+  if (gate === 'loading') { label = 'pixelfx 로딩 중'; progress = 0; }
+  else if (gate === 'finished') label = '완료 · 초기화로 다시 시작';
+  else if (gate === 'transforming') {
+    const remaining = Math.max(0, state.transition.end - now);
+    label = `성장 중 · 입력 잠금 ${(remaining / 1000).toFixed(1)}초`;
+    progress = 1 - remaining / CONFIG.EVOLUTION_LOCK_MS;
+  } else if (gate === 'cooldown') {
+    const remaining = CONFIG.CLICK_DELAY_MS - (now - state.lastAcceptedAt);
+    label = `다음 번개까지 ${(remaining / 1000).toFixed(1)}초`;
+    progress = 1 - remaining / CONFIG.CLICK_DELAY_MS;
+  } else if (gate === 'pending') { label = '마지막 번개가 도착하는 중'; progress = 1; }
+  else label = '⚡ 번개 준비 완료';
+  $('input-label').textContent = label;
+  $('input-progress').style.transform = `scaleX(${clamp01(progress)})`;
+  app.dataset.input = gate;
+}
+function resize() {
+  if (!ready) return;
+  const w = app.clientWidth, h = app.clientHeight;
+  if (w === cssWidth && h === cssHeight && background) return;
+  cssWidth = Math.max(1, w); cssHeight = Math.max(1, h);
+  const pixelSize = Math.max(2, Math.ceil(Math.max(cssWidth / 400, cssHeight / 350)));
+  width = Math.max(1, Math.round(cssWidth / pixelSize)); height = Math.max(1, Math.round(cssHeight / pixelSize));
+  groundY = Math.round(height * .65);
+  worldCanvas.width = vfxCanvas.width = width; worldCanvas.height = vfxCanvas.height = height;
+  worldCtx.imageSmoothingEnabled = vfxCtx.imageSmoothingEnabled = false;
+  backFrame = core.createFrame(width, height); frontFrame = core.createFrame(width, height);
+  backImage = worldCtx.createImageData(width, height); frontImage = vfxCtx.createImageData(width, height);
+  const dark = core.backdrop('dark', width, height);
+  const ground = core.backdrop('ground', width, height, groundY);
+  dark.set(ground.subarray(groundY * width), groundY * width); background = dark;
+  // Keep in-flight acts: resizing must not lose a reserved hit.
+  updateLayout(performance.now()); render(performance.now());
+}
+function reactToHit(unit, hit, attack) {
+  if (!unit) return;
+  if (hit.skin === null) {
+    // An older act's release event must not cancel a newer act's shock skin.
+    if (unit.target && unit.lastShockId === attack.id) unit.target.hit({ ...hit, straw: 0 });
+    return;
+  }
+  unit.freeze = Math.max(unit.freeze, hit.stop || 0);
+  unit.recoil = Math.max(unit.recoil, Math.abs(hit.push || 0) * 1.4);
+  unit.shiver = Math.max(unit.shiver, hit.shiver || (hit.push ? .22 : 0));
+  unit.shock = Math.max(unit.shock, hit.skin === 'shock' ? .4 : .1);
+  if (hit.skin === 'shock') unit.lastShockId = attack.id;
+  // Original Target supplies its own shock skin, spring motion and straw fragments.
+  // A slime keeps its original loop and receives the custom palette / CSS movement adapter.
+  if (unit.target) unit.target.hit(hit);
+  flash = Math.max(flash, hit.skin === 'shock' ? .13 : .055);
+}
+function onLightningHit(attack, hit) {
+  if (attack.ticket.generation !== state.generation || state.phase !== 'ready') return;
+  reactToHit(units[attack.targetIndex], hit, attack);
+  if (hit.skin !== 'shock') return; // Aftershocks never subtract HP again.
+  const now = performance.now();
+  const result = applyHit(state, attack.ticket, now);
+  if (!result) return;
+  if (result.transition) beginTransition(result.transition, now);
+  setHealthEffect(result.previousHp, result.hp, true, !!result.transition);
+  hudDirty = true;
+}
+function strike() {
+  if (!ready || !background) return false;
+  const now = performance.now(); settle(now);
+  const ticket = reserveAttack(state, now);
+  if (!ticket) { updateInputStatus(now); return false; }
+  updateLayout(now);
+  // Spread calls over a row. In an overlapping group, hit the foremost creature.
+  const targetIndex = view.mode === 'row' ? (state.acceptedClicks - 1) % units.length : 0;
+  const unit = units[targetIndex];
+  const targetX = lightningModule.act?.target?.x ?? 130;
+  const bolt = core.createAct(lightningModule, {
+    x: Math.round(unit.x / cssWidth * width - targetX), y: Math.round(unit.y / cssHeight * height),
+    seed: ++serial + 200, light: 1
+  });
+  const attack = { id: serial, bolt, ticket, targetIndex, targetX,
+    anchorX: unit.x / cssWidth, anchorY: unit.y / cssHeight };
+  bolt.onHit = hit => onLightningHit(attack, hit);
+  attacks.push(attack); updateInputStatus(now);
+  return true;
+}
+function resetGame() {
+  const generation = state.generation + 1;
+  state = initialState(); state.generation = generation;
+  attacks = []; flash = 0; toastUntil = 0;
+  $('toast').classList.remove('visible'); $('finish').hidden = true;
+  $('scene').style.transform = ''; $('flash').style.opacity = '0';
+  if (ready) {
+    syncUnits(true); setHealthEffect(state.hp, state.hp, false, true);
+    updateHud(); updateLayout(performance.now()); render(performance.now());
+  } else updateHud();
+  updateInputStatus(performance.now());
+}
+function update(dt, now) {
+  settle(now);
+  flash = Math.max(0, flash - dt);
+  if (now >= toastUntil) $('toast').classList.remove('visible');
+  for (const unit of units) {
+    const wasFrozen = unit.freeze > 0;
+    unit.freeze = Math.max(0, unit.freeze - dt);
+    unit.shock = Math.max(0, unit.shock - dt);
+    unit.shiver = Math.max(0, unit.shiver - dt);
+    unit.recoil = Math.max(0, unit.recoil - dt * 20);
+    if (!wasFrozen) {
+      unit.fx?.update(dt * CONFIG.ANIMATION_SPEED); // Always 1× speed, independent of size / camera.
+      unit.target?.step(dt);
+    }
+  }
+  for (const attack of attacks) attack.bolt.update(dt);
+  attacks = attacks.filter(a => !a.bolt.done());
+  for (const row of healthRows) {
+    if (!row.fx || row.age >= BAR_HOLD_TIME) continue;
+    const step = Math.min(dt, BAR_HOLD_TIME - row.age);
+    row.fx.update(step); row.age += step;
+  }
+  if (hudDirty) updateHud();
+  updateInputStatus(now);
+}
+function render(now) {
+  if (!ready || !background) return;
+  updateLayout(now);
+  core.clearFrame(backFrame); core.clearFrame(frontFrame);
+  let shakeX = 0, shakeY = 0;
+  for (const attack of attacks) {
+    // Only the act's FX layers are rendered: no hidden actor/target is drawn.
+    // Original module data / internal act logic remain loaded.
+    attack.bolt.fx.options.x = Math.round(attack.anchorX * width - attack.targetX);
+    attack.bolt.fx.options.y = Math.round(attack.anchorY * height);
+    attack.bolt.fx.draw(backFrame, 'back'); attack.bolt.fx.draw(frontFrame, 'front');
+    const [x, y] = attack.bolt.shake; shakeX += x; shakeY += y;
+  }
+  core.composite(backFrame, backImage.data, background); worldCtx.putImageData(backImage, 0, 0);
+  core.composite(frontFrame, frontImage.data, null); vfxCtx.putImageData(frontImage, 0, 0);
+  for (const unit of units) {
+    core.clearFrame(unit.frame);
+    if (unit.fx) unit.fx.draw(unit.frame);
+    else {
+      unit.target.draw(unit.frame.color, unit.frame.w, unit.frame.h, unit.origin[0], unit.origin[1], false);
+      unit.target.drawStraw(unit.frame.color, unit.frame.w, unit.frame.h, unit.origin[0], unit.origin[1], false);
+    }
+    core.composite(unit.frame, unit.image.data, null); unit.ctx.putImageData(unit.image, 0, 0);
+  }
+  for (const row of healthRows) {
+    if (!row.fx) continue;
+    core.clearFrame(row.frame); row.fx.draw(row.frame);
+    core.composite(row.frame, row.image.data, null); row.ctx.putImageData(row.image, 0, 0);
+  }
+  const dx = reducedMotion ? 0 : Math.max(-7, Math.min(7, shakeX * cssWidth / width));
+  const dy = reducedMotion ? 0 : Math.max(-5, Math.min(5, shakeY * cssHeight / height));
+  $('scene').style.transform = `translate3d(${dx}px,${dy}px,0)`;
+  $('flash').style.opacity = String(reducedMotion ? 0 : (flash / .13) * .13);
+}
+function startLoop() {
+  let last = performance.now(), accumulator = 0;
+  function tick(now) {
+    accumulator += Math.max(0, Math.min((now - last) / 1000, .07)); last = now;
+    if (accumulator >= 1 / 30) {
+      const dt = accumulator; accumulator = 0;
+      update(dt, now); render(now);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// Debug tools are opt-in. Normal play never exposes shortcuts.
+const SCENARIOS = {
+  start: {},
+  two: { count: 2, level: 10, hp: 20 },
+  three: { count: 3, level: 10, hp: 30 },
+  four: { count: 4, level: 10, hp: 40 },
+  compress: { count: 4, level: 10, hp: 1 },
+  replace: { count: 4, level: 10, hp: 1, baseSize: 364.5, cycles: 6 },
+  finish: { kind: 'scarecrow', count: 1, level: 9, hp: 1, baseSize: 546.75, cycles: 7 }
+};
+function loadScenario(name) {
+  if (!debugEnabled || !ready || !Object.hasOwn(SCENARIOS, name)) return false;
+  resetGame(); Object.assign(state, SCENARIOS[name]);
+  syncUnits(true); setHealthEffect(state.hp, state.hp, false, true);
+  updateHud(); render(performance.now()); updateInputStatus(performance.now());
+  return true;
+}
+function snapshot() {
+  return {
+    ...JSON.parse(JSON.stringify(state)), maxHp: maxHpOf(state), logicalSize: sizeOf(state),
+    input: inputGate(state, performance.now()), camera: view?.camera,
+    layout: view?.mode, points: view?.points.map(p => ({ ...p })),
+    activeAttacks: attacks.length, healthBars: healthRows.length,
+    config: { ...CONFIG }
+  };
+}
+if (debugEnabled) {
+  $('test-tools').hidden = false;
+  Object.defineProperty(window, 'pixelfxDemo', { value: Object.freeze({ snapshot, scenario: loadScenario, strike, reset: resetGame }) });
+  $('test-apply').addEventListener('click', () => loadScenario($('test-scenario').value));
+}
+app.addEventListener('pointerdown', event => {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  if (event.target.closest('button, a, select, input, summary, #test-tools, #finish, #error')) return;
+  event.preventDefault(); strike();
+}, { passive: false });
+window.addEventListener('keydown', event => {
+  if (event.code !== 'Space' || event.repeat || event.target.closest?.('button, a, select, input, summary')) return;
+  event.preventDefault(); strike();
+});
+$('reset').addEventListener('click', resetGame);
+$('finish-reset').addEventListener('click', () => { resetGame(); app.focus({ preventScroll: true }); });
+$('reload').addEventListener('click', () => location.reload());
+window.addEventListener('resize', resize);
+if ('ResizeObserver' in window) new ResizeObserver(resize).observe(app);
+updateHud(); updateInputStatus(performance.now());
+
+async function bootstrap() {
+  try {
+    const modules = await Promise.all([
+      import(`${CDN}/core/index.js`), import(`${CDN}/fx/moves/lightning-call.js`),
+      import(`${CDN}/fx/critters/slime.js`), import(`${CDN}/fx/ui/health-bar-hit.js`)
+    ]);
+    [core, lightningModule, slimeModule, healthModule] = modules;
+    if (typeof core.Target !== 'function') throw new Error('pixelfx Target API를 찾을 수 없습니다.');
+    ready = true;
+    syncUnits(); setHealthEffect(state.hp, state.hp, false, true); updateHud(); resize();
+    $('connection').textContent = 'PIXELFX LIVE'; $('connection').classList.add('ready');
+    startLoop();
+  } catch (error) {
+    ready = false; console.error('pixelfx loading failed:', error);
+    $('connection').textContent = 'FX 연결 실패'; $('connection').classList.add('error');
+    $('input-label').textContent = 'FX 연결을 확인해 주세요';
+    $('error-details').textContent = String(error); $('error').hidden = false;
+  }
+}
+bootstrap();
+</script>
+</body>
+</html>
