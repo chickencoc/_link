@@ -263,8 +263,8 @@
 // GAME_RULES_START
 // Pure game rules shared by the page and automated tests.
 const CONFIG = Object.freeze({
-  CLICK_DELAY_MS: 1750, EVOLUTION_DELAY_MS: 350, EVOLUTION_LOCK_MS: 2500,
-  GROUND_RATIO: .70, ATTACK_EFFECT_SCALE: .6, LIGHTNING_SCALE: 0.85, BASE_SLIME_SIZE: 32,
+  CLICK_DELAY_MS: 1750, EVOLUTION_DELAY_MS: 500, EVOLUTION_LOCK_MS: 2000,
+  GROUND_RATIO: .67, ATTACK_EFFECT_SCALE: .6, LIGHTNING_SCALE: 0.85, BASE_SLIME_SIZE: 32,
   LEVEL_GROWTH: 1.18, BASE_GROWTH: 1.5, SLIME_LIMIT: 450,
   HP_PER_CREATURE: 100, SCARECROW_HP: 1000, MAX_LEVEL: 5,
   ANIMATION_SPEED: 1.05, SLIME_HOP: 3, DUMMY_SIZE: 156,
@@ -281,11 +281,11 @@ const PASSIVES = Object.freeze({
 // hitAt is effect time, taken from the original effect's visible impact constants.
 // Double Slash deals damage once at the crossing, not once for each stroke.
 const ATTACKS = Object.freeze({
-  basic: { grade: 'I', name: 'Parry', path: 'impacts/parry', period: 1750, damage: 10, cost: 0, hitAt: .025, impact: [0, -30], body: true },
-  doubleSlash: { grade: 'I', name: 'Double Slash', path: 'melee/double-slash', period: 1000, damage: 10, cost: 24, hitAt: .16, impact: [34, -23], body: true },
-  lightning: { grade: 'II', name: 'Lightning Strike', path: 'lightning/lightning-strike', period: 3000, damage: 20, cost: 72, hitAt: .76, impact: [0, 0] },
-  acid: { grade: 'II', name: 'Acid Splash', path: 'nature/acid-splash', period: 3000, damage: 20, cost: 72, hitAt: .3, impact: [0, 0] },
-  holy: { grade: 'III', name: 'Holy Pillar', path: 'holy/holy-pillar', period: 15000, damage: 200, cost: 330, hitAt: .66, impact: [0, 0] }
+  basic: { grade: 'I', name: 'Parry', path: 'impacts/parry', period: 1750, damage: 7, cost: 0, hitAt: .025, impact: [0, -30], body: true },
+  doubleSlash: { grade: 'I', name: 'Double Slash', path: 'melee/double-slash', period: 1000, damage: 6, cost: 24, hitAt: .16, impact: [34, -23], body: true },
+  lightning: { grade: 'II', name: 'Lightning Strike', path: 'lightning/lightning-strike', period: 2700, damage: 18, cost: 68, hitAt: .76, impact: [0, 0] },
+  acid: { grade: 'II', name: 'Acid Splash', path: 'nature/acid-splash', period: 3200, damage: 24, cost: 80, hitAt: .3, impact: [0, 0] },
+  holy: { grade: 'III', name: 'Holy Pillar', path: 'holy/holy-pillar', period: 15000, damage: 199, cost: 324, hitAt: .66, impact: [0, 0] }
 });
 const ACTIVE_IDS = Object.freeze(Object.keys(ATTACKS).filter(id => id !== 'basic'));
 const clamp01 = n => Math.max(0, Math.min(1, n));
