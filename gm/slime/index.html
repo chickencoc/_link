@@ -239,8 +239,8 @@
   <dialog id="timeout-dialog" aria-labelledby="timeout-title">
     <div class="modal-header"><h2 id="timeout-title">시간 초과</h2></div>
     <p id="timeout-message"></p>
-    <p>500코인을 지불하면 스킬과 남은 코인, 누적 기록을 유지하고 1스테이지부터 다시 시작합니다.</p>
-    <div class="modal-actions"><button id="timeout-keep" class="reset" type="button">500 코인 / 정보 유지</button><button id="timeout-reset" class="reset danger" type="button">전체 초기화</button></div>
+    <p id="timeout-description"></p>
+    <div class="modal-actions"><button id="timeout-keep" class="reset" type="button">정보 유지</button><button id="timeout-reset" class="reset danger" type="button">전체 초기화</button></div>
   </dialog>
   <dialog id="skills-dialog" aria-labelledby="skills-title">
     <div class="modal-header"><h2 id="skills-title">스킬</h2><button class="modal-close" data-close="skills-dialog" type="button">닫기</button></div>
@@ -265,7 +265,7 @@
 const CONFIG = Object.freeze({
   CLICK_DELAY_MS: 1750, EVOLUTION_DELAY_MS: 500, EVOLUTION_LOCK_MS: 2000,
   GROUND_RATIO: .67, ATTACK_EFFECT_SCALE: .6, LIGHTNING_SCALE: 0.85, BASE_SLIME_SIZE: 32,
-  LEVEL_GROWTH: 1.18, BASE_GROWTH: 1.5, SLIME_LIMIT: 450,
+  LEVEL_GROWTH: 1.18, BASE_GROWTH: 1.5, SLIME_LIMIT: 200,
   HP_PER_CREATURE: 100, SCARECROW_HP: 1000, MAX_LEVEL: 5,
   ANIMATION_SPEED: 1.05, SLIME_HOP: 3, DUMMY_SIZE: 156,
   PASSIVE_MAX_LEVEL: 35, PASSIVE_COST: 20, PASSIVE_STEP: .01,
@@ -297,7 +297,7 @@ const sizeOf = s => (s.kind === 'slime' ? s.baseSize : CONFIG.DUMMY_SIZE) * CONF
 const speedBonus = (s, id = 'basic') => (ATTACKS[id].grade === 'I' ? s.passives.speed1 : ATTACKS[id].grade === 'II' ? s.passives.speed2 : 0) * CONFIG.PASSIVE_STEP;
 const attackPeriod = (s, id = 'basic') => (id === 'basic' ? CONFIG.CLICK_DELAY_MS : ATTACKS[id].period) / (1 + speedBonus(s, id));
 const criticalChance = s => s.passives.critChance * CONFIG.PASSIVE_STEP;
-const criticalMultiplier = s => CONFIG.CRITICAL_MULTIPLIER * (1 + s.passives.critDamage * CONFIG.PASSIVE_STEP);
+const criticalMultiplier = level => CONFIG.CRITICAL_MULTIPLIER * (1 + level * CONFIG.PASSIVE_STEP);
 const skillGrade = id => ATTACKS[id].grade;
 function resetEnemies(s, total = maxHpOf(s), growing = false) {
   const capacity = hpPerBarOf(s);
@@ -331,7 +331,7 @@ function buySkill(s, id) {
   if (!ACTIVE_IDS.includes(id) || s.owned[id] || s.coins < ATTACKS[id].cost) return false;
   s.coins -= ATTACKS[id].cost; s.owned[id] = true; s.lastCast[id] = -Infinity; return true;
 }
-function progressState(s) {
+function progressState(s, slimeLimit = CONFIG.SLIME_LIMIT) {
   const next = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
   let event = 'level', finish = false;
   if (next.kind === 'scarecrow') {
@@ -341,7 +341,7 @@ function progressState(s) {
     next.level = 1; next.count++; event = 'spawn';
     if (next.count >= 5) {
       next.count = 3; next.baseSize *= CONFIG.BASE_GROWTH; next.cycles++; event = 'compress';
-      if (next.baseSize > CONFIG.SLIME_LIMIT) {next.kind = 'scarecrow'; next.count = 1; event = 'scarecrow';}
+      if (next.baseSize > slimeLimit) {next.kind = 'scarecrow'; next.count = 1; event = 'scarecrow';}
     }
   }
   return { next, event, finish };
@@ -398,7 +398,7 @@ function reserveAttack(s, now, source = 'basic', order = null, random = () => ra
   // A lethal hit in flight is still attacking a living target. Wait for its death.
   if (!target || target.hp - target.reserved <= .0001) return null;
   const critical = random() < criticalChance(s);
-  const damage = roundHp(ATTACKS[source].damage * (critical ? criticalMultiplier(s) : 1));
+  const damage = roundHp(ATTACKS[source].damage * (critical ? criticalMultiplier(s.passives.critDamage) : 1));
   target.reserved = roundHp(target.reserved + damage); s.pending++; s.totalCasts++;
   s.targetId = target.id; s.lastCast[source] = now;
   if (source === 'basic') {s.lastAcceptedAt = now; s.acceptedClicks++;}
@@ -465,6 +465,7 @@ function groupLayout(count, size, availableWidth, availableHeight, kind = 'slime
 // Every scalar (including null/booleans) is JSON -> UTF-8 -> repeating-key XOR -> hex.
 // All scalar entries in one atomic save must carry the same, newly generated key.
 const SAVE_KEY = 'smash-slime.progress.v1';
+const LEGACY_SLIME_LIMIT = 450;
 function freshSaveKey(previous = '') {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   let key;
@@ -518,7 +519,8 @@ function validateSave(data) {
   require(data?.version === 1 && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
   const s = data.state;
   require(s && typeof s === 'object' && Object.keys(s).sort().join() === Object.keys(initialState()).sort().join());
-  const shape = v => v && ['slime','scarecrow'].includes(v.kind) && integer(v.level,1,CONFIG.MAX_LEVEL) && integer(v.count,1,v.kind === 'slime' ? 4 : 1) && number(v.baseSize,CONFIG.BASE_SLIME_SIZE,CONFIG.SLIME_LIMIT * CONFIG.BASE_GROWTH) && integer(v.cycles);
+  const savedSizeLimit = Math.max(CONFIG.SLIME_LIMIT, LEGACY_SLIME_LIMIT) * CONFIG.BASE_GROWTH;
+  const shape = v => v && ['slime','scarecrow'].includes(v.kind) && integer(v.level,1,CONFIG.MAX_LEVEL) && integer(v.count,1,v.kind === 'slime' ? 4 : 1) && number(v.baseSize,CONFIG.BASE_SLIME_SIZE,savedSizeLimit) && integer(v.cycles);
   require(shape(s) && ['ready','waiting','transforming','finished','failed'].includes(s.phase));
   for (const id of ['coins','totalHits','acceptedClicks','totalCasts','generation','criticalHits','pending']) require(integer(s[id]));
   require(integer(s.stage,1) && number(s.stageRemaining,0,CONFIG.STAGE_LIMIT_MS) && integer(s.rng,1,0xffffffff));
@@ -538,8 +540,12 @@ function validateSave(data) {
     require(number(tr.start) && number(tr.end) && Math.abs(tr.end-tr.start-CONFIG.EVOLUTION_LOCK_MS)<.001 && tr.end > data.gameNow && s.hp === 0);
     const current = s.phase === 'waiting' ? tr.from : tr.to;
     require(['kind','level','count','baseSize','cycles'].every(k=>s[k]===current[k]));
-    const next = progressState(tr.from);
-    require(Object.keys(next.next).every(k=>next.next[k]===tr.to[k]) && next.finish===tr.finish && next.event===tr.event);
+    // Finish transitions already scheduled under the previous threshold.
+    const matchesTransition = slimeLimit => {
+      const { next, finish, event } = progressState(tr.from, slimeLimit);
+      return Object.keys(next).every(k => next[k] === tr.to[k]) && finish === tr.finish && event === tr.event;
+    };
+    require(matchesTransition(CONFIG.SLIME_LIMIT) || matchesTransition(LEGACY_SLIME_LIMIT));
   } else require(s.transition === null);
   require(s.phase !== 'finished' || (s.kind === 'scarecrow' && s.level === CONFIG.MAX_LEVEL));
   require(Array.isArray(data.casts) && data.casts.length <= 5);
@@ -550,7 +556,7 @@ function validateSave(data) {
     // Another critical in the same simulation step can stop this already-due hit.
     require(number(a.t,0,ATTACKS[a.source].hitAt+1/120+1e-7) && integer(a.seed,1) && t && t.source === a.source && t.generation === s.generation && t.consumed === false && integer(t.targetId,0,s.count-1) && typeof t.critical === 'boolean');
     // A passive may have changed since casting, so accept the configured damage range.
-    require(number(t.damage,ATTACKS[a.source].damage,roundHp(ATTACKS[a.source].damage * CONFIG.CRITICAL_MULTIPLIER * 1.3)));
+    require(number(t.damage,ATTACKS[a.source].damage,roundHp(ATTACKS[a.source].damage * criticalMultiplier(CONFIG.PASSIVE_MAX_LEVEL))));
     reserved[t.targetId] += t.damage;
   }
   require(s.pending === data.casts.length && reserved.every((n,id)=>Math.abs(n-s.enemies[id].reserved)<.001));
@@ -642,7 +648,11 @@ function updateStageUi() {
 }
 function showTimeout() {
   $('timeout-message').textContent=`스테이지 ${state.stage}의 제한시간이 끝났습니다. 보유 코인: ${state.coins}${state.coins<CONFIG.CONTINUE_COST?' / 코인이 부족합니다.':''}`;
-  $('timeout-keep').disabled=state.coins<CONFIG.CONTINUE_COST;
+  const cost = CONFIG.CONTINUE_COST.toLocaleString('ko-KR');
+  $('timeout-description').textContent = `${cost}코인을 지불하면 스킬과 남은 코인, 누적 기록을 유지하고 1스테이지부터 다시 시작합니다.`;
+  const keepButton = $('timeout-keep');
+  keepButton.textContent = `${cost} 코인 / 정보 유지`;
+  keepButton.disabled = state.coins < CONFIG.CONTINUE_COST;
   if (!$('timeout-dialog').open) $('timeout-dialog').showModal();
 }
 function syncStageTimer(now=performance.now()) {
@@ -945,7 +955,7 @@ function buildSkillUi(){
 }
 function updateSkillUi(){
   $('skills-wallet').textContent=`보유 코인 ${state.coins}`;
-  $('skill-summary').innerHTML=`공격속도 I +${state.passives.speed1}% , II +${state.passives.speed2}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ×${formatNumber(criticalMultiplier(state))}`;
+  $('skill-summary').innerHTML=`공격속도 I +${state.passives.speed1}% , II +${state.passives.speed2}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ×${formatNumber(criticalMultiplier(state.passives.critDamage))}`;
   for(const id of Object.keys(PASSIVES)){
     $(`level-${id}`).textContent=`${state.passives[id]}/${CONFIG.PASSIVE_MAX_LEVEL}`;
     const button=document.querySelector(`[data-upgrade="${id}"]`),max=state.passives[id]>=CONFIG.PASSIVE_MAX_LEVEL;
@@ -993,8 +1003,8 @@ $('skills-dialog').addEventListener('click',event=>{
 });
 const SCENARIOS={
   start:{},two:{count:2,level:CONFIG.MAX_LEVEL},three:{count:3,level:CONFIG.MAX_LEVEL},four:{count:4,level:CONFIG.MAX_LEVEL},
-  compress:{count:4,level:CONFIG.MAX_LEVEL,hp:1},replace:{count:4,level:CONFIG.MAX_LEVEL,hp:1,baseSize:364.5,cycles:6},
-  finish:{kind:'scarecrow',count:1,level:CONFIG.MAX_LEVEL-1,hp:1,baseSize:546.75,cycles:7},
+  compress:{count:4,level:CONFIG.MAX_LEVEL,hp:1},replace:{count:4,level:CONFIG.MAX_LEVEL,hp:1,baseSize:162,cycles:4},
+  finish:{kind:'scarecrow',count:1,level:CONFIG.MAX_LEVEL-1,hp:1,baseSize:243,cycles:5},
   shop:{coins:2000,count:4},critical:{coins:2000,count:4,rng:1},
   timed:{coins:1000,stage:11,count:2,level:4},grace:{stage:10,count:2,level:3,hp:1},poor:{coins:499,stage:11,count:2,level:4}
 };
