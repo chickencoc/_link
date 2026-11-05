@@ -41,21 +41,23 @@
   .connection::before { content: "● "; color: #f7c47c; }
   .connection.ready::before { color: #8debba; }
   .connection.error::before { color: #ff8198; }
-  .stats-panel { padding: 8px 10px 7px; container-type: inline-size; }
-  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 6px; }
-  @container (min-width: 440px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .stats-panel { padding: 8px 10px 7px; }
+  .stats { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 12px; align-items: center; }
   .stat { display: flex; align-items: baseline; min-width: 0; white-space: nowrap; }
   .stat > span:first-child { margin-right: 12px; }
-  .stat .key { font-size: 10px; color: #a9a0b9; }
+  .stat .key { min-width: 30px; font-size: 10px; color: #a9a0b9; }
   .stat .val { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  #coin-dock { position: absolute; z-index: 10; top: 50%; right: 12px; transform: translateY(-50%); display: flex; align-items: baseline; gap: 12px; padding: 8px 10px; color: #ffdd86; pointer-events: none; }
+  #progress-dock { position: absolute; z-index: 10; top: 50%; right: 12px; transform: translateY(-50%); display: grid; justify-items: end; gap: 14px; pointer-events: none; }
+  #coin-dock { display: flex; align-items: baseline; gap: 12px; padding: 0 10px; color: #ffdd86; }
   #coin-dock .key { font-size: 10px; }
   #coin-dock .val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
   .unit { font-size: 10px; color: #aaa0bb; }
-  .stage-meter { display: flex; gap: 4px; margin-top: 6px; }
+  .stage-meter { display: flex; gap: 4px; padding: 7px 10px; }
   .stage-dot { flex: 1; height: 5px; opacity: .3; border: 1px solid #fff4; }
   .stage-dot.active { opacity: 1; outline: 1px solid #faf4ff; outline-offset: 1px; }
-  .details-row { margin-top: 7px; display: flex; justify-content: space-between; gap: 4px; flex-wrap: wrap; font-size: 10px; color: #b4aac5; font-variant-numeric: tabular-nums; }
+  #view-detail, #size-detail { min-width: 0; text-align: right; font-size: 10px; color: #b4aac5; overflow-wrap: anywhere; }
+  #view-detail { white-space: nowrap; }
+  #size-detail { line-height: 1.5; }
   #ground-ui { position: absolute; z-index: 10; top: calc(var(--ground-position) + 4px); left: 12px; right: 12px; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 16px; pointer-events: none; }
   .health-panel { width: min(600px, 100%); overflow: hidden; padding: 3px 0; }
   .health-caption { display: flex; justify-content: center; padding: 0 10px; gap: 4px; font-size: 10px; color: #b4aac5; }
@@ -82,7 +84,7 @@
   .reset:hover, .reset:focus-visible { background: #504064; outline-color: #e5cbff; }
   .reset:active { transform: translateY(1px); }
   .toast { position: absolute; z-index: 12; right: 12px; top: var(--toast-top, calc(50% + 24px)); max-width: calc(100% - 32px); padding: 4px 10px; text-align: right; color: #fff; font-weight: 800; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .12s; }
-  .stage-status { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: #d8caee; font-size: 10px; font-variant-numeric: tabular-nums; }
+  .stage-status { display: grid; justify-items: end; gap: 10px; padding: 0 10px; color: #d8caee; font-size: 11px; font-variant-numeric: tabular-nums; }
   #stage-time[data-urgent="true"] { color: #ff8198; }
   #timeout-dialog .modal-actions { flex-wrap: wrap; }
   .toast.visible { opacity: 1; }
@@ -100,7 +102,7 @@
   #test-scenario { min-width: 0; flex: 1; font-size: 10px; padding: 4px; }
   #test-apply { font-size: 10px; min-height: 32px; padding: 5px 8px; }
   @media (min-width: 650px) {
-    .hud { left: 20px; right: 20px; top: 16px; grid-template-columns: 1fr 1.6fr; align-items: start; }
+    .hud { left: 20px; right: 20px; top: 16px; align-items: start; }
     .header-panel { padding: 12px 14px; }
     h1 { font-size: 22px; }
     #test-tools { grid-column: 1 / -1; }
@@ -110,12 +112,12 @@
     .hud { top: max(6px, env(safe-area-inset-top)); gap: 4px; }
     .header-panel { padding: 5px 10px; }
     .stats-panel { padding: 5px 10px; }
-    .details-row { margin-top: 5px; }
     .footer { bottom: max(6px, env(safe-area-inset-bottom)); }
     .instructions { padding: 5px 7px; }
   }
-  /* Keep the footer clear of the controls below the 75% ground on short screens. */
+  /* Keep footer actions and stage information clear on short screens. */
   #app.footer-above-ground .footer { top: var(--footer-top); bottom: auto; }
+  #app.footer-above-ground #progress-dock { top: calc(var(--footer-top) + var(--footer-height) + 8px); transform: none; }
   @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 
   .footer-actions { display: flex; flex-shrink: 0; gap: 6px; }
@@ -140,15 +142,21 @@
   .skill-card .reset { margin-top: auto; min-height: 36px; font-size: 11px; width: 100%; white-space: normal; }
   .skill-card p:last-of-type { margin-bottom: 12px; }
   button:disabled { cursor: not-allowed; opacity: .45; }
-  .skill-summary, #shop-message { font-size: 11px; line-height: 1.6; color: #e8ffc6; }
-  #shop-message { min-height: 18px; margin-top: 10px; }
-  #skills-wallet { color: #ffdd86; font-size: 14px; }
+  .cost { color: inherit; }
+  button:enabled .cost, .skill-card[data-available="true"] .cost { color: #ffdd86; }
+  #pause-dialog { width: fit-content; max-width: calc(100vw - 32px); padding: 20px 24px; text-align: center; border: 2px solid #aa96eb; background: #14121e; }
+  #pause-dialog::backdrop { background: rgb(9 8 17 / 30%); }
+  #pause-dialog h2 { margin: 0; font-size: 17px; font-weight: 400; }
+  #pause-dialog p { margin: 10px 0 16px; color: #e5deef; }
+  #pause-resume { min-width: 120px; }
+  .skill-summary, #shop-message, #item-message { font-size: 11px; line-height: 1.6; color: #e8ffc6; }
+  #shop-message, #item-message { min-height: 18px; margin-top: 10px; }
+  #skills-wallet, #items-wallet { color: #ffdd86; font-size: 14px; }
   @media (max-width: 649px) {
     .footer { flex-wrap: wrap; gap: 6px; }
     .instructions { flex: 1 1 170px; }
     .footer-actions { margin-left: auto; }
     .stat .unit { font-size: 10px; }
-    .details-row { gap: 5px; }
   }
 </style>
 </head>
@@ -168,14 +176,13 @@
     <aside class="panel stats-panel">
       <div class="stats">
         <div class="stat"><span class="key">단계</span><span id="level" class="val">01</span><span class="unit"> /<span id="max-level"></span></span></div>
-        <div class="stat"><span class="key">개체</span><span id="count" class="val">1</span><span class="unit"> 마리</span></div>
-        <div class="stat"><span class="key">적 HP</span><span id="hp" class="val">10</span><span class="unit"> /<span id="max-hp">10</span></span></div>
-        <div class="stat"><span class="key">누적 적중</span><span id="hits" class="val">0</span></div>
+        <span id="view-detail">VIEW 100%</span>
+        <div class="stat"><span class="key">적 HP</span><span id="hp" class="val">100</span><span class="unit"> /<span id="max-hp">100</span></span></div>
+        <span id="size-detail">1단계 적 크기 · 32px / 현재 단계 적 크기 · 32px</span>
       </div>
-      <div id="stages" class="stage-meter" aria-label="단계 색상 진행"></div>
-      <div class="stage-status"><span id="stage-number">스테이지 1</span><span id="stage-time">시간제한 없음</span></div>
-      <div class="details-row"><span id="size-detail">1단계 적 크기 : 32px / 현재 단계 적 크기 : 32px</span><span id="view-detail">VIEW 100% / 나란히</span></div>
+      <span id="count" class="sr-only">1</span><span id="hits" class="sr-only">0</span>
     </aside>
+    <div id="stages" class="panel stage-meter" aria-label="단계 색상 진행"></div>
     <details id="test-tools" class="panel" hidden>
       <summary>상태로 이동</summary>
       <div class="test-actions">
@@ -184,7 +191,7 @@
           <option value="two">2마리 / 마지막 단계</option>
           <option value="three">3마리 / 마지막 단계</option>
           <option value="four">4마리 / 마지막 단계</option>
-          <option value="compress">다음 적중 → 기본 1.5배 / 3마리</option>
+          <option value="compress">다음 적중 → 기본 1.5배 / 1마리 · HP 350</option>
           <option value="replace">다음 적중 → 허수아비</option>
           <option value="finish">다음 적중 → finish</option><option value="shop">스킬 확인 / 2000 코인</option><option value="critical">크리티컬 확인 / 확률 30%</option>
         </select>
@@ -192,7 +199,10 @@
       </div>
     </details>
   </div>
-  <aside id="coin-dock" aria-label="보유 코인"><span class="key">코인</span><span id="coins" class="val">0</span></aside>
+  <aside id="progress-dock" aria-label="스테이지와 보유 코인">
+    <div class="stage-status"><span id="stage-number">스테이지 1</span><span id="stage-time">시간제한 없음</span></div>
+    <div id="coin-dock"><span class="key">코인</span><span id="coins" class="val">0</span></div>
+  </aside>
   <div id="toast" class="toast" aria-live="polite"></div>
   <div id="combat-feedback" class="sr-only" role="status" aria-live="polite"></div>
   <div id="ground-ui">
@@ -207,7 +217,7 @@
   </div>
   <footer class="footer">
     <div id="instruction" class="instructions"><strong>⚡ 클릭 또는 space / 화면 터치</strong><span>스킬을 업그레이드해 몬스터를 잡으세요!</span></div>
-    <div class="footer-actions"><button id="skills-open" class="reset" type="button">스킬</button><button id="settings-open" class="reset" type="button">설정</button></div>
+    <div class="footer-actions"><button id="items-open" class="reset" type="button">상점</button><button id="skills-open" class="reset" type="button">스킬</button><button id="settings-open" class="reset" type="button">설정</button></div>
   </footer>
   <section id="finish" class="overlay" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
     <div class="finish-card">
@@ -227,13 +237,13 @@
   <dialog id="settings-dialog" aria-labelledby="settings-title">
     <div class="modal-header"><h2 id="settings-title">설정</h2><button class="modal-close" data-close="settings-dialog" type="button">닫기</button></div>
     <button id="reset" class="reset danger" type="button">↺ 초기화</button>
-    <p>단계, 코인, 패시브 레벨, 구매한 스킬을 모두 초기화합니다.</p>
-    <p>설정과 스킬 창이 열려 있는 동안 전투가 일시 정지됩니다.</p>
+    <p>단계, 코인, 패시브 레벨, 구매한 스킬과 아이템, 스킬 사용 횟수를 모두 초기화합니다.</p>
+    <p>설정, 상점, 스킬 창이 열려 있는 동안 전투가 일시 정지됩니다.</p>
     <p id="save-status" role="status">진행 상태가 자동 저장됩니다.</p>
   </dialog>
   <dialog id="reset-dialog" aria-labelledby="reset-title">
     <div class="modal-header"><h2 id="reset-title">처음부터 시작할까요?</h2></div>
-    <p>현재 진행, 보유 코인, 모든 스킬이 초기화됩니다.</p>
+    <p>현재 진행, 보유 코인, 모든 스킬과 아이템, 스킬 사용 횟수가 초기화됩니다.</p>
     <div class="modal-actions"><button id="reset-cancel" class="reset" type="button">취소</button><button id="reset-confirm" class="reset danger" type="button">초기화 확인</button></div>
   </dialog>
   <dialog id="timeout-dialog" aria-labelledby="timeout-title">
@@ -252,10 +262,21 @@
     </div>
     <div id="passive-panel" role="tabpanel" aria-labelledby="passive-tab" class="skill-list"></div>
     <div id="active-panel" role="tabpanel" aria-labelledby="active-tab" hidden>
-      <p>구매한 스킬은 하단 스킬 버튼을 눌러 사용합니다.</p>
+      <p>구매한 스킬은 하단 버튼으로 사용합니다. 자동 공격 아이템을 구매한 등급은 자동으로도 사용합니다.</p>
       <div id="active-list" class="skill-list"></div>
     </div>
     <div id="shop-message" role="status" aria-live="polite"></div>
+  </dialog>
+  <dialog id="items-dialog" aria-labelledby="items-title">
+    <div class="modal-header"><h2 id="items-title">상점</h2><button class="modal-close" data-close="items-dialog" type="button">닫기</button></div>
+    <div id="items-wallet"></div>
+    <div id="items-list" class="skill-list"></div>
+    <div id="item-message" role="status" aria-live="polite"></div>
+  </dialog>
+  <dialog id="pause-dialog" aria-labelledby="pause-title">
+    <h2 id="pause-title">게임 일시 정지</h2>
+    <p id="pause-time"></p>
+    <button id="pause-resume" class="reset" type="button">계속</button>
   </dialog>
 </main>
 <script type="module">
@@ -266,39 +287,72 @@ const CONFIG = Object.freeze({
   CLICK_DELAY_MS: 1750, EVOLUTION_DELAY_MS: 500, EVOLUTION_LOCK_MS: 2000,
   GROUND_RATIO: .67, ATTACK_EFFECT_SCALE: .6, LIGHTNING_SCALE: 0.85, BASE_SLIME_SIZE: 32,
   LEVEL_GROWTH: 1.18, BASE_GROWTH: 1.5, SLIME_LIMIT: 200,
-  HP_PER_CREATURE: 100, SCARECROW_HP: 1000, MAX_LEVEL: 5,
+  HP_PER_CREATURE: 100, GROWN_SLIME_HP: 350, SLIME_HP_GROWTH: 1.3, SCARECROW_HP: 1000, MAX_LEVEL: 5,
   ANIMATION_SPEED: 1.05, SLIME_HOP: 3, DUMMY_SIZE: 156,
-  PASSIVE_MAX_LEVEL: 35, PASSIVE_COST: 20, PASSIVE_STEP: .01,
+  PASSIVE_MAX_LEVEL: 35, PASSIVE_COST: 20, PASSIVE_STEP: .01, DAMAGE_GROWTH: 1.08,
   CRITICAL_MULTIPLIER: 1.5, HIT_STOP_MS: 100,
   UNTIMED_STAGES: 10, STAGE_LIMIT_MS: 20000, CONTINUE_COST: 1500
 });
 const PASSIVES = Object.freeze({
-  speed1: { name: '공격속도 I', description: '기본 공격, Double Slash 공격속도: 레벨당 +1%' },
-  speed2: { name: '공격속도 II', description: 'Lightning Strike, Acid Splash 공격속도: 레벨당 +1%' },
-  critChance: { name: '크리티컬 확률', description: '레벨당 확률 +1%p' },
-  critDamage: { name: '크리티컬 공격력', description: '레벨당 크리티컬 피해 +1%' }
+  speed1: { name: '공격속도 I', description: '기본 공격, Double Slash 공격속도: 레벨당 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  speed2: { name: '공격속도 II', description: 'Lightning Strike, Vine Whip 공격속도: 레벨당 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  critChance: { name: '크리티컬 확률', description: '레벨당 확률 +1%p', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  critDamage: { name: '크리티컬 공격력', description: '레벨당 크리티컬 피해 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  strength: { name: 'Strength', description: '레벨당 물리 공격력 ×1.08', cost: 125, maxLevel: 10 },
+  intelligence: { name: 'Intelligence', description: '레벨당 마법 공격력 ×1.08', cost: 125, maxLevel: 10 },
+  dexterity: { name: 'Dexterity', description: '모든 등급 공격속도: 레벨당 +1%', cost: 45, maxLevel: 10, requires: [['speed1', 1], ['speed2', 1]] },
+  luck: { name: 'luck', description: '레벨당 크리티컬 확률 +1%p', cost: 45, maxLevel: 10, requires: [['critChance', 10]] }
 });
 // hitAt is effect time, taken from the original effect's visible impact constants.
 // Double Slash deals damage once at the crossing, not once for each stroke.
 const ATTACKS = Object.freeze({
-  basic: { grade: 'I', name: 'Parry', path: 'impacts/parry', period: 1750, damage: 7, cost: 0, hitAt: .025, impact: [0, -30], body: true },
-  doubleSlash: { grade: 'I', name: 'Double Slash', path: 'melee/double-slash', period: 1000, damage: 6, cost: 24, hitAt: .16, impact: [34, -23], body: true },
-  lightning: { grade: 'II', name: 'Lightning Strike', path: 'lightning/lightning-strike', period: 2700, damage: 18, cost: 68, hitAt: .76, impact: [0, 0] },
-  acid: { grade: 'II', name: 'Acid Splash', path: 'nature/acid-splash', period: 3200, damage: 24, cost: 80, hitAt: .3, impact: [0, 0] },
-  holy: { grade: 'III', name: 'Holy Pillar', path: 'holy/holy-pillar', period: 15000, damage: 199, cost: 324, hitAt: .66, impact: [0, 0] }
+  basic: { grade: 'I', type: 'physical', name: 'Parry', path: 'impacts/parry', period: 1750, damage: 7, cost: 0, hitAt: .025, impact: [0, -30], body: true },
+  doubleSlash: { grade: 'I', type: 'physical', name: 'Double Slash', path: 'melee/double-slash', period: 1000, damage: 6, cost: 24, hitAt: .16, impact: [34, -23], body: true },
+  lightning: { grade: 'II', type: 'magic', name: 'Lightning Strike', path: 'lightning/lightning-strike', period: 2700, damage: 18, cost: 68, hitAt: .76, hits: [.76, 1.04, 1.26], impact: [0, 0] },
+  acid: { grade: 'II', type: 'magic', name: 'Vine Whip', path: 'nature/vine-whip', period: 3200, damage: 24, cost: 80, hitAt: .3, impact: [0, 0] },
+  holy: { grade: 'III', type: 'neutral', name: 'Holy Pillar', path: 'holy/holy-pillar', period: 15000, damage: 199, cost: 324, hitAt: .66, hits: [.66, .96, 1.26, 1.56, 1.86], impact: [0, 0] }
+});
+const ITEMS = Object.freeze({
+  autoGlove: { name: 'Auto Glove', cost: 125, grade: 'I', skills: ['basic', 'doubleSlash'] },
+  autoMagicStick: { name: 'Auto Magic Stick', cost: 777, grade: 'II', skills: ['lightning', 'acid'] }
 });
 const ACTIVE_IDS = Object.freeze(Object.keys(ATTACKS).filter(id => id !== 'basic'));
 const clamp01 = n => Math.max(0, Math.min(1, n));
 const easeInOut = u => u * u * (3 - 2 * u);
-const roundHp = n => Math.round(n * 100) / 100;
-const hpPerBarOf = s => s.kind === 'scarecrow' ? CONFIG.SCARECROW_HP : CONFIG.HP_PER_CREATURE;
+const roundHp = Math.round;
+const hpPerBarOf = s => s.kind === 'scarecrow' ? CONFIG.SCARECROW_HP
+  : s.cycles > 0 ? Math.round(CONFIG.GROWN_SLIME_HP * CONFIG.SLIME_HP_GROWTH ** (s.cycles - 1)) : CONFIG.HP_PER_CREATURE;
 const maxHpOf = s => hpPerBarOf(s) * s.count;
 const sizeOf = s => (s.kind === 'slime' ? s.baseSize : CONFIG.DUMMY_SIZE) * CONFIG.LEVEL_GROWTH ** (s.level - 1);
-const speedBonus = (s, id = 'basic') => (ATTACKS[id].grade === 'I' ? s.passives.speed1 : ATTACKS[id].grade === 'II' ? s.passives.speed2 : 0) * CONFIG.PASSIVE_STEP;
+const speedBonus = (s, id = 'basic') => ((ATTACKS[id].grade === 'I' ? s.passives.speed1 : ATTACKS[id].grade === 'II' ? s.passives.speed2 : 0) + s.passives.dexterity) * CONFIG.PASSIVE_STEP;
 const attackPeriod = (s, id = 'basic') => (id === 'basic' ? CONFIG.CLICK_DELAY_MS : ATTACKS[id].period) / (1 + speedBonus(s, id));
-const criticalChance = s => s.passives.critChance * CONFIG.PASSIVE_STEP;
+const criticalChance = s => (s.passives.critChance + s.passives.luck) * CONFIG.PASSIVE_STEP;
 const criticalMultiplier = level => CONFIG.CRITICAL_MULTIPLIER * (1 + level * CONFIG.PASSIVE_STEP);
 const skillGrade = id => ATTACKS[id].grade;
+function attackDamage(s, id, critical = false) {
+  const physical = CONFIG.DAMAGE_GROWTH ** s.passives.strength;
+  const magic = CONFIG.DAMAGE_GROWTH ** s.passives.intelligence;
+  const type = ATTACKS[id].type;
+  const multiplier = type === 'physical' ? physical : type === 'magic' ? magic : (physical + magic) / 2;
+  return Math.round(ATTACKS[id].damage * multiplier * (critical ? criticalMultiplier(s.passives.critDamage) : 1));
+}
+const passiveUnlocked = (s, id) => (PASSIVES[id].requires || []).every(([key, level]) => s.passives[key] >= level);
+const itemUnlocked = (s, id) => ITEMS[id].skills.every(skill => (skill === 'basic' || s.owned[skill]) && s.uses[skill] >= 25);
+const isAutomatic = (s, id) => Object.keys(ITEMS).some(item => s.items[item] && ITEMS[item].grade === ATTACKS[id].grade);
+const environmentOf = s => ({
+  weather: s.kind === 'scarecrow' ? 'fireflies' : s.stage > 20 ? 'fog' : null,
+  ground: s.kind === 'scarecrow' ? 'dark' : 'ground'
+});
+const hitTimes = ticket => ATTACKS[ticket.source].hits || [ATTACKS[ticket.source].hitAt];
+function splitDamage(source, total) {
+  if (source !== 'holy' && source !== 'lightning') return [total];
+  const first = source === 'holy' ? Math.round(total / 2) : 0;
+  const count = source === 'holy' ? 4 : 3;
+  const part = Math.floor((total - first) / count);
+  const tail = Array.from({length: count}, (_, index) => index === count - 1 ? total - first - part * (count - 1) : part);
+  return source === 'holy' ? [first, ...tail] : tail;
+}
+const remainingDamage = ticket => splitDamage(ticket.source, ticket.damage).slice(ticket.hitIndex).reduce((sum, damage) => sum + damage, 0);
 function resetEnemies(s, total = maxHpOf(s), growing = false) {
   const capacity = hpPerBarOf(s);
   s.enemies = Array.from({ length: s.count }, (_, id) => {
@@ -312,8 +366,10 @@ function initialState(seed = 0x12345678) {
   const s = { kind: 'slime', level: 1, count: 1, baseSize: CONFIG.BASE_SLIME_SIZE, cycles: 0,
     hp: CONFIG.HP_PER_CREATURE, totalHits: 0, acceptedClicks: 0, totalCasts: 0,
     pending: 0, phase: 'ready', generation: 0, lastAcceptedAt: -Infinity, transition: null,
-    coins: 0, passives: { speed1: 0, speed2: 0, critChance: 0, critDamage: 0 },
+    coins: 0, passives: Object.fromEntries(Object.keys(PASSIVES).map(id => [id, 0])),
     owned: Object.fromEntries(ACTIVE_IDS.map(id => [id, false])),
+    items: Object.fromEntries(Object.keys(ITEMS).map(id => [id, false])),
+    uses: Object.fromEntries(Object.keys(ATTACKS).map(id => [id, 0])),
     lastCast: Object.fromEntries(Object.keys(ATTACKS).map(id => [id, -Infinity])),
     rng: seed >>> 0 || 1, targetId: null, lastHit: null, criticalHits: 0,
     stage: 1, stageRemaining: CONFIG.STAGE_LIMIT_MS };
@@ -324,23 +380,31 @@ function random01(s) {
   s.rng = n >>> 0; return s.rng / 4294967296;
 }
 function upgradePassive(s, id) {
-  if (!Object.hasOwn(PASSIVES, id) || s.passives[id] >= CONFIG.PASSIVE_MAX_LEVEL || s.coins < CONFIG.PASSIVE_COST) return false;
-  s.coins -= CONFIG.PASSIVE_COST; s.passives[id]++; return true;
+  if (!Object.hasOwn(PASSIVES, id)) return false;
+  const passive = PASSIVES[id];
+  if (!passiveUnlocked(s, id) || s.passives[id] >= passive.maxLevel || s.coins < passive.cost) return false;
+  s.coins -= passive.cost; s.passives[id]++; return true;
 }
 function buySkill(s, id) {
   if (!ACTIVE_IDS.includes(id) || s.owned[id] || s.coins < ATTACKS[id].cost) return false;
   s.coins -= ATTACKS[id].cost; s.owned[id] = true; s.lastCast[id] = -Infinity; return true;
 }
-function progressState(s, slimeLimit = CONFIG.SLIME_LIMIT) {
+function buyItem(s, id) {
+  if (!Object.hasOwn(ITEMS, id) || s.items[id] || !itemUnlocked(s, id) || s.coins < ITEMS[id].cost) return false;
+  s.coins -= ITEMS[id].cost; s.items[id] = true; return true;
+}
+function progressState(s, slimeLimit = CONFIG.SLIME_LIMIT, legacy = false) {
   const next = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
   let event = 'level', finish = false;
   if (next.kind === 'scarecrow') {
     next.level = Math.min(CONFIG.MAX_LEVEL, next.level + 1); finish = next.level === CONFIG.MAX_LEVEL;
   } else if (next.level < CONFIG.MAX_LEVEL) next.level++;
   else {
-    next.level = 1; next.count++; event = 'spawn';
-    if (next.count >= 5) {
-      next.count = 3; next.baseSize *= CONFIG.BASE_GROWTH; next.cycles++; event = 'compress';
+    next.level = 1;
+    if ((legacy || next.cycles === 0) && next.count < 4) {
+      next.count++; event = 'spawn';
+    } else {
+      next.count = legacy ? 3 : 1; next.baseSize *= CONFIG.BASE_GROWTH; next.cycles++; event = 'compress';
       if (next.baseSize > slimeLimit) {next.kind = 'scarecrow'; next.count = 1; event = 'scarecrow';}
     }
   }
@@ -373,6 +437,7 @@ function restartAfterFailure(s, keep, seed = 1) {
   if (keep) {
     next.coins = s.coins - CONFIG.CONTINUE_COST;
     next.passives = {...s.passives}; next.owned = {...s.owned};
+    next.items = {...s.items}; next.uses = {...s.uses};
     for (const key of ['totalHits', 'acceptedClicks', 'totalCasts', 'criticalHits', 'rng']) next[key] = s[key];
   }
   return next;
@@ -398,28 +463,38 @@ function reserveAttack(s, now, source = 'basic', order = null, random = () => ra
   // A lethal hit in flight is still attacking a living target. Wait for its death.
   if (!target || target.hp - target.reserved <= .0001) return null;
   const critical = random() < criticalChance(s);
-  const damage = roundHp(ATTACKS[source].damage * (critical ? criticalMultiplier(s.passives.critDamage) : 1));
+  const damage = attackDamage(s, source, critical);
   target.reserved = roundHp(target.reserved + damage); s.pending++; s.totalCasts++;
+  s.uses[source]++;
   s.targetId = target.id; s.lastCast[source] = now;
   if (source === 'basic') {s.lastAcceptedAt = now; s.acceptedClicks++;}
-  return { generation: s.generation, consumed: false, source, targetId: target.id, damage, critical };
+  return { generation: s.generation, consumed: false, source, targetId: target.id, damage, critical, hitIndex: 0 };
 }
 function applyHit(s, ticket, now, random = () => random01(s)) {
   if (!ticket || ticket.consumed || ticket.generation !== s.generation || s.phase !== 'ready') return null;
-  ticket.consumed = true; s.pending = Math.max(0, s.pending - 1);
   const target = s.enemies[ticket.targetId];
   if (!target) return null;
-  target.reserved = roundHp(Math.max(0, target.reserved - ticket.damage));
-  if (target.dead) return null;
+  if (target.dead) {
+    target.reserved = Math.max(0, target.reserved - remainingDamage(ticket));
+    ticket.consumed = true; s.pending = Math.max(0, s.pending - 1);
+    return null;
+  }
+  const parts = splitDamage(ticket.source, ticket.damage), damage = parts[ticket.hitIndex];
+  ticket.hitIndex++;
+  target.reserved = Math.max(0, target.reserved - damage);
   const previousHp = s.hp, previousEnemyHp = target.hp;
-  target.hp = roundHp(Math.max(0, target.hp - ticket.damage)); target.dead = target.hp <= 0;
+  target.hp = Math.max(0, target.hp - damage); target.dead = target.hp <= 0;
+  if (target.dead || ticket.hitIndex === parts.length) {
+    target.reserved = Math.max(0, target.reserved - remainingDamage(ticket));
+    ticket.consumed = true; s.pending = Math.max(0, s.pending - 1);
+  }
   if (target.dead) s.targetId = null;
   s.hp = roundHp(s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0));
   s.totalHits++; if (ticket.critical) s.criticalHits++;
   const coins = s.kind === 'slime' ? 1 + Math.min(3, Math.floor(clamp01(random()) * 4)) : 0;
   s.coins += coins;
   const result = { previousHp, hp: s.hp, previousEnemyHp, enemyHp: target.hp, targetId: target.id,
-    damage: ticket.damage, actualDamage: roundHp(previousEnemyHp - target.hp), critical: ticket.critical, coins, source: ticket.source, transition: null };
+    damage, actualDamage: previousEnemyHp - target.hp, critical: ticket.critical, coins, source: ticket.source, transition: null };
   s.lastHit = { ...result };
   if (s.hp <= 0) {
     const from = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
@@ -512,11 +587,53 @@ function decodeSave(raw) {
   if (!key) throw new Error('Missing save key');
   return {data,key};
 }
+function migrateSave(data) {
+  if (data?.version !== 1) return data;
+  const s = data.state;
+  const reserved = s.enemies.map(() => 0);
+  for (const cast of data.casts) {
+    const damage = cast.ticket.damage;
+    if (!Object.hasOwn(ATTACKS, cast.source) || !Number.isFinite(damage)
+      || damage < ATTACKS[cast.source].damage
+      || damage > Math.round(ATTACKS[cast.source].damage * criticalMultiplier(CONFIG.PASSIVE_MAX_LEVEL) * 100) / 100) {
+      throw new Error('Invalid legacy damage');
+    }
+    reserved[cast.ticket.targetId] += damage;
+  }
+  const capacity = s.kind === 'scarecrow' ? CONFIG.SCARECROW_HP : CONFIG.HP_PER_CREATURE;
+  if (!s.enemies.every((enemy, id) => Number.isFinite(enemy.hp) && enemy.hp >= 0
+    && enemy.hp <= capacity
+    && Number.isFinite(enemy.reserved) && Math.abs(enemy.reserved - reserved[id]) < .001)
+    || !Number.isFinite(s.hp) || Math.abs(s.hp - s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0)) > .001) {
+    throw new Error('Invalid legacy health');
+  }
+  s.passives = {...s.passives, strength: 0, intelligence: 0, dexterity: 0, luck: 0};
+  s.items = Object.fromEntries(Object.keys(ITEMS).map(id => [id, false]));
+  // Earlier saves only recorded a total, so per-skill use counts start here.
+  s.uses = Object.fromEntries(Object.keys(ATTACKS).map(id => [id, 0]));
+  if (s.transition) s.transition.legacy = true;
+  for (const enemy of s.enemies) {
+    enemy.hp = enemy.hp > 0 ? Math.max(1, Math.round(enemy.hp)) : 0;
+    enemy.reserved = 0;
+  }
+  s.hp = s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0);
+  for (const cast of data.casts) {
+    cast.ticket.damage = Math.round(cast.ticket.damage);
+    s.enemies[cast.ticket.targetId].reserved += cast.ticket.damage;
+  }
+  data.version = 2;
+  return data;
+}
 function validateSave(data) {
+  data = migrateSave(data);
+  if (data?.version === 2) {
+    for (const cast of data.casts) cast.ticket.hitIndex = 0;
+    data.version = 3;
+  }
   const require = ok => {if (!ok) throw new Error('Invalid progress data');};
   const number = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isFinite(n) && n >= min && n <= max;
   const integer = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && number(n,min,max);
-  require(data?.version === 1 && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
+  require(data?.version === 3 && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
   const s = data.state;
   require(s && typeof s === 'object' && Object.keys(s).sort().join() === Object.keys(initialState()).sort().join());
   const savedSizeLimit = Math.max(CONFIG.SLIME_LIMIT, LEGACY_SLIME_LIMIT) * CONFIG.BASE_GROWTH;
@@ -526,12 +643,19 @@ function validateSave(data) {
   require(integer(s.stage,1) && number(s.stageRemaining,0,CONFIG.STAGE_LIMIT_MS) && integer(s.rng,1,0xffffffff));
   require(s.phase !== 'failed' || (s.stage > CONFIG.UNTIMED_STAGES && s.stageRemaining === 0));
   require(s.phase !== 'ready' || s.stage <= CONFIG.UNTIMED_STAGES || s.stageRemaining > 0);
-  for (const [obj,ids,check] of [[s.passives,Object.keys(PASSIVES),v=>integer(v,0,CONFIG.PASSIVE_MAX_LEVEL)],[s.owned,ACTIVE_IDS,v=>typeof v==='boolean'],[s.lastCast,Object.keys(ATTACKS),v=>v===null||number(v,0,data.gameNow)]]) {
-    require(obj && Object.keys(obj).sort().join() === [...ids].sort().join() && Object.values(obj).every(check));
+  for (const [obj,ids,check] of [
+    [s.passives,Object.keys(PASSIVES),(v,id)=>integer(v,0,PASSIVES[id].maxLevel)],
+    [s.owned,ACTIVE_IDS,v=>typeof v==='boolean'],
+    [s.items,Object.keys(ITEMS),v=>typeof v==='boolean'],
+    [s.uses,Object.keys(ATTACKS),v=>integer(v,0,s.totalCasts)],
+    [s.lastCast,Object.keys(ATTACKS),v=>v===null||number(v,0,data.gameNow)]
+  ]) {
+    require(obj && Object.keys(obj).sort().join() === [...ids].sort().join() && Object.entries(obj).every(([id,v])=>check(v,id)));
   }
+  require(Object.values(s.uses).reduce((sum, uses) => sum + uses, 0) <= s.totalCasts);
   require(s.lastAcceptedAt === null || number(s.lastAcceptedAt,0,data.gameNow));
   require(Array.isArray(s.enemies) && s.enemies.length === s.count);
-  s.enemies.forEach((e,id) => require(e.id === id && number(e.hp,0,hpPerBarOf(s)) && number(e.reserved) && typeof e.dead === 'boolean' && (s.phase === 'transforming' ? !e.dead && e.hp === 0 : e.dead === (e.hp <= 0))));
+  s.enemies.forEach((e,id) => require(e.id === id && integer(e.hp,0,hpPerBarOf(s)) && integer(e.reserved) && typeof e.dead === 'boolean' && (s.phase === 'transforming' ? !e.dead && e.hp === 0 : e.dead === (e.hp <= 0))));
   require(number(s.hp,0,maxHpOf(s)) && Math.abs(s.hp - s.enemies.reduce((sum,e)=>sum+e.hp,0)) < .001);
   require(s.targetId === null || integer(s.targetId,0,s.count-1));
   if (['waiting','transforming'].includes(s.phase)) {
@@ -542,22 +666,26 @@ function validateSave(data) {
     require(['kind','level','count','baseSize','cycles'].every(k=>s[k]===current[k]));
     // Finish transitions already scheduled under the previous threshold.
     const matchesTransition = slimeLimit => {
-      const { next, finish, event } = progressState(tr.from, slimeLimit);
+      const { next, finish, event } = progressState(tr.from, slimeLimit, tr.legacy === true);
       return Object.keys(next).every(k => next[k] === tr.to[k]) && finish === tr.finish && event === tr.event;
     };
     require(matchesTransition(CONFIG.SLIME_LIMIT) || matchesTransition(LEGACY_SLIME_LIMIT));
   } else require(s.transition === null);
   require(s.phase !== 'finished' || (s.kind === 'scarecrow' && s.level === CONFIG.MAX_LEVEL));
   require(Array.isArray(data.casts) && data.casts.length <= 5);
+  const maximumDamageState = {passives: Object.fromEntries(Object.entries(PASSIVES).map(([id, passive]) => [id, passive.maxLevel]))};
   const sources = new Set(), reserved = s.enemies.map(()=>0);
   for (const a of data.casts) {
     const t = a.ticket;
     require(s.phase === 'ready' && Object.hasOwn(ATTACKS,a.source) && !sources.has(a.source) && (a.source === 'basic' || s.owned[a.source])); sources.add(a.source);
     // Another critical in the same simulation step can stop this already-due hit.
-    require(number(a.t,0,ATTACKS[a.source].hitAt+1/120+1e-7) && integer(a.seed,1) && t && t.source === a.source && t.generation === s.generation && t.consumed === false && integer(t.targetId,0,s.count-1) && typeof t.critical === 'boolean');
+    require(integer(a.seed,1) && t && t.source === a.source && t.generation === s.generation && t.consumed === false && integer(t.targetId,0,s.count-1) && typeof t.critical === 'boolean');
+    const times = hitTimes(t);
+    require(integer(t.hitIndex,0,times.length-1));
+    require(number(a.t,t.hitIndex ? times[t.hitIndex-1] : 0,times[t.hitIndex]+1/120+1e-7));
     // A passive may have changed since casting, so accept the configured damage range.
-    require(number(t.damage,ATTACKS[a.source].damage,roundHp(ATTACKS[a.source].damage * criticalMultiplier(CONFIG.PASSIVE_MAX_LEVEL))));
-    reserved[t.targetId] += t.damage;
+    require(integer(t.damage,ATTACKS[a.source].damage,attackDamage(maximumDamageState,a.source,true)));
+    reserved[t.targetId] += remainingDamage(t);
   }
   require(s.pending === data.casts.length && reserved.every((n,id)=>Math.abs(n-s.enemies[id].reserved)<.001));
   s.lastAcceptedAt ??= -Infinity;
@@ -599,9 +727,11 @@ const stageDots = COLORS.slice(0, CONFIG.MAX_LEVEL).map((c, i) => {
 const freshSeed = () => crypto.getRandomValues(new Uint32Array(1))[0] || 1;
 let core, slimeModule, healthModule, critModule, damageModule, coinModule, ready = false;
 let effectModules = {}, effectBuffers = new Map();
+let weatherModules = {}, weatherFx = null, environmentKey = '';
 let state = initialState(freshSeed()), units = [], healthRows = [], attacks = [], serial = 0;
 let gameNow = 0, hitStopUntil = 0, flash = 0, shakeTime = 0, toastUntil = 0;
 let stageWall = performance.now(), pageVisible = !document.hidden, lastSaveAt = -Infinity, saveKey = '', savedSignature = '';
+let pauseStartedAt = null, pauseHitStopRemaining = 0;
 let cssWidth = 1, cssHeight = 1, width = 1, height = 1;
 let background, backgroundFrame, backgroundImage, visualSize = 32, view = null, hudDirty = true;
 const formatNumber = n => Number(n.toFixed(2)).toString();
@@ -611,7 +741,7 @@ const modalOpen = () => !!document.querySelector('dialog[open]');
 function saveProgress(force = false) {
   if (!ready) return;
   try {
-    const data = {version:1,maxLevel:CONFIG.MAX_LEVEL,state,gameNow,hitStopRemaining:Math.max(0,hitStopUntil-performance.now()),
+    const data = {version:3,maxLevel:CONFIG.MAX_LEVEL,state,gameNow,hitStopRemaining:pauseStartedAt === null ? Math.max(0,hitStopUntil-performance.now()) : pauseHitStopRemaining,
       casts:attacks.filter(a=>a.ticket && !a.ticket.consumed && a.ticket.generation===state.generation && state.phase==='ready')
         .map(a=>({source:a.source,t:a.fx.t,seed:a.fx.options.seed,ticket:a.ticket}))};
     const signature = JSON.stringify(data);
@@ -649,7 +779,7 @@ function updateStageUi() {
 function showTimeout() {
   $('timeout-message').textContent=`스테이지 ${state.stage}의 제한시간이 끝났습니다. 보유 코인: ${state.coins}${state.coins<CONFIG.CONTINUE_COST?' / 코인이 부족합니다.':''}`;
   const cost = CONFIG.CONTINUE_COST.toLocaleString('ko-KR');
-  $('timeout-description').textContent = `${cost}코인을 지불하면 스킬과 남은 코인, 누적 기록을 유지하고 1스테이지부터 다시 시작합니다.`;
+  $('timeout-description').textContent = `${cost}코인을 지불하면 스킬, 아이템, 스킬 사용 횟수와 남은 코인, 누적 기록을 유지하고 1스테이지부터 다시 시작합니다.`;
   const keepButton = $('timeout-keep');
   keepButton.textContent = `${cost} 코인 / 정보 유지`;
   keepButton.disabled = state.coins < CONFIG.CONTINUE_COST;
@@ -744,8 +874,6 @@ function settle() {
 }
 function updateLayout() {
   if (!ready) return;
-  const statHeight = document.querySelector('.stats-panel').getBoundingClientRect().height;
-  document.querySelector('.header-panel').style.height = cssWidth<650?'auto':`${statHeight}px`;
   const visual = visualState(); visualSize = visual.size;
   const top = app.getBoundingClientRect().top, hudBottom = $('hud').getBoundingClientRect().bottom - top;
   app.style.setProperty('--hud-bottom', `${hudBottom}px`);
@@ -753,12 +881,11 @@ function updateLayout() {
   const groundUiBottom = $('ground-ui').getBoundingClientRect().bottom - top;
   const raised = groundUiBottom + 8 > cssHeight - footerHeight - 16;
   app.classList.toggle('footer-above-ground', raised);
+  const footerTop = hudBottom + 8;
+  app.style.setProperty('--footer-top', `${footerTop}px`);
+  app.style.setProperty('--footer-height', `${footerHeight}px`);
   const coinRect = $('coin-dock').getBoundingClientRect();
   app.style.setProperty('--toast-top', `${coinRect.bottom-top+4}px`);
-  const toastBottom=$('toast').getBoundingClientRect().bottom-top;
-  let footerTop = hudBottom + 8;
-  if (raised && footerTop < toastBottom + 8 && footerTop + footerHeight > coinRect.top - top - 8) footerTop = toastBottom + 8;
-  app.style.setProperty('--footer-top', `${footerTop}px`);
   const occupied = raised ? footerTop + footerHeight : hudBottom;
   view = groupLayout(state.count, visual.size, Math.max(40, cssWidth - 32), Math.max(36, cssHeight * CONFIG.GROUND_RATIO - occupied - 16), state.kind);
   for (let i = 0; i < units.length; i++) {
@@ -773,7 +900,7 @@ function updateLayout() {
     unit.canvas.style.transform = `translate3d(${kick}px,0,0) scale(${scale})`;
     if (unit.fx) unit.fx.options.palette = dead ? core.PAL.night : visual.palette;
   }
-  $('view-detail').textContent = `VIEW ${Math.round(view.camera*100)}% / ${view.mode==='row'?'나란히':'겹침'}`;
+  $('view-detail').textContent = `VIEW ${Math.round(view.camera*100)}%`;
   app.dataset.layout = view.mode;
 }
 function updateInputStatus() {
@@ -781,8 +908,7 @@ function updateInputStatus() {
   const paused = modalOpen(), stopped = performance.now() < hitStopUntil;
   let label = '클릭 / 터치 / Space = 기본 공격';
   if (!ready) label = 'pixelfx 로딩 중';
-  else if (paused) label = '관리 창 / 전투 일시 정지';
-  else if (stopped) label = 'CRITICAL / HIT STOP';
+  else if (paused) label = '전투 일시 정지';
   else if (state.phase === 'finished') label = '완료 / 설정에서 다시 시작';
   else if (state.phase === 'failed') label = '시간 초과';
   else if (state.phase === 'waiting') label = `적 변화 준비 / ${seconds(Math.max(0,state.transition.start-gameNow))}`;
@@ -795,6 +921,7 @@ function updateInputStatus() {
     const period = attackPeriod(state,id), left = Math.max(0,period-(gameNow-state.lastCast[id]));
     button.disabled = !ready || paused || stopped || inputGate(state,gameNow,id) !== 'ready';
     button.hidden = !owned;
+    button.querySelector('.skill-name').textContent = `${ATTACKS[id].name}${isAutomatic(state,id) ? ' · AUTO' : ''}`;
     button.querySelector('.skill-time').textContent = !owned ? '미구매' : left > .005 ? seconds(left) : '준비';
     button.querySelector('.input-progress').style.transform = `scaleX(${owned ? clamp01(1-left/period) : 0})`;
     button.setAttribute('aria-label',`${ATTACKS[id].name} / ${!owned?'미구매':left>0?seconds(left)+' 후 사용 가능':'사용 가능'} / 주기 ${seconds(period)}`);
@@ -811,9 +938,21 @@ function resize() {
   worldCanvas.width=vfxCanvas.width=width;worldCanvas.height=vfxCanvas.height=height;
   worldCtx.imageSmoothingEnabled=vfxCtx.imageSmoothingEnabled=false;
   backgroundFrame=core.createFrame(width,height);backgroundImage=worldCtx.createImageData(width,height);
-  const y=Math.round(height*CONFIG.GROUND_RATIO),dark=core.backdrop('dark',width,height),ground=core.backdrop('ground',width,height,y);
-  dark.set(ground.subarray(y*width),y*width);background=dark;
+  environmentKey='';syncEnvironment();
   updateLayout();render();
+}
+function syncEnvironment() {
+  const environment = environmentOf(state), key = `${environment.weather}/${environment.ground}`;
+  if (key === environmentKey) return;
+  const y = Math.round(height * CONFIG.GROUND_RATIO);
+  background = core.backdrop('dark', width, height);
+  if (environment.ground === 'ground') {
+    const ground = core.backdrop('ground', width, height, y);
+    background.set(ground.subarray(y * width), y * width);
+  }
+  const module = weatherModules[environment.weather];
+  weatherFx = module ? core.createFx(module, {x: module.meta.origin[0], y: module.meta.origin[1], seed: 19, light: .8}) : null;
+  environmentKey = key; app.dataset.weather = environment.weather || 'none';
 }
 function effectBuffer(module) {
   if (!effectBuffers.has(module)) {
@@ -829,12 +968,15 @@ function makeEffect(source, targetId, critical, ticket = null, options = {}) {
   const [ox,oy]=module.meta.origin;
   const opts={x:ox,y:oy,seed:++serial+200,light:1,...options};
   if (critical) {opts.palette=core.PAL.candy;opts.sparks=core.PAL.candy;}
+  if (source === 'damage') opts.palette = core.PAL.ember;
+  if (source === 'coins') opts.smoke = [0, 0, 0, 0];
+  const jitter = source === 'damage' ? new core.Rng(opts.seed) : null;
   const fx=core.createFx(module,opts);
-  return {id:serial,source,module,fx,ticket,targetId,critical,impact:def.impact,scale:source==='damage'||source==='coins'?.5:CONFIG.ATTACK_EFFECT_SCALE*(source==='lightning'?CONFIG.LIGHTNING_SCALE:1),keepInView:source==='damage'||source==='coins',anchorX:unit.x/cssWidth,anchorY:(unit.y-bodyOffset)/cssHeight};
+  return {id:serial,source,module,fx,ticket,targetId,critical,impact:def.impact,scale:source==='damage'||source==='coins'?.5:CONFIG.ATTACK_EFFECT_SCALE*(source==='lightning'?CONFIG.LIGHTNING_SCALE:1),keepInView:source==='damage'||source==='coins',anchorX:(unit.x+(jitter?jitter.range(-12,12):0))/cssWidth,anchorY:(unit.y-bodyOffset+(jitter?jitter.range(-8,8):0))/cssHeight};
 }
 function strike(source = 'basic') {
   syncStageTimer();
-  if (!ready || !background || modalOpen() || performance.now()<hitStopUntil) return false;
+  if (!ready || !background || document.hidden || modalOpen() || performance.now()<hitStopUntil) return false;
   settle();updateLayout();
   // Screen order chooses the next target; an existing living target stays selected.
   const order=[...units].sort((a,b)=>b.x-a.x || view.points[b.index].z-view.points[a.index].z || b.index-a.index).map(u=>u.index);
@@ -865,6 +1007,7 @@ function onHit(attack, wallNow) {
 function resetGame(next = null) {
   const generation=state.generation+1;
   state=next||initialState(freshSeed());state.generation=generation;gameNow=0;hitStopUntil=0;stageWall=performance.now();
+  pauseStartedAt=null;pauseHitStopRemaining=0;
   attacks=[];flash=shakeTime=toastUntil=0;
   $('combat-feedback').textContent='';
   document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
@@ -889,18 +1032,28 @@ function update(dt, wallNow) {
     batch.forEach(attack=>attack.fx.update(step));
     for(const row of healthRows){if(row.fx && row.age<BAR_HOLD_TIME){const delta=Math.min(step,BAR_HOLD_TIME-row.age);row.fx.update(delta);row.age+=delta;}}
     for(const attack of batch){
-      if(attack.ticket && !attack.ticket.consumed && attack.fx.t+1e-8>=ATTACKS[attack.source].hitAt){
+      while(attack.ticket && !attack.ticket.consumed && attack.ticket.generation===state.generation && state.phase==='ready' && attack.fx.t+1e-8>=hitTimes(attack.ticket)[attack.ticket.hitIndex]){
         onHit(attack,wallNow);if(wallNow<hitStopUntil)break;
       }
     }
     attacks=attacks.filter(attack=>!attack.fx.done());
     if(wallNow<hitStopUntil)break;
   }
+  for (const id of Object.keys(ATTACKS)) {
+    if (wallNow >= hitStopUntil && isAutomatic(state,id) && inputGate(state,gameNow,id) === 'ready') strike(id);
+  }
   if(hudDirty)updateHud();updateInputStatus();
 }
 function render() {
   if(!ready || !background)return;
+  syncEnvironment();
   updateLayout();core.clearFrame(backgroundFrame);core.composite(backgroundFrame,backgroundImage.data,background);worldCtx.putImageData(backgroundImage,0,0);
+  if (weatherFx) {
+    const module = weatherModules[environmentOf(state).weather], b = effectBuffer(module);
+    weatherFx.update(gameNow / 1000 - weatherFx.t);
+    core.clearFrame(b.frame);weatherFx.draw(b.frame);core.composite(b.frame,b.image.data,null);b.ctx.putImageData(b.image,0,0);
+    worldCtx.drawImage(b.canvas,0,0,width,Math.round(height*CONFIG.GROUND_RATIO));
+  }
   vfxCtx.clearRect(0,0,width,height);
   // Keep damage text above attacks and loot, including later overlapping casts.
   for(const attack of [...attacks].sort((a,b)=>Number(a.source==='damage')-Number(b.source==='damage'))){
@@ -944,36 +1097,77 @@ function buildSkillUi(){
   }
   for(const [id,skill] of Object.entries(PASSIVES)){
     const card=document.createElement('article');card.className='skill-card';
-    card.innerHTML=`<h3>${skill.name} <span id="level-${id}"></span></h3><p>* ${skill.description}<br>* 최대 ${CONFIG.PASSIVE_MAX_LEVEL}레벨</p><button class="reset" data-upgrade="${id}" type="button"></button>`;
+    const requirement = (skill.requires || []).map(([key, level]) => `${PASSIVES[key].name} ${level}레벨 이상`).join(', ') || '없음';
+    card.innerHTML=`<h3>${skill.name} <span id="level-${id}"></span></h3><p>${skill.description}<br>최대 ${skill.maxLevel}레벨 / 레벨당 <span class="cost">${skill.cost}코인</span><br>구매 조건 · ${requirement}</p><button class="reset" data-upgrade="${id}" type="button"></button>`;
     $('passive-panel').append(card);
   }
   for(const id of ACTIVE_IDS){
     const skill=ATTACKS[id],card=document.createElement('article');card.className='skill-card';
-    card.innerHTML=`<h3><span class="skill-grade">[ ${skillGrade(id)} ]</span> ${skill.name}</h3><p>공격력 ${skill.damage} / 기본 주기 ${seconds(skill.period)}</p><p id="period-${id}"></p><button class="reset" data-buy="${id}" type="button"></button>`;
+    const type = {physical: '물리', magic: '마법', neutral: '중립 · 물리 50% + 마법 50%'}[skill.type];
+    card.innerHTML=`<h3><span class="skill-grade">[ ${skillGrade(id)} ]</span> ${skill.name}</h3><p>${type} / 기본 공격력 ${skill.damage} / 기본 주기 ${seconds(skill.period)}</p><p id="period-${id}"></p><button class="reset" data-buy="${id}" type="button"></button>`;
     $('active-list').append(card);
+  }
+  for (const [id, item] of Object.entries(ITEMS)) {
+    const card = document.createElement('article'); card.className = 'skill-card';
+    card.innerHTML = `<h3>${item.name}</h3><p><span class="cost">${item.cost}코인</span> / 1회 구매<br>${item.grade} 등급 공격 자동 사용<br>구매 조건 · 해당 등급의 모든 스킬 보유 및 각각 25회 사용</p><p id="item-progress-${id}"></p><button class="reset" data-item="${id}" type="button"></button>`;
+    $('items-list').append(card);
   }
 }
 function updateSkillUi(){
   $('skills-wallet').textContent=`보유 코인 ${state.coins}`;
-  $('skill-summary').innerHTML=`공격속도 I +${state.passives.speed1}% , II +${state.passives.speed2}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ×${formatNumber(criticalMultiplier(state.passives.critDamage))}`;
+  $('skill-summary').innerHTML=`물리 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.strength)} / 마법 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.intelligence)}<br>공격속도 I +${Math.round(speedBonus(state,'basic')*100)}% , II +${Math.round(speedBonus(state,'lightning')*100)}% , III +${state.passives.dexterity}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ×${formatNumber(criticalMultiplier(state.passives.critDamage))}`;
   for(const id of Object.keys(PASSIVES)){
-    $(`level-${id}`).textContent=`${state.passives[id]}/${CONFIG.PASSIVE_MAX_LEVEL}`;
-    const button=document.querySelector(`[data-upgrade="${id}"]`),max=state.passives[id]>=CONFIG.PASSIVE_MAX_LEVEL;
-    button.disabled=max || state.coins<CONFIG.PASSIVE_COST;button.textContent=max?'최대 레벨':`업그레이드 / ${CONFIG.PASSIVE_COST} 코인`;
+    const passive = PASSIVES[id], unlocked = passiveUnlocked(state,id);
+    $(`level-${id}`).textContent=`${state.passives[id]}/${passive.maxLevel}`;
+    const button=document.querySelector(`[data-upgrade="${id}"]`),max=state.passives[id]>=passive.maxLevel;
+    button.disabled=max || !unlocked || state.coins<passive.cost;button.innerHTML=max?'최대 레벨':!unlocked?'구매 조건 미충족':`업그레이드 / <span class="cost">${passive.cost} 코인</span>`;
+    button.closest('.skill-card').dataset.available=String(!button.disabled);
   }
   for(const id of ACTIVE_IDS){
-    $(`period-${id}`).textContent=`현재 주기 ${seconds(attackPeriod(state,id))}${state.owned[id]?' / 수동 사용':''}`;
+    $(`period-${id}`).textContent=`현재 공격력 ${attackDamage(state,id)} / 주기 ${seconds(attackPeriod(state,id))}${state.owned[id]?isAutomatic(state,id)?' / 자동 사용':' / 수동 사용':''}`;
     const button=document.querySelector(`[data-buy="${id}"]`);button.disabled=state.owned[id] || state.coins<ATTACKS[id].cost;
-    button.textContent=state.owned[id]?'구매 완료 / 사용 가능':`구매 / ${ATTACKS[id].cost} 코인`;
+    button.innerHTML=state.owned[id]?'구매 완료 / 사용 가능':`구매 / <span class="cost">${ATTACKS[id].cost} 코인</span>`;
+  }
+  $('items-wallet').textContent = `보유 코인 ${state.coins}`;
+  for (const [id, item] of Object.entries(ITEMS)) {
+    $(`item-progress-${id}`).textContent = item.skills.map(skill => `${ATTACKS[skill].name} · ${skill === 'basic' || state.owned[skill] ? '보유' : '미보유'} / ${state.uses[skill]}/25회`).join(' | ');
+    const button = document.querySelector(`[data-item="${id}"]`);
+    const unlocked = itemUnlocked(state,id);
+    button.disabled = state.items[id] || !unlocked || state.coins < item.cost;
+    button.closest('.skill-card').dataset.available = String(!button.disabled);
+    button.innerHTML = state.items[id] ? '구매 완료 / 자동 사용 중' : !unlocked ? '구매 조건 미충족' : `구매 / <span class="cost">${item.cost} 코인</span>`;
   }
 }
-function openModal(id){syncStageTimer();if(ready&&state.phase!=='failed'){$(id).showModal();updateInputStatus();updateStageUi();saveProgress();}}
+function pauseGame() {
+  syncStageTimer();
+  if (!ready || pauseStartedAt !== null || ['failed','finished'].includes(state.phase)) return;
+  pauseStartedAt = Date.now();
+  pauseHitStopRemaining = Math.max(0,hitStopUntil-performance.now());
+  $('pause-time').textContent = `일시 정지 시각 · ${new Date(pauseStartedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false})}`;
+  $('pause-dialog').showModal();
+  updateInputStatus();updateStageUi();saveProgress();
+}
+function resumeGame() {
+  if (document.hidden) return;
+  hitStopUntil = performance.now() + pauseHitStopRemaining;
+  pauseStartedAt = null;pauseHitStopRemaining = 0;stageWall = performance.now();
+  $('pause-dialog').close();updateInputStatus();saveProgress();
+}
+function handleVisibilityChange() {
+  syncStageTimer();pageVisible=!document.hidden;stageWall=performance.now();
+  if (!pageVisible) pauseGame();
+  saveProgress();updateStageUi();updateInputStatus();
+}
+function openModal(id){syncStageTimer();if(ready&&!document.hidden&&state.phase!=='failed'){$(id).showModal();updateInputStatus();updateStageUi();saveProgress();}}
 function requestReset(){$('reset-dialog').showModal();$('reset-cancel').focus();}
 function selectTab(name){
   for(const id of ['passive','active']){const selected=id===name;$(`${id}-tab`).setAttribute('aria-selected',String(selected));$(`${id}-tab`).tabIndex=selected?0:-1;$(`${id}-panel`).hidden=!selected;}
 }
 buildSkillUi();
 $('settings-open').addEventListener('click',()=>openModal('settings-dialog'));
+$('pause-resume').addEventListener('click',resumeGame);
+$('pause-dialog').addEventListener('cancel',event=>event.preventDefault());
+$('items-open').addEventListener('click',()=>{updateSkillUi();$('item-message').textContent='';openModal('items-dialog');});
 $('skills-open').addEventListener('click',()=>{updateSkillUi();$('shop-message').textContent='';openModal('skills-dialog');});
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.close).close()));
 $('reset').addEventListener('click',requestReset);$('finish-reset').addEventListener('click',requestReset);
@@ -1001,9 +1195,15 @@ $('skills-dialog').addEventListener('click',event=>{
   if(upgrade){const id=upgrade.dataset.upgrade;if(upgradePassive(state,id)){$('shop-message').textContent=`${PASSIVES[id].name} ${state.passives[id]}레벨`;updateHud();updateInputStatus();saveProgress();}}
   if(buy){const id=buy.dataset.buy;if(buySkill(state,id)){$('shop-message').textContent=`${ATTACKS[id].name} 구매 완료`;updateHud();updateInputStatus();saveProgress();}}
 });
+$('items-dialog').addEventListener('click', event => {
+  const button = event.target.closest('[data-item]');
+  if (!button || !buyItem(state, button.dataset.item)) return;
+  $('item-message').textContent = `${ITEMS[button.dataset.item].name} 구매 완료 / 자동 공격 활성화`;
+  updateHud(); updateInputStatus(); saveProgress();
+});
 const SCENARIOS={
   start:{},two:{count:2,level:CONFIG.MAX_LEVEL},three:{count:3,level:CONFIG.MAX_LEVEL},four:{count:4,level:CONFIG.MAX_LEVEL},
-  compress:{count:4,level:CONFIG.MAX_LEVEL,hp:1},replace:{count:4,level:CONFIG.MAX_LEVEL,hp:1,baseSize:162,cycles:4},
+  compress:{count:4,level:CONFIG.MAX_LEVEL,hp:1},replace:{count:1,level:CONFIG.MAX_LEVEL,hp:1,baseSize:162,cycles:4},
   finish:{kind:'scarecrow',count:1,level:CONFIG.MAX_LEVEL-1,hp:1,baseSize:243,cycles:5},
   shop:{coins:2000,count:4},critical:{coins:2000,count:4,rng:1},
   timed:{coins:1000,stage:11,count:2,level:4},grace:{stage:10,count:2,level:3,hp:1},poor:{coins:499,stage:11,count:2,level:4}
@@ -1017,7 +1217,7 @@ function loadScenario(name){
 function snapshot(){return {...JSON.parse(JSON.stringify(state)),maxHp:maxHpOf(state),logicalSize:sizeOf(state),gameNow,
   input:inputGate(state,gameNow),camera:view?.camera,layout:view?.mode,points:view?.points,activeAttacks:attacks.length,healthBars:healthRows.length,
   hitStopRemaining:Math.max(0,hitStopUntil-performance.now()),modal:document.querySelector('dialog[open]')?.id??null,
-  effects:attacks.map(a=>({source:a.source,t:a.fx.t,critical:a.critical,targetId:a.targetId,palette:a.critical?'candy':'default',colors:a.fx.options.palette,text:a.fx.options.text,coins:a.fx.options.coins})),
+  effects:attacks.map(a=>({source:a.source,t:a.fx.t,critical:a.critical,targetId:a.targetId,palette:a.source==='damage'?'ember':a.critical?'candy':'default',colors:a.fx.options.palette,text:a.fx.options.text,coins:a.fx.options.coins})),
   unitTimes:units.map(u=>u.fx?.t??u.target?.clock),healthTimes:healthRows.map(r=>r.fx?.t),
   grades:Object.fromEntries(Object.keys(ATTACKS).map(id=>[id,skillGrade(id)])),unitPalettes:units.map(u=>u.fx?.options.palette??null),periods:Object.fromEntries(Object.keys(ATTACKS).map(id=>[id,attackPeriod(state,id)])),config:{...CONFIG}};}
 if(debugEnabled){
@@ -1037,18 +1237,19 @@ window.addEventListener('keydown',event=>{
 });
 $('reload').addEventListener('click',()=>location.reload());
 window.addEventListener('resize',resize);if('ResizeObserver' in window)new ResizeObserver(resize).observe(app);
-document.addEventListener('visibilitychange',()=>{syncStageTimer();pageVisible=!document.hidden;stageWall=performance.now();saveProgress();updateStageUi();});
+document.addEventListener('visibilitychange',handleVisibilityChange);
 window.addEventListener('pagehide',()=>{syncStageTimer();saveProgress();});
 window.addEventListener('pageshow',()=>{stageWall=performance.now();pageVisible=!document.hidden;});
 updateHud();updateInputStatus();
 async function bootstrap(){
   try{
     const ids=Object.keys(ATTACKS);
-    const modules=await Promise.all([import(`${CDN}/core/index.js`),import(`${CDN}/fx/critters/slime.js`),import(`${CDN}/fx/ui/health-bar-hit.js`),import(`${CDN}/fx/impacts/crit-hit.js`),import(`${CDN}/fx/ui/damage-number.js`),import(`${CDN}/fx/spawn/coin-drop.js`),...ids.map(id=>import(`${CDN}/fx/${ATTACKS[id].path}.js`))]);
+    const modules=await Promise.all([import(`${CDN}/core/index.js`),import(`${CDN}/fx/critters/slime.js`),import(`${CDN}/fx/ui/health-bar-hit.js`),import(`${CDN}/fx/impacts/crit-hit.js`),import(`${CDN}/fx/ui/damage-number.js`),import(`${CDN}/fx/spawn/coin-drop.js`),...ids.map(id=>import(`${CDN}/fx/${ATTACKS[id].path}.js`)),import(`${CDN}/fx/weather/fog.js`),import(`${CDN}/fx/weather/fireflies.js`)]);
     [core,slimeModule,healthModule,critModule,damageModule,coinModule]=modules;
     // The original frame fits "-27"; add transparent room for fractional critical values.
     damageModule={...damageModule,meta:{...damageModule.meta,size:[160,100],origin:[80,76]}};
     effectModules=Object.fromEntries(ids.map((id,i)=>[id,modules[i+6]]));
+    weatherModules={fog:modules[ids.length+6],fireflies:modules[ids.length+7]};
     const restored=loadProgress();
     ready=true;syncUnits();setHealthEffect(false,null,true);updateHud();resize();
     if(restored){
@@ -1061,6 +1262,7 @@ async function bootstrap(){
     stageWall=performance.now();
     if(state.phase==='failed')showTimeout();
     if(state.phase==='finished')showFinished();
+    if(document.hidden)pauseGame();
     saveProgress(true);updateInputStatus();render();
     $('connection').textContent='PIXELFX LIVE';$('connection').classList.add('ready');startLoop();
   }catch(error){ready=false;console.error(error);$('connection').textContent='FX 연결 실패';$('connection').classList.add('error');$('error-details').textContent=String(error);$('error').hidden=false;}
