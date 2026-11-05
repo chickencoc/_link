@@ -126,6 +126,10 @@
   .health-unit[data-dead="true"] { opacity: .5; }
   dialog { color: #f5f0ff; background: #171225; border: 1px solid #9582c6; padding: 18px; width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; box-shadow: 0 16px 70px #000b; }
   dialog::backdrop { background: #090811dd; }
+  #skills-dialog[open], #items-dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
+  #skills-dialog > :not(.modal-panel), #items-dialog > :not(.modal-panel) { flex: 0 0 auto; }
+  .modal-panel { min-height: 0; flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .modal-panel:focus-visible { outline: 1px solid #aa96eb; outline-offset: -1px; }
   .modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .modal-header h2 { font-size: 20px; margin: 0; }
   .modal-close { border: 1px solid #7d6b9b; background: #30273f; color: inherit; padding: 8px 10px; cursor: pointer; font-size: 12px; }
@@ -135,7 +139,7 @@
   .skill-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
   .skill-tabs button { padding: 10px 6px; background: #241d35; border: 1px solid #7d6b9b; color: #c3b9d1; cursor: pointer; font-size: 12px; }
   .skill-tabs button[aria-selected="true"] { border-color: #d7c6ff; color: white; background: #49365f; }
-  .skill-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .skill-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-content: start; }
   .skill-card { min-width: 0; display: flex; flex-direction: column; padding: 12px; background: #100f1c; border: 1px solid #b4a0d433; overflow-wrap: anywhere; }
   .skill-card h3 { margin: 0 0 7px; font-size: 14px; }
   .skill-card p { margin: 4px 0; }
@@ -260,17 +264,18 @@
       <button id="passive-tab" role="tab" aria-selected="true" aria-controls="passive-panel" type="button">패시브 / Passive</button>
       <button id="active-tab" role="tab" aria-selected="false" aria-controls="active-panel" tabindex="-1" type="button">액티브 / Active</button>
     </div>
-    <div id="passive-panel" role="tabpanel" aria-labelledby="passive-tab" class="skill-list"></div>
-    <div id="active-panel" role="tabpanel" aria-labelledby="active-tab" hidden>
+    <div id="passive-panel" role="tabpanel" aria-labelledby="passive-tab" class="modal-panel skill-panel" tabindex="0"></div>
+    <div id="active-panel" class="modal-panel" role="tabpanel" aria-labelledby="active-tab" tabindex="0" hidden>
       <p>구매한 스킬은 하단 버튼으로 사용합니다. 자동 공격 아이템을 구매한 등급은 자동으로도 사용합니다.</p>
-      <div id="active-list" class="skill-list"></div>
+      <div id="active-skills-panel" class="skill-panel"></div>
     </div>
     <div id="shop-message" role="status" aria-live="polite"></div>
   </dialog>
   <dialog id="items-dialog" aria-labelledby="items-title">
     <div class="modal-header"><h2 id="items-title">상점</h2><button class="modal-close" data-close="items-dialog" type="button">닫기</button></div>
     <div id="items-wallet"></div>
-    <div id="items-list" class="skill-list"></div>
+    <p>필요한 것을 얼른 구매하세요!</p>
+    <div id="items-panel" class="modal-panel skill-panel" tabindex="0" aria-label="상점 아이템"></div>
     <div id="item-message" role="status" aria-live="polite"></div>
   </dialog>
   <dialog id="pause-dialog" aria-labelledby="pause-title">
@@ -284,7 +289,7 @@
 // GAME_RULES_START
 // Pure game rules shared by the page and automated tests.
 const CONFIG = Object.freeze({
-  CLICK_DELAY_MS: 1750, EVOLUTION_DELAY_MS: 500, EVOLUTION_LOCK_MS: 2000,
+  EVOLUTION_DELAY_MS: 500, EVOLUTION_LOCK_MS: 2000,
   GROUND_RATIO: .67, ATTACK_EFFECT_SCALE: .6, LIGHTNING_SCALE: 0.85, BASE_SLIME_SIZE: 32,
   LEVEL_GROWTH: 1.18, BASE_GROWTH: 1.5, SLIME_LIMIT: 200,
   HP_PER_CREATURE: 100, GROWN_SLIME_HP: 350, SLIME_HP_GROWTH: 1.3, SCARECROW_HP: 1000, MAX_LEVEL: 5,
@@ -297,7 +302,7 @@ const PASSIVES = Object.freeze({
   speed1: { name: '공격속도 I', description: '기본 공격, Double Slash 공격속도: 레벨당 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
   speed2: { name: '공격속도 II', description: 'Lightning Strike, Vine Whip 공격속도: 레벨당 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
   critChance: { name: '크리티컬 확률', description: '레벨당 확률 +1%p', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
-  critDamage: { name: '크리티컬 공격력', description: '레벨당 크리티컬 피해 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  critDamage: { name: '크리티컬 공격력', description: '레벨당 크리티컬 피해 배율 +0.01 (1%p)', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
   strength: { name: 'Strength', description: '레벨당 물리 공격력 ×1.08', cost: 125, maxLevel: 10 },
   intelligence: { name: 'Intelligence', description: '레벨당 마법 공격력 ×1.08', cost: 125, maxLevel: 10 },
   dexterity: { name: 'Dexterity', description: '모든 등급 공격속도: 레벨당 +1%', cost: 45, maxLevel: 10, requires: [['speed1', 1], ['speed2', 1]] },
@@ -305,16 +310,19 @@ const PASSIVES = Object.freeze({
 });
 // hitAt is effect time, taken from the original effect's visible impact constants.
 // Double Slash deals damage once at the crossing, not once for each stroke.
+// nature/vine-whip: CRACK=LASH+LAG*N+(PI-atan(OMEGA*TAU_S))/OMEGA.
+// pose(CRACK)[24] is the actual tip, measured in the original effect's coordinates.
+const VINE_IMPACT = Object.freeze({time:.36+.0052*24+(Math.PI-Math.atan((Math.PI*2/.21)*.055))/(Math.PI*2/.21),x:70.90391674129162,y:-19.884953533311638});
 const ATTACKS = Object.freeze({
   basic: { grade: 'I', type: 'physical', name: 'Parry', path: 'impacts/parry', period: 1750, damage: 7, cost: 0, hitAt: .025, impact: [0, -30], body: true },
   doubleSlash: { grade: 'I', type: 'physical', name: 'Double Slash', path: 'melee/double-slash', period: 1000, damage: 6, cost: 24, hitAt: .16, impact: [34, -23], body: true },
   lightning: { grade: 'II', type: 'magic', name: 'Lightning Strike', path: 'lightning/lightning-strike', period: 2700, damage: 18, cost: 68, hitAt: .76, hits: [.76, 1.04, 1.26], impact: [0, 0] },
-  acid: { grade: 'II', type: 'magic', name: 'Vine Whip', path: 'nature/vine-whip', period: 3200, damage: 24, cost: 80, hitAt: .3, impact: [0, 0] },
+  acid: { grade: 'II', type: 'magic', name: 'Vine Whip', path: 'nature/vine-whip', period: 3200, damage: 24, cost: 80, hitAt: VINE_IMPACT.time, impact: [VINE_IMPACT.x, 0] },
   holy: { grade: 'III', type: 'neutral', name: 'Holy Pillar', path: 'holy/holy-pillar', period: 15000, damage: 199, cost: 324, hitAt: .66, hits: [.66, .96, 1.26, 1.56, 1.86], impact: [0, 0] }
 });
 const ITEMS = Object.freeze({
-  autoGlove: { name: 'Auto Glove', cost: 125, grade: 'I', skills: ['basic', 'doubleSlash'] },
-  autoMagicStick: { name: 'Auto Magic Stick', cost: 777, grade: 'II', skills: ['lightning', 'acid'] }
+  autoGlove: { name: 'Auto Glove', cost: 200, grade: 'I', skills: ['basic', 'doubleSlash'] },
+  autoMagicStick: { name: 'Auto Magic Stick', cost: 800, grade: 'II', skills: ['lightning', 'acid'] }
 });
 const ACTIVE_IDS = Object.freeze(Object.keys(ATTACKS).filter(id => id !== 'basic'));
 const clamp01 = n => Math.max(0, Math.min(1, n));
@@ -325,9 +333,9 @@ const hpPerBarOf = s => s.kind === 'scarecrow' ? CONFIG.SCARECROW_HP
 const maxHpOf = s => hpPerBarOf(s) * s.count;
 const sizeOf = s => (s.kind === 'slime' ? s.baseSize : CONFIG.DUMMY_SIZE) * CONFIG.LEVEL_GROWTH ** (s.level - 1);
 const speedBonus = (s, id = 'basic') => ((ATTACKS[id].grade === 'I' ? s.passives.speed1 : ATTACKS[id].grade === 'II' ? s.passives.speed2 : 0) + s.passives.dexterity) * CONFIG.PASSIVE_STEP;
-const attackPeriod = (s, id = 'basic') => (id === 'basic' ? CONFIG.CLICK_DELAY_MS : ATTACKS[id].period) / (1 + speedBonus(s, id));
+const attackPeriod = (s, id = 'basic') => ATTACKS[id].period / (1 + speedBonus(s, id));
 const criticalChance = s => (s.passives.critChance + s.passives.luck) * CONFIG.PASSIVE_STEP;
-const criticalMultiplier = level => CONFIG.CRITICAL_MULTIPLIER * (1 + level * CONFIG.PASSIVE_STEP);
+const criticalMultiplier = level => CONFIG.CRITICAL_MULTIPLIER + level * CONFIG.PASSIVE_STEP;
 const skillGrade = id => ATTACKS[id].grade;
 function attackDamage(s, id, critical = false) {
   const physical = CONFIG.DAMAGE_GROWTH ** s.passives.strength;
@@ -353,6 +361,30 @@ function splitDamage(source, total) {
   return source === 'holy' ? [first, ...tail] : tail;
 }
 const remainingDamage = ticket => splitDamage(ticket.source, ticket.damage).slice(ticket.hitIndex).reduce((sum, damage) => sum + damage, 0);
+const damageNumberScale = damage => Math.min( .5 + Math.floor(Math.max(0,damage)/100) * .05, 1 );
+function effectSide(seed) {
+  let n=Math.imul(seed^(seed>>>16),0x85ebca6b);
+  n=Math.imul(n^(n>>>13),0xc2b2ae35);
+  return ((n^(n>>>16))>>>0)<0x80000000 ? -1 : 1;
+}
+function vinePlacement(targetX, groundY, bodyHeight, canvasWidth, canvasHeight, side) {
+  const w=216,h=128,ox=60,oy=114;
+  const contactX=side===1 ? ox+VINE_IMPACT.x : w-ox-VINE_IMPACT.x;
+  // Root stays on the floor; the crack hits the target's body. Mirror the whole
+  // buffer instead of flipping inside the asymmetrical native frame (which clips).
+  const scale=Math.max(.001,Math.min(CONFIG.ATTACK_EFFECT_SCALE,
+    bodyHeight*.6/-VINE_IMPACT.y,(targetX-2)/contactX,
+    (canvasWidth-targetX-2)/(w-contactX),(groundY-2)/oy,(canvasHeight-groundY-2)/(h-oy)));
+  return {x:targetX-contactX*scale,y:groundY-oy*scale,scale,
+    rootX:targetX-side*VINE_IMPACT.x*scale,rootY:groundY,
+    tipX:targetX,tipY:groundY+VINE_IMPACT.y*scale};
+}
+function slimeHitPose(age, power, direction) {
+  const envelope=age<.4 ? Math.exp(-age*12)*power : 0;
+  const pulse=envelope*Math.cos(age*35);
+  return {x:direction*5*envelope,scaleX:1+.14*pulse,scaleY:1-.18*pulse,
+    flash:age<.08 ? (1-age/.08)*.65*power : 0};
+}
 function resetEnemies(s, total = maxHpOf(s), growing = false) {
   const capacity = hpPerBarOf(s);
   s.enemies = Array.from({ length: s.count }, (_, id) => {
@@ -393,7 +425,7 @@ function buyItem(s, id) {
   if (!Object.hasOwn(ITEMS, id) || s.items[id] || !itemUnlocked(s, id) || s.coins < ITEMS[id].cost) return false;
   s.coins -= ITEMS[id].cost; s.items[id] = true; return true;
 }
-function progressState(s, slimeLimit = CONFIG.SLIME_LIMIT, legacy = false) {
+function progressState(s) {
   const next = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
   let event = 'level', finish = false;
   if (next.kind === 'scarecrow') {
@@ -401,11 +433,11 @@ function progressState(s, slimeLimit = CONFIG.SLIME_LIMIT, legacy = false) {
   } else if (next.level < CONFIG.MAX_LEVEL) next.level++;
   else {
     next.level = 1;
-    if ((legacy || next.cycles === 0) && next.count < 4) {
+    if (next.cycles === 0 && next.count < 4) {
       next.count++; event = 'spawn';
     } else {
-      next.count = legacy ? 3 : 1; next.baseSize *= CONFIG.BASE_GROWTH; next.cycles++; event = 'compress';
-      if (next.baseSize > slimeLimit) {next.kind = 'scarecrow'; next.count = 1; event = 'scarecrow';}
+      next.count = 1; next.baseSize *= CONFIG.BASE_GROWTH; next.cycles++; event = 'compress';
+      if (next.baseSize > CONFIG.SLIME_LIMIT) {next.kind = 'scarecrow'; next.count = 1; event = 'scarecrow';}
     }
   }
   return { next, event, finish };
@@ -510,37 +542,20 @@ function applyHit(s, ticket, now, random = () => random01(s)) {
 
 /** Place the group in logical CSS pixels; the camera never changes the growth rules. */
 function groupLayout(count, size, availableWidth, availableHeight, kind = 'slime') {
-  const bodyWidth = kind === 'scarecrow' ? size * 38 / 52 : size * 1.36;
+  // Include the slime's widest squash and hit reaction in its reserved body width.
+  const bodyWidth = kind === 'scarecrow' ? size * 38 / 52 : size * 1.6;
   const step = bodyWidth + 8;
-  let mode = 'row', points;
-  if (count * bodyWidth + (count - 1) * 8 <= availableWidth || count === 1) {
-    points = Array.from({ length: count }, (_, i) => ({ x: (i - (count - 1) / 2) * step, y: 0, z: count - i }));
-  } else if (count === 2) {
-    mode = 'overlap-left';
-    const offset = bodyWidth * .48;
-    points = [{ x: -offset / 2, y: 0, z: 20 }, { x: offset / 2, y: 0, z: 10 }];
-  } else {
-    mode = 'overlap-center';
-    const offset = bodyWidth * .48;
-    points = [
-      { x: 0, y: 0, z: 40 },                 // foreground: center
-      { x: -offset, y: 0, z: 30 },           // second: left
-      { x: offset, y: 0, z: 20 },            // third: right
-      { x: 0, y: -size * .25, z: 10 }        // optional fourth: behind the middle
-    ].slice(0, count);
-  }
-  const minX = Math.min(...points.map(p => p.x)), maxX = Math.max(...points.map(p => p.x));
-  const rearRise = -Math.min(0, ...points.map(p => p.y));
-  const boundsWidth = maxX - minX + bodyWidth;
-  const boundsHeight = size * (kind === 'scarecrow' ? 1.12 : 1.95) + rearRise;
-  const camera = Math.min(1, availableWidth / boundsWidth, availableHeight / boundsHeight);
-  return { mode, points, camera: Math.max(.01, camera), boundsWidth, boundsHeight, bodyWidth };
+  const points = Array.from({length:count},(_,i)=>({x:(i-(count-1)/2)*step,y:0,z:count-i}));
+  const boundsWidth = count * bodyWidth + (count-1)*8;
+  const boundsHeight = size * (kind==='scarecrow' ? 1.12 : 1.95);
+  const camera = Math.min(1,availableWidth/boundsWidth,availableHeight/boundsHeight);
+  return {mode:'row',points,camera:Math.max(.001,camera),boundsWidth,boundsHeight,bodyWidth};
 }
 
 // Every scalar (including null/booleans) is JSON -> UTF-8 -> repeating-key XOR -> hex.
 // All scalar entries in one atomic save must carry the same, newly generated key.
 const SAVE_KEY = 'smash-slime.progress.v1';
-const LEGACY_SLIME_LIMIT = 450;
+const SAVE_VERSION = 3;
 function freshSaveKey(previous = '') {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   let key;
@@ -587,56 +602,14 @@ function decodeSave(raw) {
   if (!key) throw new Error('Missing save key');
   return {data,key};
 }
-function migrateSave(data) {
-  if (data?.version !== 1) return data;
-  const s = data.state;
-  const reserved = s.enemies.map(() => 0);
-  for (const cast of data.casts) {
-    const damage = cast.ticket.damage;
-    if (!Object.hasOwn(ATTACKS, cast.source) || !Number.isFinite(damage)
-      || damage < ATTACKS[cast.source].damage
-      || damage > Math.round(ATTACKS[cast.source].damage * criticalMultiplier(CONFIG.PASSIVE_MAX_LEVEL) * 100) / 100) {
-      throw new Error('Invalid legacy damage');
-    }
-    reserved[cast.ticket.targetId] += damage;
-  }
-  const capacity = s.kind === 'scarecrow' ? CONFIG.SCARECROW_HP : CONFIG.HP_PER_CREATURE;
-  if (!s.enemies.every((enemy, id) => Number.isFinite(enemy.hp) && enemy.hp >= 0
-    && enemy.hp <= capacity
-    && Number.isFinite(enemy.reserved) && Math.abs(enemy.reserved - reserved[id]) < .001)
-    || !Number.isFinite(s.hp) || Math.abs(s.hp - s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0)) > .001) {
-    throw new Error('Invalid legacy health');
-  }
-  s.passives = {...s.passives, strength: 0, intelligence: 0, dexterity: 0, luck: 0};
-  s.items = Object.fromEntries(Object.keys(ITEMS).map(id => [id, false]));
-  // Earlier saves only recorded a total, so per-skill use counts start here.
-  s.uses = Object.fromEntries(Object.keys(ATTACKS).map(id => [id, 0]));
-  if (s.transition) s.transition.legacy = true;
-  for (const enemy of s.enemies) {
-    enemy.hp = enemy.hp > 0 ? Math.max(1, Math.round(enemy.hp)) : 0;
-    enemy.reserved = 0;
-  }
-  s.hp = s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0);
-  for (const cast of data.casts) {
-    cast.ticket.damage = Math.round(cast.ticket.damage);
-    s.enemies[cast.ticket.targetId].reserved += cast.ticket.damage;
-  }
-  data.version = 2;
-  return data;
-}
 function validateSave(data) {
-  data = migrateSave(data);
-  if (data?.version === 2) {
-    for (const cast of data.casts) cast.ticket.hitIndex = 0;
-    data.version = 3;
-  }
   const require = ok => {if (!ok) throw new Error('Invalid progress data');};
   const number = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isFinite(n) && n >= min && n <= max;
   const integer = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && number(n,min,max);
-  require(data?.version === 3 && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
+  require(data?.version === SAVE_VERSION && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
   const s = data.state;
   require(s && typeof s === 'object' && Object.keys(s).sort().join() === Object.keys(initialState()).sort().join());
-  const savedSizeLimit = Math.max(CONFIG.SLIME_LIMIT, LEGACY_SLIME_LIMIT) * CONFIG.BASE_GROWTH;
+  const savedSizeLimit = CONFIG.SLIME_LIMIT * CONFIG.BASE_GROWTH;
   const shape = v => v && ['slime','scarecrow'].includes(v.kind) && integer(v.level,1,CONFIG.MAX_LEVEL) && integer(v.count,1,v.kind === 'slime' ? 4 : 1) && number(v.baseSize,CONFIG.BASE_SLIME_SIZE,savedSizeLimit) && integer(v.cycles);
   require(shape(s) && ['ready','waiting','transforming','finished','failed'].includes(s.phase));
   for (const id of ['coins','totalHits','acceptedClicks','totalCasts','generation','criticalHits','pending']) require(integer(s[id]));
@@ -664,12 +637,8 @@ function validateSave(data) {
     require(number(tr.start) && number(tr.end) && Math.abs(tr.end-tr.start-CONFIG.EVOLUTION_LOCK_MS)<.001 && tr.end > data.gameNow && s.hp === 0);
     const current = s.phase === 'waiting' ? tr.from : tr.to;
     require(['kind','level','count','baseSize','cycles'].every(k=>s[k]===current[k]));
-    // Finish transitions already scheduled under the previous threshold.
-    const matchesTransition = slimeLimit => {
-      const { next, finish, event } = progressState(tr.from, slimeLimit, tr.legacy === true);
-      return Object.keys(next).every(k => next[k] === tr.to[k]) && finish === tr.finish && event === tr.event;
-    };
-    require(matchesTransition(CONFIG.SLIME_LIMIT) || matchesTransition(LEGACY_SLIME_LIMIT));
+    const {next,finish,event}=progressState(tr.from);
+    require(!tr.legacy && Object.keys(next).every(k=>next[k]===tr.to[k]) && finish===tr.finish && event===tr.event);
   } else require(s.transition === null);
   require(s.phase !== 'finished' || (s.kind === 'scarecrow' && s.level === CONFIG.MAX_LEVEL));
   require(Array.isArray(data.casts) && data.casts.length <= 5);
@@ -683,8 +652,12 @@ function validateSave(data) {
     const times = hitTimes(t);
     require(integer(t.hitIndex,0,times.length-1));
     require(number(a.t,t.hitIndex ? times[t.hitIndex-1] : 0,times[t.hitIndex]+1/120+1e-7));
-    // A passive may have changed since casting, so accept the configured damage range.
-    require(integer(t.damage,ATTACKS[a.source].damage,attackDamage(maximumDamageState,a.source,true)));
+    // A passive may have changed since casting. Current v3 saves may also contain
+    // an in-flight cast from the old maximum multiplier: 1.5 * (1 + 35 * .01) = 2.025.
+    const previousCriticalMax = Math.round(ATTACKS[a.source].damage * CONFIG.DAMAGE_GROWTH ** 10 * 2.025);
+    require(integer(t.damage,ATTACKS[a.source].damage,Math.max(previousCriticalMax,attackDamage(maximumDamageState,a.source,true))));
+    if (!Object.hasOwn(a,'side')) a.side = a.source==='acid' ? effectSide(a.seed) : 1;
+    require(a.side===1 || a.side===-1);
     reserved[t.targetId] += remainingDamage(t);
   }
   require(s.pending === data.casts.length && reserved.every((n,id)=>Math.abs(n-s.enemies[id].reserved)<.001));
@@ -734,6 +707,8 @@ let stageWall = performance.now(), pageVisible = !document.hidden, lastSaveAt = 
 let pauseStartedAt = null, pauseHitStopRemaining = 0;
 let cssWidth = 1, cssHeight = 1, width = 1, height = 1;
 let background, backgroundFrame, backgroundImage, visualSize = 32, view = null, hudDirty = true;
+let lastRenderedAt = -Infinity;
+const combatButtons = new Map();
 const formatNumber = n => Number(n.toFixed(2)).toString();
 const formatSize = n => Number(n.toFixed(1)).toString();
 const seconds = ms => `${formatNumber(ms / 1000)}s`;
@@ -741,10 +716,11 @@ const modalOpen = () => !!document.querySelector('dialog[open]');
 function saveProgress(force = false) {
   if (!ready) return;
   try {
-    const data = {version:3,maxLevel:CONFIG.MAX_LEVEL,state,gameNow,hitStopRemaining:pauseStartedAt === null ? Math.max(0,hitStopUntil-performance.now()) : pauseHitStopRemaining,
+    const data = {version:SAVE_VERSION,maxLevel:CONFIG.MAX_LEVEL,state,gameNow,hitStopRemaining:pauseStartedAt === null ? Math.max(0,hitStopUntil-performance.now()) : pauseHitStopRemaining,
       casts:attacks.filter(a=>a.ticket && !a.ticket.consumed && a.ticket.generation===state.generation && state.phase==='ready')
-        .map(a=>({source:a.source,t:a.fx.t,seed:a.fx.options.seed,ticket:a.ticket}))};
+        .map(a=>({source:a.source,t:a.fx.t,seed:a.fx.options.seed,ticket:a.ticket,side:a.side}))};
     const signature = JSON.stringify(data);
+    lastSaveAt=performance.now();
     if (!force && signature === savedSignature) return;
     const key = freshSaveKey(saveKey);
     localStorage.setItem(SAVE_KEY,encodeSave(JSON.parse(signature),key));
@@ -816,7 +792,7 @@ function newUnit(index) {
   Object.assign(canvas.style, { width: `${frameSize[0]}px`, height: `${frameSize[1]}px`, left: `${-origin[0]}px`, top: `${-origin[1]}px`, transformOrigin: `${origin[0]}px ${origin[1]}px` });
   canvas.setAttribute('aria-hidden', 'true'); element.append(canvas); $('creatures').append(element);
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
-  const unit = { index, kind, element, canvas, ctx, origin, frame: core.createFrame(...frameSize), image: ctx.createImageData(...frameSize), recoil: 0, shiver: 0, x: 0, y: 0 };
+  const unit = { index, kind, element, canvas, ctx, origin, frame: core.createFrame(...frameSize), image: ctx.createImageData(...frameSize), hitAge: 1, hitPower: 0, hitDirection: 1, x: 0, y: 0 };
   if (kind === 'slime') unit.fx = core.createFx(slimeModule, { x: origin[0], y: origin[1], palette: COLORS[state.level - 1].palette, hop: CONFIG.SLIME_HOP, seed: index + 1, light: 1 });
   else unit.target = new core.Target(0, index + 17);
   return unit;
@@ -876,7 +852,6 @@ function updateLayout() {
   if (!ready) return;
   const visual = visualState(); visualSize = visual.size;
   const top = app.getBoundingClientRect().top, hudBottom = $('hud').getBoundingClientRect().bottom - top;
-  app.style.setProperty('--hud-bottom', `${hudBottom}px`);
   const footerHeight = document.querySelector('.footer').getBoundingClientRect().height;
   const groundUiBottom = $('ground-ui').getBoundingClientRect().bottom - top;
   const raised = groundUiBottom + 8 > cssHeight - footerHeight - 16;
@@ -896,9 +871,9 @@ function updateLayout() {
     const tr = state.transition;
     unit.element.style.opacity = tr && state.phase === 'transforming' && (tr.from.kind !== state.kind || i >= tr.from.count) ? Math.max(.05, visual.p) : 1;
     const scale = visual.size / (state.kind === 'slime' ? 32 : 52) * view.camera;
-    const kick = dead || reducedMotion || unit.kind !== 'slime' ? 0 : Math.sin(gameNow*.083)*Math.min(4,unit.shiver*3)+unit.recoil*.5;
-    unit.canvas.style.transform = `translate3d(${kick}px,0,0) scale(${scale})`;
-    if (unit.fx) unit.fx.options.palette = dead ? core.PAL.night : visual.palette;
+    const hit = slimeHitPose(unit.hitAge,dead||reducedMotion||unit.kind!=='slime'?0:unit.hitPower,unit.hitDirection);
+    unit.canvas.style.transform = `translate3d(${hit.x}px,0,0) scale(${scale*hit.scaleX},${scale*hit.scaleY})`;
+    if (unit.fx) unit.fx.options.palette = dead ? core.PAL.night : hit.flash>0 ? mixPalette(visual.palette,visual.palette.map(()=>'#ffffff'),hit.flash) : visual.palette;
   }
   $('view-detail').textContent = `VIEW ${Math.round(view.camera*100)}%`;
   app.dataset.layout = view.mode;
@@ -916,14 +891,16 @@ function updateInputStatus() {
   else if (gate === 'pending') label = '대상에게 공격이 도착하는 중';
   $('input-label').textContent = label;
   for (const id of Object.keys(ATTACKS)) {
-    const button = document.querySelector(`[data-cast="${id}"]`);
+    const {button,name,time,progress} = combatButtons.get(id);
     const owned = id === 'basic' || state.owned[id];
     const period = attackPeriod(state,id), left = Math.max(0,period-(gameNow-state.lastCast[id]));
     button.disabled = !ready || paused || stopped || inputGate(state,gameNow,id) !== 'ready';
     button.hidden = !owned;
-    button.querySelector('.skill-name').textContent = `${ATTACKS[id].name}${isAutomatic(state,id) ? ' · AUTO' : ''}`;
-    button.querySelector('.skill-time').textContent = !owned ? '미구매' : left > .005 ? seconds(left) : '준비';
-    button.querySelector('.input-progress').style.transform = `scaleX(${owned ? clamp01(1-left/period) : 0})`;
+    const nameText=`${ATTACKS[id].name}${isAutomatic(state,id) ? ' · AUTO' : ''}`;
+    const timeText=!owned ? '미구매' : left > .005 ? seconds(left) : '준비';
+    if(name.textContent!==nameText)name.textContent=nameText;
+    if(time.textContent!==timeText)time.textContent=timeText;
+    progress.style.transform = `scaleX(${owned ? clamp01(1-left/period) : 0})`;
     button.setAttribute('aria-label',`${ATTACKS[id].name} / ${!owned?'미구매':left>0?seconds(left)+' 후 사용 가능':'사용 가능'} / 주기 ${seconds(period)}`);
   }
   app.dataset.input = gate;
@@ -968,11 +945,15 @@ function makeEffect(source, targetId, critical, ticket = null, options = {}) {
   const [ox,oy]=module.meta.origin;
   const opts={x:ox,y:oy,seed:++serial+200,light:1,...options};
   if (critical) {opts.palette=core.PAL.candy;opts.sparks=core.PAL.candy;}
-  if (source === 'damage') opts.palette = core.PAL.ember;
   if (source === 'coins') opts.smoke = [0, 0, 0, 0];
   const jitter = source === 'damage' ? new core.Rng(opts.seed) : null;
   const fx=core.createFx(module,opts);
-  return {id:serial,source,module,fx,ticket,targetId,critical,impact:def.impact,scale:source==='damage'||source==='coins'?.5:CONFIG.ATTACK_EFFECT_SCALE*(source==='lightning'?CONFIG.LIGHTNING_SCALE:1),keepInView:source==='damage'||source==='coins',anchorX:(unit.x+(jitter?jitter.range(-12,12):0))/cssWidth,anchorY:(unit.y-bodyOffset+(jitter?jitter.range(-8,8):0))/cssHeight};
+  const side=source==='acid' ? (options.side ?? effectSide(opts.seed)) : 1;
+  const scale=source==='damage' ? damageNumberScale(options.damage??Math.abs(Number(options.text))) : source==='coins' ? .5 : CONFIG.ATTACK_EFFECT_SCALE*(source==='lightning'?CONFIG.LIGHTNING_SCALE:1);
+  // Fit the visible number, not its large transparent safety margin.
+  const halfText=source==='damage' ? (String(options.text).length*6-1)*3.4/2+3 : 0;
+  const bounds=source==='damage' ? [Math.max(0,ox-halfText),0,Math.min(module.meta.size[0],ox+halfText+20),module.meta.size[1]] : [0,0,...module.meta.size];
+  return {source,module,fx,ticket,targetId,critical,side,bounds,impact:def.impact,scale,keepInView:source==='damage'||source==='coins',anchorX:(unit.x+(jitter?jitter.range(-12,12):0))/cssWidth,anchorY:(unit.y-bodyOffset+(jitter?jitter.range(-8,8):0))/cssHeight};
 }
 function strike(source = 'basic') {
   syncStageTimer();
@@ -988,7 +969,7 @@ function onHit(attack, wallNow) {
   const result=applyHit(state,attack.ticket,gameNow);
   if (!result) return;
   const unit=units[result.targetId];
-  unit.recoil=Math.max(unit.recoil,result.critical?4:2);unit.shiver=Math.max(unit.shiver,result.critical?.4:.12);
+  unit.hitAge=0;unit.hitPower=result.critical?1:.7;unit.hitDirection=attack.side;
   if (unit.target) unit.target.hit({push:result.critical?2.8:1.2,straw:result.critical?18:8,flash:.05});
   setHealthEffect(true,result.targetId);hudDirty=true;
   flash=Math.max(flash,result.critical?.13:.04);shakeTime=Math.max(shakeTime,result.critical?.25:.08);
@@ -998,7 +979,7 @@ function onHit(attack, wallNow) {
   }
   // Visual feedback has no damage ticket: it cannot hit or award coins again.
   if (result.coins > 0) attacks.push(makeEffect('coins',result.targetId,false,null,{coins:result.coins}));
-  attacks.push(makeEffect('damage',result.targetId,result.critical,null,{text:`-${formatNumber(result.damage)}`}));
+  attacks.push(makeEffect('damage',result.targetId,result.critical,null,{text:`-${formatNumber(result.damage)}`,damage:result.damage}));
   $('combat-feedback').textContent=`${result.critical?'크리티컬 / ':''}피해 ${formatNumber(result.damage)}${result.coins?` / ${result.coins} 코인 획득`:''}`;
   if (result.transition) showToast(`${result.critical?'CRITICAL! / ':''}성장 준비`);
   else if (result.critical) showToast('CRITICAL!');
@@ -1025,7 +1006,7 @@ function update(dt, wallNow) {
     flash=Math.max(0,flash-step);shakeTime=Math.max(0,shakeTime-step);
     if(gameNow>=toastUntil)$('toast').classList.remove('visible');
     for(const unit of units){
-      unit.shiver=Math.max(0,unit.shiver-step);unit.recoil=Math.max(0,unit.recoil-step*20);
+      unit.hitAge=Math.min(1,unit.hitAge+step);
       if(!state.enemies[unit.index].dead){unit.fx?.update(step*CONFIG.ANIMATION_SPEED);unit.target?.step(step);}
     }
     const batch=[...attacks];
@@ -1035,6 +1016,7 @@ function update(dt, wallNow) {
       while(attack.ticket && !attack.ticket.consumed && attack.ticket.generation===state.generation && state.phase==='ready' && attack.fx.t+1e-8>=hitTimes(attack.ticket)[attack.ticket.hitIndex]){
         onHit(attack,wallNow);if(wallNow<hitStopUntil)break;
       }
+      if(wallNow<hitStopUntil)break;
     }
     attacks=attacks.filter(attack=>!attack.fx.done());
     if(wallNow<hitStopUntil)break;
@@ -1046,6 +1028,7 @@ function update(dt, wallNow) {
 }
 function render() {
   if(!ready || !background)return;
+  lastRenderedAt=gameNow;
   syncEnvironment();
   updateLayout();core.clearFrame(backgroundFrame);core.composite(backgroundFrame,backgroundImage.data,background);worldCtx.putImageData(backgroundImage,0,0);
   if (weatherFx) {
@@ -1058,12 +1041,20 @@ function render() {
   // Keep damage text above attacks and loot, including later overlapping casts.
   for(const attack of [...attacks].sort((a,b)=>Number(a.source==='damage')-Number(b.source==='damage'))){
     const b=effectBuffer(attack.module),[ox,oy]=attack.module.meta.origin;
-    const scale=attack.keepInView?Math.min(attack.scale,Math.max(1,width-4)/b.frame.w):attack.scale;
+    const [left,top,right,bottom]=attack.bounds;
+    let scale=attack.keepInView?Math.min(attack.scale,Math.max(1,width-4)/(right-left),Math.max(1,height-4)/(bottom-top)):attack.scale;
     let x=attack.anchorX*width-(ox+attack.impact[0])*scale,y=attack.anchorY*height-(oy+attack.impact[1])*scale;
-    if(attack.keepInView){x=Math.max(2,Math.min(width-b.frame.w*scale-2,x));y=Math.max(2,Math.min(height-b.frame.h*scale-2,y));}
+    if(attack.source==='acid'){
+      const target=units[attack.targetId],tracking=attack.ticket?.generation===state.generation;
+      const tx=tracking?target.x/cssWidth:attack.anchorX,ty=tracking?target.y/cssHeight:attack.anchorY;
+      const placement=vinePlacement(tx*width,ty*height,visualSize*view.camera*(state.kind==='slime'?.7:1)*height/cssHeight,width,height,attack.side);
+      ({x,y,scale}=placement);attack.placement=placement;
+    }
+    if(attack.keepInView){x=Math.max(2-left*scale,Math.min(width-right*scale-2,x));y=Math.max(2-top*scale,Math.min(height-bottom*scale-2,y));}
     for(const [layer,ctx] of [['back',worldCtx],['front',vfxCtx]]){
       core.clearFrame(b.frame);attack.fx.draw(b.frame,layer);core.composite(b.frame,b.image.data,null);b.ctx.putImageData(b.image,0,0);
-      ctx.drawImage(b.canvas,x,y,b.frame.w*scale,b.frame.h*scale);
+      if(attack.side===-1){ctx.save();ctx.translate(x+b.frame.w*scale,y);ctx.scale(-1,1);ctx.drawImage(b.canvas,0,0,b.frame.w*scale,b.frame.h*scale);ctx.restore();}
+      else ctx.drawImage(b.canvas,x,y,b.frame.w*scale,b.frame.h*scale);
     }
   }
   for(const unit of units){
@@ -1083,7 +1074,7 @@ function startLoop(){
     syncStageTimer(now);
     update(Math.min(elapsed/1000,.07),now);drawAge+=elapsed;
     if(now-lastSaveAt>=1000)saveProgress();
-    if(drawAge>=1000/30 || now<hitStopUntil){render();drawAge=0;}
+    if(gameNow!==lastRenderedAt && (drawAge>=1000/30 || now<hitStopUntil)){render();drawAge=0;}
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -1093,6 +1084,7 @@ function buildSkillUi(){
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'combat-skill'; button.dataset.cast = id;
     button.innerHTML = `<span class="skill-name">${ATTACKS[id].name}</span><span class="skill-time"></span><span class="input-track"><span class="input-progress" style="display:block"></span></span>`;
+    combatButtons.set(id,{button,name:button.querySelector('.skill-name'),time:button.querySelector('.skill-time'),progress:button.querySelector('.input-progress')});
     button.addEventListener('click', () => strike(id)); $('combat-skills').append(button);
   }
   for(const [id,skill] of Object.entries(PASSIVES)){
@@ -1105,28 +1097,29 @@ function buildSkillUi(){
     const skill=ATTACKS[id],card=document.createElement('article');card.className='skill-card';
     const type = {physical: '물리', magic: '마법', neutral: '중립 · 물리 50% + 마법 50%'}[skill.type];
     card.innerHTML=`<h3><span class="skill-grade">[ ${skillGrade(id)} ]</span> ${skill.name}</h3><p>${type} / 기본 공격력 ${skill.damage} / 기본 주기 ${seconds(skill.period)}</p><p id="period-${id}"></p><button class="reset" data-buy="${id}" type="button"></button>`;
-    $('active-list').append(card);
+    $('active-skills-panel').append(card);
   }
   for (const [id, item] of Object.entries(ITEMS)) {
     const card = document.createElement('article'); card.className = 'skill-card';
     card.innerHTML = `<h3>${item.name}</h3><p><span class="cost">${item.cost}코인</span> / 1회 구매<br>${item.grade} 등급 공격 자동 사용<br>구매 조건 · 해당 등급의 모든 스킬 보유 및 각각 25회 사용</p><p id="item-progress-${id}"></p><button class="reset" data-item="${id}" type="button"></button>`;
-    $('items-list').append(card);
+    $('items-panel').append(card);
   }
 }
-function updateSkillUi(){
+function updateSkillUi(force = false){
+  if(!force&&!$('skills-dialog').open&&!$('items-dialog').open)return;
   $('skills-wallet').textContent=`보유 코인 ${state.coins}`;
-  $('skill-summary').innerHTML=`물리 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.strength)} / 마법 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.intelligence)}<br>공격속도 I +${Math.round(speedBonus(state,'basic')*100)}% , II +${Math.round(speedBonus(state,'lightning')*100)}% , III +${state.passives.dexterity}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ×${formatNumber(criticalMultiplier(state.passives.critDamage))}`;
+  $('skill-summary').innerHTML=`물리 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.strength)} / 마법 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.intelligence)}<br>공격속도 I +${Math.round(speedBonus(state,'basic')*100)}% , II +${Math.round(speedBonus(state,'lightning')*100)}% , III +${state.passives.dexterity}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ${Math.round(criticalMultiplier(state.passives.critDamage)*100)}%`;
   for(const id of Object.keys(PASSIVES)){
     const passive = PASSIVES[id], unlocked = passiveUnlocked(state,id);
     $(`level-${id}`).textContent=`${state.passives[id]}/${passive.maxLevel}`;
     const button=document.querySelector(`[data-upgrade="${id}"]`),max=state.passives[id]>=passive.maxLevel;
-    button.disabled=max || !unlocked || state.coins<passive.cost;button.innerHTML=max?'최대 레벨':!unlocked?'구매 조건 미충족':`업그레이드 / <span class="cost">${passive.cost} 코인</span>`;
+    button.disabled=max || !unlocked || state.coins<passive.cost;button.innerHTML=max?'최대 레벨':!unlocked?'구매 조건 미충족':`<span class="cost">${passive.cost} 코인</span>`;
     button.closest('.skill-card').dataset.available=String(!button.disabled);
   }
   for(const id of ACTIVE_IDS){
     $(`period-${id}`).textContent=`현재 공격력 ${attackDamage(state,id)} / 주기 ${seconds(attackPeriod(state,id))}${state.owned[id]?isAutomatic(state,id)?' / 자동 사용':' / 수동 사용':''}`;
     const button=document.querySelector(`[data-buy="${id}"]`);button.disabled=state.owned[id] || state.coins<ATTACKS[id].cost;
-    button.innerHTML=state.owned[id]?'구매 완료 / 사용 가능':`구매 / <span class="cost">${ATTACKS[id].cost} 코인</span>`;
+    button.innerHTML=state.owned[id]?'구매 완료 / 사용 가능':`<span class="cost">${ATTACKS[id].cost} 코인</span>`;
   }
   $('items-wallet').textContent = `보유 코인 ${state.coins}`;
   for (const [id, item] of Object.entries(ITEMS)) {
@@ -1135,7 +1128,7 @@ function updateSkillUi(){
     const unlocked = itemUnlocked(state,id);
     button.disabled = state.items[id] || !unlocked || state.coins < item.cost;
     button.closest('.skill-card').dataset.available = String(!button.disabled);
-    button.innerHTML = state.items[id] ? '구매 완료 / 자동 사용 중' : !unlocked ? '구매 조건 미충족' : `구매 / <span class="cost">${item.cost} 코인</span>`;
+    button.innerHTML = state.items[id] ? '구매 완료 / 자동 사용 중' : !unlocked ? '구매 조건 미충족' : `<span class="cost">${item.cost} 코인</span>`;
   }
 }
 function pauseGame() {
@@ -1167,8 +1160,8 @@ buildSkillUi();
 $('settings-open').addEventListener('click',()=>openModal('settings-dialog'));
 $('pause-resume').addEventListener('click',resumeGame);
 $('pause-dialog').addEventListener('cancel',event=>event.preventDefault());
-$('items-open').addEventListener('click',()=>{updateSkillUi();$('item-message').textContent='';openModal('items-dialog');});
-$('skills-open').addEventListener('click',()=>{updateSkillUi();$('shop-message').textContent='';openModal('skills-dialog');});
+$('items-open').addEventListener('click',()=>{updateSkillUi(true);$('item-message').textContent='';openModal('items-dialog');});
+$('skills-open').addEventListener('click',()=>{updateSkillUi(true);$('shop-message').textContent='';openModal('skills-dialog');});
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.close).close()));
 $('reset').addEventListener('click',requestReset);$('finish-reset').addEventListener('click',requestReset);
 $('reset-cancel').addEventListener('click',()=>$('reset-dialog').close());
@@ -1217,7 +1210,8 @@ function loadScenario(name){
 function snapshot(){return {...JSON.parse(JSON.stringify(state)),maxHp:maxHpOf(state),logicalSize:sizeOf(state),gameNow,
   input:inputGate(state,gameNow),camera:view?.camera,layout:view?.mode,points:view?.points,activeAttacks:attacks.length,healthBars:healthRows.length,
   hitStopRemaining:Math.max(0,hitStopUntil-performance.now()),modal:document.querySelector('dialog[open]')?.id??null,
-  effects:attacks.map(a=>({source:a.source,t:a.fx.t,critical:a.critical,targetId:a.targetId,palette:a.source==='damage'?'ember':a.critical?'candy':'default',colors:a.fx.options.palette,text:a.fx.options.text,coins:a.fx.options.coins})),
+  effects:attacks.map(a=>({source:a.source,t:a.fx.t,critical:a.critical,targetId:a.targetId,palette:a.critical?'candy':'default',colors:a.fx.options.palette,text:a.fx.options.text,coins:a.fx.options.coins,scale:a.scale,side:a.side,placement:a.placement,seed:a.fx.options.seed})),
+  unitReactions:units.map(u=>({age:u.hitAge,power:u.hitPower,transform:u.canvas.style.transform})),
   unitTimes:units.map(u=>u.fx?.t??u.target?.clock),healthTimes:healthRows.map(r=>r.fx?.t),
   grades:Object.fromEntries(Object.keys(ATTACKS).map(id=>[id,skillGrade(id)])),unitPalettes:units.map(u=>u.fx?.options.palette??null),periods:Object.fromEntries(Object.keys(ATTACKS).map(id=>[id,attackPeriod(state,id)])),config:{...CONFIG}};}
 if(debugEnabled){
@@ -1246,7 +1240,7 @@ async function bootstrap(){
     const ids=Object.keys(ATTACKS);
     const modules=await Promise.all([import(`${CDN}/core/index.js`),import(`${CDN}/fx/critters/slime.js`),import(`${CDN}/fx/ui/health-bar-hit.js`),import(`${CDN}/fx/impacts/crit-hit.js`),import(`${CDN}/fx/ui/damage-number.js`),import(`${CDN}/fx/spawn/coin-drop.js`),...ids.map(id=>import(`${CDN}/fx/${ATTACKS[id].path}.js`)),import(`${CDN}/fx/weather/fog.js`),import(`${CDN}/fx/weather/fireflies.js`)]);
     [core,slimeModule,healthModule,critModule,damageModule,coinModule]=modules;
-    // The original frame fits "-27"; add transparent room for fractional critical values.
+    // Leave room for large damage numbers and their arc, without changing the original art.
     damageModule={...damageModule,meta:{...damageModule.meta,size:[160,100],origin:[80,76]}};
     effectModules=Object.fromEntries(ids.map((id,i)=>[id,modules[i+6]]));
     weatherModules={fog:modules[ids.length+6],fireflies:modules[ids.length+7]};
@@ -1254,7 +1248,7 @@ async function bootstrap(){
     ready=true;syncUnits();setHealthEffect(false,null,true);updateHud();resize();
     if(restored){
       for(const cast of restored.casts){
-        const attack=makeEffect(cast.source,cast.ticket.targetId,cast.ticket.critical,cast.ticket,{seed:cast.seed});
+        const attack=makeEffect(cast.source,cast.ticket.targetId,cast.ticket.critical,cast.ticket,{seed:cast.seed,side:cast.side});
         attack.fx.update(cast.t);attacks.push(attack);serial=Math.max(serial,cast.seed-200);
       }
       hitStopUntil=performance.now()+restored.hitStopRemaining;
