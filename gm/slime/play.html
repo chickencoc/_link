@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10101a">
+<title>SMASH SLIME</title>
+<style>
+  @font-face {
+    font-family: "TtukttakGamja";
+    src: url("./assets/fonts/TtukttakGamja.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+  :root { color-scheme: dark; font: 12px/1.4 "TtukttakGamja", ui-monospace, SFMono-Regular, Menlo, Consolas, "Apple SD Gothic Neo", "Malgun Gothic", monospace; }
+  * { box-sizing: border-box; letter-spacing: .05em; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: #090911; color: #f5f0ff; user-select: none; -webkit-user-select: none; }
+  button, select { font: inherit; }
+  button { touch-action: manipulation; }
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #app { --ground-position: 75%; position: relative; isolation: isolate; width: 100%; max-width: 835px; height: 100vh; height: 100dvh; margin: 0 auto; overflow: hidden; background: #15131d; box-shadow: 0 0 90px #000a; touch-action: manipulation; outline: none; }
+  #scene { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  #world, #vfx { position: absolute; inset: 0; display: block; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; }
+  #world { z-index: 0; }
+  #creatures { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .creature { position: absolute; width: 0; height: 0; }
+  .creature canvas { position: absolute; display: block; image-rendering: pixelated; image-rendering: crisp-edges; will-change: transform; }
+  #vfx { z-index: 3; }
+  #flash { position: absolute; inset: 0; background: #d6eaff; opacity: 0; z-index: 5; pointer-events: none; }
+  #app::after { content: ""; position: absolute; z-index: 6; inset: 0; box-shadow: inset 0 0 70px #03020b50; pointer-events: none; }
+  .hud { position: absolute; z-index: 10; top: max(10px, env(safe-area-inset-top)); left: 12px; right: 12px; display: grid; gap: 6px; pointer-events: none; }
+  .panel { background: #11101de8; border: 1px solid #b4a0d433; box-shadow: 0 5px 20px #08061235; }
+  .header-panel { padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .header-brand { min-width: 0; display: flex; align-items: center; gap: 16px; }
+  .header-brand .connection { max-width: none; text-align: left; }
+  .header-actions { display: flex; flex-shrink: 0; gap: 6px; margin-left: auto; pointer-events: auto; }
+  .header-actions .reset { min-height: 36px; padding: 7px 8px; font-size: 11px; }
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #a39cbb; }
+  h1 { margin: 2px 0 0; font-size: 18px; line-height: 1.2; letter-spacing: .05em; }
+  h1 em { color: #bbacff; font-style: normal; }
+  .connection { max-width: 110px; color: #b5a9c6; font-size: 10px; text-align: right; line-height: 1.35; }
+  .connection::before { content: "● "; color: #f7c47c; }
+  .connection.ready::before { color: #8debba; }
+  .connection.error::before { color: #ff8198; }
+  .stats-panel { padding: 8px 10px 7px; }
+  .stats { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 12px; align-items: center; }
+  .stat { display: flex; align-items: baseline; min-width: 0; white-space: nowrap; }
+  .stat > span:first-child { margin-right: 12px; }
+  .stat .key { min-width: 30px; font-size: 10px; color: #a9a0b9; }
+  .stat .val { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  #progress-dock { position: absolute; z-index: 10; top: 50%; right: 12px; transform: translateY(-50%); display: grid; justify-items: end; gap: 14px; pointer-events: none; }
+  #coin-dock { display: flex; align-items: baseline; gap: 12px; padding: 0 10px; color: #ffdd86; }
+  #coin-dock .key { font-size: 10px; }
+  #coin-dock .val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .unit { font-size: 10px; color: #aaa0bb; }
+  .stage-meter { display: flex; gap: 4px; padding: 7px 10px; }
+  .stage-dot { flex: 1; height: 5px; opacity: .3; border: 1px solid #fff4; }
+  .stage-dot.active { opacity: 1; outline: 1px solid #faf4ff; outline-offset: 1px; }
+  #view-detail, #size-detail { min-width: 0; text-align: right; font-size: 10px; color: #b4aac5; overflow-wrap: anywhere; }
+  #view-detail { white-space: nowrap; }
+  #size-detail { line-height: 1.5; }
+  #ground-ui { position: absolute; z-index: 10; top: calc(var(--ground-position) + 4px); left: 12px; right: 12px; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 16px; pointer-events: none; }
+  .health-panel { width: min(600px, 100%); overflow: hidden; padding: 3px 0; }
+  .health-caption { display: flex; justify-content: center; padding: 0 10px; gap: 4px; font-size: 10px; color: #b4aac5; }
+  #health-bars { display: flex; justify-content: center; gap: 0; }
+  .health-unit { position: relative; flex: 0 1 144px; min-width: 0; aspect-ratio: 144 / 30; }
+  .health-unit canvas { position: absolute; display: block; width: 111.111111%; height: auto; left: -5.555556%; top: 50%; transform: translateY(-50%); image-rendering: pixelated; }
+  .input-status { width: min(340px, 100%); pointer-events: auto; text-align: center; display: grid; gap: 4px; }
+  #input-label { font-size: 11px; font-weight: 700; }
+  .combat-skills { display: flex; justify-content: center; gap: 4px; }
+  .combat-skill { position: relative; width: calc((100% - 16px) / 5); flex: 0 0 auto; aspect-ratio: 1; padding: 3px 2px 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #201a30f2; border: 1px solid #9a84bc; color: #f1eaff; cursor: pointer; min-width: 0; font-size: 10px; line-height: 1.1; }
+  .combat-skill:focus-visible, .combat-skill:hover:enabled { outline: 1px solid #e5cbff; background: #49365f; }
+  .combat-skill:disabled { opacity: .75; }
+  .skill-grade { color: #c2a9ed; white-space: nowrap; }
+  .skill-name { max-width: 100%; overflow-wrap: anywhere; }
+  .skill-time { color: #c3b9d1; font-variant-numeric: tabular-nums; }
+  .input-track { position: absolute; height: 4px; bottom: 0; left: 0; right: 0; background: #ffffff13; overflow: hidden; }
+  .input-progress { height: 100%; background: #aa96eb; transform-origin: left; }
+  @media (max-height: 610px) { .health-unit { max-height: 24px; } }
+  .footer { position: absolute; z-index: 10; left: 12px; right: 12px; bottom: max(10px, env(safe-area-inset-bottom)); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .instructions { padding: 7px 9px; background: #110f1aaa; min-width: 0; }
+  .instructions strong { display: block; font-size: 11px; }
+  .instructions span { display: block; margin-top: 2px; color: #bbb1c9; font-size: 10px; }
+  .reset { color: #f1eaff; background: #30273fea; border: 1px solid #7d6b9b; font-size: 11px; font-weight: 800; min-height: 42px; padding: 10px 13px; cursor: pointer; white-space: nowrap; }
+  .reset:hover, .reset:focus-visible { background: #504064; outline-color: #e5cbff; }
+  .reset:active { transform: translateY(1px); }
+  .toast { position: absolute; z-index: 12; right: 12px; top: var(--toast-top, calc(50% + 24px)); max-width: calc(100% - 32px); padding: 4px 10px; text-align: right; color: #fff; font-weight: 800; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .12s; }
+  .stage-status { display: grid; justify-items: end; gap: 10px; padding: 0 10px; color: #d8caee; font-size: 11px; font-variant-numeric: tabular-nums; }
+  #stage-time[data-urgent="true"] { color: #ff8198; }
+  #timeout-dialog .modal-actions { flex-wrap: wrap; }
+  .toast.visible { opacity: 1; }
+  .overlay { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: #090811d9; }
+  .finish-card { width: min(330px, 100%); text-align: center; background: #171225; border: 1px solid #9582c6; padding: 30px 20px; box-shadow: 0 16px 70px #000b; }
+  .finish-card h2 { margin: 5px 0 14px; color: #c7baff; font-size: 38px; line-height: 1.1; letter-spacing: .05em; }
+  .finish-card p { color: #c3b9d1; font-size: 12px; line-height: 1.7; }
+  .finish-card .reset { display: block; width: 100%; margin-top: 18px; }
+  .error-panel { position: absolute; z-index: 40; left: 14px; right: 14px; top: 38%; padding: 18px; background: #211522fa; border: 1px solid #de92a4; }
+  .error-panel h2 { font-size: 16px; margin: 0 0 10px; }
+  .error-panel p { font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+  #test-tools { pointer-events: auto; padding: 7px 9px; font-size: 10px; }
+  #test-tools summary { cursor: pointer; }
+  .test-actions { display: flex; gap: 6px; margin-top: 6px; }
+  #test-scenario { min-width: 0; flex: 1; font-size: 10px; padding: 4px; }
+  #test-apply { font-size: 10px; min-height: 32px; padding: 5px 8px; }
+  @media (min-width: 650px) {
+    .hud { left: 20px; right: 20px; top: 16px; align-items: start; }
+    .header-panel { padding: 12px 14px; }
+    h1 { font-size: 22px; }
+    #test-tools { grid-column: 1 / -1; }
+    .footer { left: 20px; right: 20px; bottom: 16px; }
+  }
+  @media (max-height: 610px) and (max-width: 649px) {
+    .hud { top: max(6px, env(safe-area-inset-top)); gap: 4px; }
+    .header-panel { padding: 5px 10px; }
+    .stats-panel { padding: 5px 10px; }
+    .footer { bottom: max(6px, env(safe-area-inset-bottom)); }
+    .instructions { padding: 5px 7px; }
+  }
+  /* Keep footer actions and stage information clear on short screens. */
+  #app.footer-above-ground .footer { top: var(--footer-top); bottom: auto; }
+  #app.footer-above-ground #progress-dock { top: calc(var(--footer-top) + var(--footer-height) + 8px); transform: none; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+  .footer-actions { display: flex; flex-shrink: 0; gap: 6px; }
+  .footer-actions .reset { padding: 8px 10px; }
+  .instructions strong, .instructions span { overflow-wrap: anywhere; }
+  .health-unit[data-dead="true"] { opacity: .5; }
+  dialog { color: #f5f0ff; background: #171225; border: 1px solid #9582c6; padding: 18px; width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; box-shadow: 0 16px 70px #000b; }
+  dialog::backdrop { background: #090811dd; }
+  #skills-dialog[open], #items-dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
+  #skills-dialog > :not(.modal-panel), #items-dialog > :not(.modal-panel) { flex: 0 0 auto; }
+  .modal-panel { min-height: 0; flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .modal-panel:focus-visible { outline: 1px solid #aa96eb; outline-offset: -1px; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .modal-header h2 { font-size: 20px; margin: 0; }
+  .modal-close { border: 1px solid #7d6b9b; background: #30273f; color: inherit; padding: 8px 10px; cursor: pointer; font-size: 12px; }
+  dialog p { font-size: 11px; line-height: 1.6; color: #c3b9d1; }
+  .danger { border-color: #e58da3; color: #ffd5df; }
+  .success { border-color: #8de5af; color: #d5ffe4; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .skill-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .skill-tabs button { padding: 10px 6px; background: #241d35; border: 1px solid #7d6b9b; color: #c3b9d1; cursor: pointer; font-size: 12px; }
+  .skill-tabs button[aria-selected="true"] { border-color: #d7c6ff; color: white; background: #49365f; }
+  .skill-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-content: start; }
+  .skill-card { min-width: 0; display: flex; flex-direction: column; padding: 12px; background: #100f1c; border: 1px solid #b4a0d433; overflow-wrap: anywhere; }
+  .skill-card h3 { margin: 0 0 7px; font-size: 14px; }
+  .skill-card p { margin: 4px 0; }
+  .skill-card .reset { margin-top: auto; min-height: 36px; font-size: 11px; width: 100%; white-space: normal; }
+  .skill-card p:last-of-type { margin-bottom: 12px; }
+  button:disabled { cursor: not-allowed; opacity: .45; }
+  .cost { color: inherit; }
+  button:enabled .cost, .skill-card[data-available="true"] .cost { color: #ffdd86; }
+  #pause-dialog { width: fit-content; max-width: calc(100vw - 32px); padding: 20px 24px; text-align: center; border: 2px solid #aa96eb; background: #14121e; }
+  #pause-dialog::backdrop { background: rgb(9 8 17 / 30%); }
+  #pause-dialog h2 { margin: 0; font-size: 17px; font-weight: 400; }
+  #pause-dialog p { margin: 10px 0 16px; color: #e5deef; }
+  #pause-resume { min-width: 120px; }
+  .skill-summary, #shop-message, #item-message { font-size: 11px; line-height: 1.6; color: #e8ffc6; }
+  #shop-message, #item-message { min-height: 18px; margin-top: 10px; }
+  #skills-wallet, #items-wallet { color: #ffdd86; font-size: 14px; }
+  @media (max-width: 649px) {
+    .footer { flex-wrap: wrap; gap: 6px; }
+    .instructions { flex: 1 1 170px; }
+    .footer-actions { margin-left: auto; }
+    .stat .unit { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+<main id="app" tabindex="0" aria-label="SMASH SLIME. 클릭 또는 스페이스 키로 기본 공격을 사용합니다.">
+  <div id="scene">
+    <canvas id="world" aria-hidden="true"></canvas>
+    <div id="creatures" aria-label="슬라임 무리"></div>
+    <canvas id="vfx" aria-hidden="true"></canvas>
+    <div id="flash"></div>
+  </div>
+  <div id="hud" class="hud" aria-label="게임 상태">
+    <header class="panel header-panel">
+      <div class="header-brand">
+        <h1>SMASH <em>SLIME</em></h1>
+        <div id="connection" class="connection" role="status">FX 연결 중…</div>
+      </div>
+      <div class="header-actions" role="group" aria-label="게임 메뉴">
+        <button id="main-menu-open" class="reset" type="button" disabled>메인메뉴</button>
+        <button id="pause-open" class="reset" type="button" disabled>일시정지</button>
+      </div>
+    </header>
+    <aside class="panel stats-panel">
+      <div class="stats">
+        <div class="stat"><span class="key">단계</span><span id="level" class="val">01</span><span class="unit"> /<span id="max-level"></span></span></div>
+        <span id="view-detail">VIEW 100%</span>
+        <div class="stat"><span class="key">적 HP</span><span id="hp" class="val">100</span><span class="unit"> /<span id="max-hp">100</span></span></div>
+        <span id="size-detail">1단계 적 크기 · 32px / 현재 단계 적 크기 · 32px</span>
+      </div>
+      <span id="count" class="sr-only">1</span><span id="hits" class="sr-only">0</span>
+    </aside>
+    <div id="stages" class="panel stage-meter" aria-label="단계 색상 진행"></div>
+    <details id="test-tools" class="panel" hidden>
+      <summary>상태로 이동</summary>
+      <div class="test-actions">
+        <select id="test-scenario" aria-label="테스트 시나리오">
+          <option value="start">처음 / 1마리</option>
+          <option value="two">2마리 / 마지막 단계</option>
+          <option value="three">3마리 / 마지막 단계</option>
+          <option value="four">4마리 / 마지막 단계</option>
+          <option value="compress">다음 적중 → 기본 1.5배 / 1마리 · HP 350</option>
+          <option value="replace">다음 적중 → 허수아비</option>
+          <option value="finish">다음 적중 → finish</option><option value="shop">스킬 확인 / 2000 코인</option><option value="critical">크리티컬 확인 / 확률 30%</option>
+        </select>
+        <button id="test-apply" class="reset" type="button">적용</button>
+      </div>
+    </details>
+  </div>
+  <aside id="progress-dock" aria-label="스테이지와 보유 코인">
+    <div class="stage-status"><span id="stage-number">스테이지 1</span><span id="stage-time">시간제한 없음</span></div>
+    <div id="coin-dock"><span class="key">코인</span><span id="coins" class="val">0</span></div>
+  </aside>
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <div id="combat-feedback" class="sr-only" role="status" aria-live="polite"></div>
+  <div id="ground-ui">
+    <section id="hp-dock" class="panel health-panel" aria-label="적 체력">
+      <div class="health-caption"><span id="hp-caption"></span></div>
+      <div id="health-bars"></div>
+    </section>
+    <div id="input-status" class="input-status" aria-label="공격 스킬">
+      <div id="input-label">pixelfx 로딩 중</div>
+      <div id="combat-skills" class="combat-skills"></div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div id="instruction" class="instructions"><strong>⚡ 클릭 또는 space / 화면 터치</strong><span>스킬을 업그레이드해 몬스터를 잡으세요!</span></div>
+    <div class="footer-actions"><button id="items-open" class="reset" type="button">상점</button><button id="skills-open" class="reset" type="button">스킬</button><button id="settings-open" class="reset" type="button">설정</button></div>
+  </footer>
+  <section id="finish" class="overlay" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
+    <div class="finish-card">
+      <div class="eyebrow">ALL STAGES COMPLETE</div>
+      <h2 id="finish-title">finish</h2>
+      <p><span id="finish-message"></span><br><span id="finish-stats"></span></p>
+      <button id="finish-reset" class="reset" type="button">↺ 초기화</button>
+    </div>
+  </section>
+  <section id="error" class="error-panel" role="alert" hidden>
+    <h2>pixelfx를 불러오지 못했습니다.</h2>
+    <p>인터넷 연결과 CDN 접근을 확인해 주세요. 파일 직접 실행이 차단되면 로컬 서버에서 열어 주세요.</p>
+    <p id="error-details"></p>
+    <button id="reload" class="reset" type="button">다시 불러오기</button>
+  </section>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <div class="modal-header"><h2 id="settings-title">설정</h2><button class="modal-close" data-close="settings-dialog" type="button">닫기</button></div>
+    <button id="reset" class="reset danger" type="button">↺ 초기화</button>
+    <p>단계, 코인, 패시브 레벨, 구매한 스킬과 아이템, 스킬 사용 횟수를 모두 초기화합니다.</p>
+    <p>설정, 상점, 스킬 창이 열려 있는 동안 전투가 일시 정지됩니다.</p>
+    <p id="save-status" role="status">진행 상태가 자동 저장됩니다.</p>
+  </dialog>
+  <dialog id="reset-dialog" aria-labelledby="reset-title">
+    <div class="modal-header"><h2 id="reset-title">처음부터 시작할까요?</h2></div>
+    <p>현재 진행, 보유 코인, 모든 스킬과 아이템, 스킬 사용 횟수가 초기화됩니다.</p>
+    <div class="modal-actions"><button id="reset-cancel" class="reset" type="button">취소</button><button id="reset-confirm" class="reset danger" type="button">초기화 확인</button></div>
+  </dialog>
+  <dialog id="main-menu-dialog" aria-labelledby="main-menu-title" aria-describedby="main-menu-description">
+    <div class="modal-header"><h2 id="main-menu-title">메인메뉴로 이동할까요?</h2></div>
+    <p id="main-menu-description">현재 진행 상태를 저장한 후 메인메뉴로 이동합니다.</p>
+    <p id="main-menu-error" role="alert" hidden></p>
+    <div class="modal-actions"><button id="main-menu-cancel" class="reset" type="button">취소</button><button id="main-menu-confirm" class="reset success" type="button">저장 후 이동</button></div>
+  </dialog>
+  <dialog id="timeout-dialog" aria-labelledby="timeout-title">
+    <div class="modal-header"><h2 id="timeout-title">시간 초과</h2></div>
+    <p id="timeout-message"></p>
+    <p id="timeout-description"></p>
+    <div class="modal-actions"><button id="timeout-keep" class="reset" type="button">정보 유지</button><button id="timeout-reset" class="reset danger" type="button">전체 초기화</button></div>
+  </dialog>
+  <dialog id="skills-dialog" aria-labelledby="skills-title">
+    <div class="modal-header"><h2 id="skills-title">스킬</h2><button class="modal-close" data-close="skills-dialog" type="button">닫기</button></div>
+    <div id="skills-wallet"></div>
+    <p class="skill-summary" id="skill-summary"></p>
+    <div class="skill-tabs" role="tablist" aria-label="스킬 종류">
+      <button id="passive-tab" role="tab" aria-selected="true" aria-controls="passive-panel" type="button">패시브 / Passive</button>
+      <button id="active-tab" role="tab" aria-selected="false" aria-controls="active-panel" tabindex="-1" type="button">액티브 / Active</button>
+    </div>
+    <div id="passive-panel" role="tabpanel" aria-labelledby="passive-tab" class="modal-panel skill-panel" tabindex="0"></div>
+    <div id="active-panel" class="modal-panel" role="tabpanel" aria-labelledby="active-tab" tabindex="0" hidden>
+      <p>구매한 스킬은 하단 버튼으로 사용합니다. 자동 공격 아이템을 구매한 등급은 자동으로도 사용합니다.</p>
+      <div id="active-skills-panel" class="skill-panel"></div>
+    </div>
+    <div id="shop-message" role="status" aria-live="polite"></div>
+  </dialog>
+  <dialog id="items-dialog" aria-labelledby="items-title">
+    <div class="modal-header"><h2 id="items-title">상점</h2><button class="modal-close" data-close="items-dialog" type="button">닫기</button></div>
+    <div id="items-wallet"></div>
+    <p>필요한 것을 얼른 구매하세요!</p>
+    <div id="items-panel" class="modal-panel skill-panel" tabindex="0" aria-label="상점 아이템"></div>
+    <div id="item-message" role="status" aria-live="polite"></div>
+  </dialog>
+  <dialog id="pause-dialog" aria-labelledby="pause-title">
+    <h2 id="pause-title">게임 일시 정지</h2>
+    <p id="pause-time"></p>
+    <button id="pause-resume" class="reset" type="button">계속</button>
+  </dialog>
+</main>
+<script type="module">
+
+// GAME_RULES_START
+// Pure game rules shared by the page and automated tests.
+const CONFIG = Object.freeze({
+  EVOLUTION_DELAY_MS: 500, EVOLUTION_LOCK_MS: 2000,
+  GROUND_RATIO: .67, ATTACK_EFFECT_SCALE: .6, LIGHTNING_SCALE: 0.85, BASE_SLIME_SIZE: 32,
+  LEVEL_GROWTH: 1.18, BASE_GROWTH: 1.5, SLIME_LIMIT: 200,
+  HP_PER_CREATURE: 100, GROWN_SLIME_HP: 350, SLIME_HP_GROWTH: 1.3, SCARECROW_HP: 1000, MAX_LEVEL: 5,
+  ANIMATION_SPEED: 1.05, SLIME_HOP: 3, DUMMY_SIZE: 156,
+  PASSIVE_MAX_LEVEL: 35, PASSIVE_COST: 20, PASSIVE_STEP: .01, DAMAGE_GROWTH: 1.08,
+  CRITICAL_MULTIPLIER: 1.5, HIT_STOP_MS: 100,
+  UNTIMED_STAGES: 10, STAGE_LIMIT_MS: 20000, CONTINUE_COST: 1500
+});
+const PASSIVES = Object.freeze({
+  speed1: { name: '공격속도 I', description: '기본 공격, Double Slash 공격속도: 레벨당 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  speed2: { name: '공격속도 II', description: 'Lightning Strike, Vine Whip 공격속도: 레벨당 +1%', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  critChance: { name: '크리티컬 확률', description: '레벨당 확률 +1%p', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  critDamage: { name: '크리티컬 공격력', description: '레벨당 크리티컬 피해 배율 +0.01 (1%p)', cost: CONFIG.PASSIVE_COST, maxLevel: CONFIG.PASSIVE_MAX_LEVEL },
+  strength: { name: 'Strength', description: '레벨당 물리 공격력 ×1.08', cost: 125, maxLevel: 10 },
+  intelligence: { name: 'Intelligence', description: '레벨당 마법 공격력 ×1.08', cost: 125, maxLevel: 10 },
+  dexterity: { name: 'Dexterity', description: '모든 등급 공격속도: 레벨당 +1%', cost: 45, maxLevel: 10, requires: [['speed1', 1], ['speed2', 1]] },
+  luck: { name: 'luck', description: '레벨당 크리티컬 확률 +1%p', cost: 45, maxLevel: 10, requires: [['critChance', 10]] }
+});
+// hitAt is effect time, taken from the original effect's visible impact constants.
+// Double Slash deals damage once at the crossing, not once for each stroke.
+// nature/vine-whip: CRACK=LASH+LAG*N+(PI-atan(OMEGA*TAU_S))/OMEGA.
+// pose(CRACK)[24] is the actual tip, measured in the original effect's coordinates.
+const VINE_IMPACT = Object.freeze({time:.36+.0052*24+(Math.PI-Math.atan((Math.PI*2/.21)*.055))/(Math.PI*2/.21),x:70.90391674129162,y:-19.884953533311638});
+const ATTACKS = Object.freeze({
+  basic: { grade: 'I', type: 'physical', name: 'Parry', path: 'impacts/parry', period: 1750, damage: 7, cost: 0, hitAt: .025, impact: [0, -30], body: true },
+  doubleSlash: { grade: 'I', type: 'physical', name: 'Double Slash', path: 'melee/double-slash', period: 1000, damage: 6, cost: 24, hitAt: .16, impact: [34, -23], body: true },
+  lightning: { grade: 'II', type: 'magic', name: 'Lightning Strike', path: 'lightning/lightning-strike', period: 2700, damage: 18, cost: 68, hitAt: .76, hits: [.76, 1.04, 1.26], impact: [0, 0] },
+  acid: { grade: 'II', type: 'magic', name: 'Vine Whip', path: 'nature/vine-whip', period: 3200, damage: 24, cost: 80, hitAt: VINE_IMPACT.time, impact: [VINE_IMPACT.x, 0] },
+  holy: { grade: 'III', type: 'neutral', name: 'Holy Pillar', path: 'holy/holy-pillar', period: 15000, damage: 199, cost: 324, hitAt: .66, hits: [.66, .96, 1.26, 1.56, 1.86], impact: [0, 0] }
+});
+const ITEMS = Object.freeze({
+  autoGlove: { name: 'Auto Glove', cost: 200, grade: 'I', skills: ['basic', 'doubleSlash'] },
+  autoMagicStick: { name: 'Auto Magic Stick', cost: 800, grade: 'II', skills: ['lightning', 'acid'] }
+});
+const ACTIVE_IDS = Object.freeze(Object.keys(ATTACKS).filter(id => id !== 'basic'));
+const clamp01 = n => Math.max(0, Math.min(1, n));
+const easeInOut = u => u * u * (3 - 2 * u);
+const roundHp = Math.round;
+const hpPerBarOf = s => s.kind === 'scarecrow' ? CONFIG.SCARECROW_HP
+  : s.cycles > 0 ? Math.round(CONFIG.GROWN_SLIME_HP * CONFIG.SLIME_HP_GROWTH ** (s.cycles - 1)) : CONFIG.HP_PER_CREATURE;
+const maxHpOf = s => hpPerBarOf(s) * s.count;
+const sizeOf = s => (s.kind === 'slime' ? s.baseSize : CONFIG.DUMMY_SIZE) * CONFIG.LEVEL_GROWTH ** (s.level - 1);
+const speedBonus = (s, id = 'basic') => ((ATTACKS[id].grade === 'I' ? s.passives.speed1 : ATTACKS[id].grade === 'II' ? s.passives.speed2 : 0) + s.passives.dexterity) * CONFIG.PASSIVE_STEP;
+const attackPeriod = (s, id = 'basic') => ATTACKS[id].period / (1 + speedBonus(s, id));
+const criticalChance = s => (s.passives.critChance + s.passives.luck) * CONFIG.PASSIVE_STEP;
+const criticalMultiplier = level => CONFIG.CRITICAL_MULTIPLIER + level * CONFIG.PASSIVE_STEP;
+const skillGrade = id => ATTACKS[id].grade;
+function attackDamage(s, id, critical = false) {
+  const physical = CONFIG.DAMAGE_GROWTH ** s.passives.strength;
+  const magic = CONFIG.DAMAGE_GROWTH ** s.passives.intelligence;
+  const type = ATTACKS[id].type;
+  const multiplier = type === 'physical' ? physical : type === 'magic' ? magic : (physical + magic) / 2;
+  return Math.round(ATTACKS[id].damage * multiplier * (critical ? criticalMultiplier(s.passives.critDamage) : 1));
+}
+const passiveUnlocked = (s, id) => (PASSIVES[id].requires || []).every(([key, level]) => s.passives[key] >= level);
+const itemUnlocked = (s, id) => ITEMS[id].skills.every(skill => (skill === 'basic' || s.owned[skill]) && s.uses[skill] >= 25);
+const isAutomatic = (s, id) => Object.keys(ITEMS).some(item => s.items[item] && ITEMS[item].grade === ATTACKS[id].grade);
+const environmentOf = s => ({
+  weather: s.kind === 'scarecrow' ? 'fireflies' : s.stage > 20 ? 'fog' : null,
+  ground: s.kind === 'scarecrow' ? 'dark' : 'ground'
+});
+const hitTimes = ticket => ATTACKS[ticket.source].hits || [ATTACKS[ticket.source].hitAt];
+function splitDamage(source, total) {
+  if (source !== 'holy' && source !== 'lightning') return [total];
+  const first = source === 'holy' ? Math.round(total / 2) : 0;
+  const count = source === 'holy' ? 4 : 3;
+  const part = Math.floor((total - first) / count);
+  const tail = Array.from({length: count}, (_, index) => index === count - 1 ? total - first - part * (count - 1) : part);
+  return source === 'holy' ? [first, ...tail] : tail;
+}
+const remainingDamage = ticket => splitDamage(ticket.source, ticket.damage).slice(ticket.hitIndex).reduce((sum, damage) => sum + damage, 0);
+const damageNumberScale = damage => Math.min( .5 + Math.floor(Math.max(0,damage)/100) * .05, 1 );
+function effectSide(seed) {
+  let n=Math.imul(seed^(seed>>>16),0x85ebca6b);
+  n=Math.imul(n^(n>>>13),0xc2b2ae35);
+  return ((n^(n>>>16))>>>0)<0x80000000 ? -1 : 1;
+}
+function vinePlacement(targetX, groundY, bodyHeight, canvasWidth, canvasHeight, side) {
+  const w=216,h=128,ox=60,oy=114;
+  const contactX=side===1 ? ox+VINE_IMPACT.x : w-ox-VINE_IMPACT.x;
+  // Root stays on the floor; the crack hits the target's body. Mirror the whole
+  // buffer instead of flipping inside the asymmetrical native frame (which clips).
+  const scale=Math.max(.001,Math.min(CONFIG.ATTACK_EFFECT_SCALE,
+    bodyHeight*.6/-VINE_IMPACT.y,(targetX-2)/contactX,
+    (canvasWidth-targetX-2)/(w-contactX),(groundY-2)/oy,(canvasHeight-groundY-2)/(h-oy)));
+  return {x:targetX-contactX*scale,y:groundY-oy*scale,scale,
+    rootX:targetX-side*VINE_IMPACT.x*scale,rootY:groundY,
+    tipX:targetX,tipY:groundY+VINE_IMPACT.y*scale};
+}
+function slimeHitPose(age, power, direction) {
+  const envelope=age<.4 ? Math.exp(-age*12)*power : 0;
+  const pulse=envelope*Math.cos(age*35);
+  return {x:direction*5*envelope,scaleX:1+.14*pulse,scaleY:1-.18*pulse,
+    flash:age<.08 ? (1-age/.08)*.65*power : 0};
+}
+function resetEnemies(s, total = maxHpOf(s), growing = false) {
+  const capacity = hpPerBarOf(s);
+  s.enemies = Array.from({ length: s.count }, (_, id) => {
+    const hp = roundHp(Math.max(0, Math.min(capacity, total - id * capacity)));
+    return { id, hp, reserved: 0, dead: !growing && hp <= 0 };
+  });
+  s.hp = roundHp(s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0));
+  s.pending = 0; s.targetId = null;
+}
+function initialState(seed = 0x12345678) {
+  const s = { kind: 'slime', level: 1, count: 1, baseSize: CONFIG.BASE_SLIME_SIZE, cycles: 0,
+    hp: CONFIG.HP_PER_CREATURE, totalHits: 0, acceptedClicks: 0, totalCasts: 0,
+    pending: 0, phase: 'ready', generation: 0, lastAcceptedAt: -Infinity, transition: null,
+    coins: 0, passives: Object.fromEntries(Object.keys(PASSIVES).map(id => [id, 0])),
+    owned: Object.fromEntries(ACTIVE_IDS.map(id => [id, false])),
+    items: Object.fromEntries(Object.keys(ITEMS).map(id => [id, false])),
+    uses: Object.fromEntries(Object.keys(ATTACKS).map(id => [id, 0])),
+    lastCast: Object.fromEntries(Object.keys(ATTACKS).map(id => [id, -Infinity])),
+    rng: seed >>> 0 || 1, targetId: null, lastHit: null, criticalHits: 0,
+    stage: 1, stageRemaining: CONFIG.STAGE_LIMIT_MS };
+  resetEnemies(s); return s;
+}
+function random01(s) {
+  let n = s.rng; n ^= n << 13; n ^= n >>> 17; n ^= n << 5;
+  s.rng = n >>> 0; return s.rng / 4294967296;
+}
+function upgradePassive(s, id) {
+  if (!Object.hasOwn(PASSIVES, id)) return false;
+  const passive = PASSIVES[id];
+  if (!passiveUnlocked(s, id) || s.passives[id] >= passive.maxLevel || s.coins < passive.cost) return false;
+  s.coins -= passive.cost; s.passives[id]++; return true;
+}
+function buySkill(s, id) {
+  if (!ACTIVE_IDS.includes(id) || s.owned[id] || s.coins < ATTACKS[id].cost) return false;
+  s.coins -= ATTACKS[id].cost; s.owned[id] = true; s.lastCast[id] = -Infinity; return true;
+}
+function buyItem(s, id) {
+  if (!Object.hasOwn(ITEMS, id) || s.items[id] || !itemUnlocked(s, id) || s.coins < ITEMS[id].cost) return false;
+  s.coins -= ITEMS[id].cost; s.items[id] = true; return true;
+}
+function progressState(s) {
+  const next = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
+  let event = 'level', finish = false;
+  if (next.kind === 'scarecrow') {
+    next.level = Math.min(CONFIG.MAX_LEVEL, next.level + 1); finish = next.level === CONFIG.MAX_LEVEL;
+  } else if (next.level < CONFIG.MAX_LEVEL) next.level++;
+  else {
+    next.level = 1;
+    if (next.cycles === 0 && next.count < 4) {
+      next.count++; event = 'spawn';
+    } else {
+      next.count = 1; next.baseSize *= CONFIG.BASE_GROWTH; next.cycles++; event = 'compress';
+      if (next.baseSize > CONFIG.SLIME_LIMIT) {next.kind = 'scarecrow'; next.count = 1; event = 'scarecrow';}
+    }
+  }
+  return { next, event, finish };
+}
+function settleState(s, now) {
+  if (!s.transition || now + 1e-7 < s.transition.start) return false;
+  let started = false;
+  if (s.phase === 'waiting') {
+    Object.assign(s, s.transition.to); s.phase = 'transforming';
+    resetEnemies(s, 0, true); started = true;
+  }
+  if (now + 1e-7 < s.transition.end) return started;
+  const finish = s.transition.finish;
+  s.transition = null; s.phase = finish ? 'finished' : 'ready'; resetEnemies(s);
+  s.stage++; s.stageRemaining = CONFIG.STAGE_LIMIT_MS;
+  return true;
+}
+function elapseStageTime(s, elapsed) {
+  if (s.phase !== 'ready' || s.stage <= CONFIG.UNTIMED_STAGES) return false;
+  s.stageRemaining = Math.max(0, s.stageRemaining - Math.max(0, elapsed));
+  if (s.stageRemaining > .000001) return false;
+  s.stageRemaining = 0; s.phase = 'failed'; s.generation++; s.pending = 0;
+  s.enemies.forEach(enemy => enemy.reserved = 0);
+  return true;
+}
+function restartAfterFailure(s, keep, seed = 1) {
+  if (s.phase !== 'failed' || (keep && s.coins < CONFIG.CONTINUE_COST)) return null;
+  const next = initialState(seed); next.generation = s.generation + 1;
+  if (keep) {
+    next.coins = s.coins - CONFIG.CONTINUE_COST;
+    next.passives = {...s.passives}; next.owned = {...s.owned};
+    next.items = {...s.items}; next.uses = {...s.uses};
+    for (const key of ['totalHits', 'acceptedClicks', 'totalCasts', 'criticalHits', 'rng']) next[key] = s[key];
+  }
+  return next;
+}
+function attackTarget(s, order = null) {
+  const current = s.enemies[s.targetId];
+  if (current && !current.dead) return current;
+  const ids = order || s.enemies.map(enemy => enemy.id).reverse();
+  return ids.map(id => s.enemies[id]).find(enemy => enemy && !enemy.dead) || null;
+}
+function inputGate(s, now, source = 'basic') {
+  if (!Object.hasOwn(ATTACKS, source)) return 'unknown';
+  if (source !== 'basic' && !s.owned[source]) return 'unowned';
+  if (s.phase !== 'ready') return s.phase;
+  if (now - s.lastCast[source] + 1e-7 < attackPeriod(s, source)) return 'cooldown';
+  const target = attackTarget(s);
+  if (!target || target.hp - target.reserved <= .0001) return 'pending';
+  return 'ready';
+}
+function reserveAttack(s, now, source = 'basic', order = null, random = () => random01(s)) {
+  if (inputGate(s, now, source) !== 'ready') return null;
+  const target = attackTarget(s, order);
+  // A lethal hit in flight is still attacking a living target. Wait for its death.
+  if (!target || target.hp - target.reserved <= .0001) return null;
+  const critical = random() < criticalChance(s);
+  const damage = attackDamage(s, source, critical);
+  target.reserved = roundHp(target.reserved + damage); s.pending++; s.totalCasts++;
+  s.uses[source]++;
+  s.targetId = target.id; s.lastCast[source] = now;
+  if (source === 'basic') {s.lastAcceptedAt = now; s.acceptedClicks++;}
+  return { generation: s.generation, consumed: false, source, targetId: target.id, damage, critical, hitIndex: 0 };
+}
+function applyHit(s, ticket, now, random = () => random01(s)) {
+  if (!ticket || ticket.consumed || ticket.generation !== s.generation || s.phase !== 'ready') return null;
+  const target = s.enemies[ticket.targetId];
+  if (!target) return null;
+  if (target.dead) {
+    target.reserved = Math.max(0, target.reserved - remainingDamage(ticket));
+    ticket.consumed = true; s.pending = Math.max(0, s.pending - 1);
+    return null;
+  }
+  const parts = splitDamage(ticket.source, ticket.damage), damage = parts[ticket.hitIndex];
+  ticket.hitIndex++;
+  target.reserved = Math.max(0, target.reserved - damage);
+  const previousHp = s.hp, previousEnemyHp = target.hp;
+  target.hp = Math.max(0, target.hp - damage); target.dead = target.hp <= 0;
+  if (target.dead || ticket.hitIndex === parts.length) {
+    target.reserved = Math.max(0, target.reserved - remainingDamage(ticket));
+    ticket.consumed = true; s.pending = Math.max(0, s.pending - 1);
+  }
+  if (target.dead) s.targetId = null;
+  s.hp = roundHp(s.enemies.reduce((sum, enemy) => sum + enemy.hp, 0));
+  s.totalHits++; if (ticket.critical) s.criticalHits++;
+  const coins = s.kind === 'slime' ? 1 + Math.min(3, Math.floor(clamp01(random()) * 4)) : 0;
+  s.coins += coins;
+  const result = { previousHp, hp: s.hp, previousEnemyHp, enemyHp: target.hp, targetId: target.id,
+    damage, actualDamage: previousEnemyHp - target.hp, critical: ticket.critical, coins, source: ticket.source, transition: null };
+  s.lastHit = { ...result };
+  if (s.hp <= 0) {
+    const from = { kind: s.kind, level: s.level, count: s.count, baseSize: s.baseSize, cycles: s.cycles };
+    const { next, event, finish } = progressState(s);
+    s.phase = 'waiting'; s.generation++; s.pending = 0;
+    s.enemies.forEach(enemy => enemy.reserved = 0);
+    const start = now + CONFIG.EVOLUTION_DELAY_MS;
+    s.transition = { from, to: next, event, finish, start, end: start + CONFIG.EVOLUTION_LOCK_MS };
+    result.transition = s.transition;
+  }
+  return result;
+}
+
+/** Place the group in logical CSS pixels; the camera never changes the growth rules. */
+function groupLayout(count, size, availableWidth, availableHeight, kind = 'slime') {
+  // Include the slime's widest squash and hit reaction in its reserved body width.
+  const bodyWidth = kind === 'scarecrow' ? size * 38 / 52 : size * 1.6;
+  const step = bodyWidth + 8;
+  const points = Array.from({length:count},(_,i)=>({x:(i-(count-1)/2)*step,y:0,z:count-i}));
+  const boundsWidth = count * bodyWidth + (count-1)*8;
+  const boundsHeight = size * (kind==='scarecrow' ? 1.12 : 1.95);
+  const camera = Math.min(1,availableWidth/boundsWidth,availableHeight/boundsHeight);
+  return {mode:'row',points,camera:Math.max(.001,camera),boundsWidth,boundsHeight,bodyWidth};
+}
+
+// Every scalar (including null/booleans) is JSON -> UTF-8 -> repeating-key XOR -> hex.
+// All scalar entries in one atomic save must carry the same, newly generated key.
+const SAVE_KEY = 'smash-slime.progress.v1';
+const SAVE_VERSION = 3;
+function freshSaveKey(previous = '') {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let key;
+  do {
+    key = '';
+    while (key.length < 6) {
+      const bytes = crypto.getRandomValues(new Uint8Array(12));
+      for (const byte of bytes) if (byte < 208 && key.length < 6) key += alphabet[byte % 52];
+    }
+  } while (key === previous);
+  return key;
+}
+function encodeSave(data, key) {
+  if (!/^[A-Za-z]{6}$/.test(key)) throw new Error('Invalid save key');
+  const encode = value => {
+    if (Array.isArray(value)) return value.map(encode);
+    if (value !== null && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k,v]) => [k,encode(v)]));
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    return {value: Array.from(bytes, (byte,i) => (byte ^ key.charCodeAt(i % 6)).toString(16).padStart(2,'0')).join(''), back: key};
+  };
+  return btoa(JSON.stringify(encode(data)));
+}
+function decodeSave(raw) {
+  if (typeof raw !== 'string' || raw.length > 256000) throw new Error('Invalid save size');
+  let key = null, count = 0;
+  const decode = (node, depth = 0) => {
+    if (++count > 5000 || depth > 20 || !node || typeof node !== 'object') throw new Error('Invalid save structure');
+    if (Array.isArray(node)) return node.map(item => decode(item, depth + 1));
+    if (Object.hasOwn(node,'value') || Object.hasOwn(node,'back')) {
+      if (Object.keys(node).length !== 2 || !/^[A-Za-z]{6}$/.test(node.back) || typeof node.value !== 'string' || !/^(?:[0-9a-f]{2})+$/.test(node.value)) throw new Error('Invalid save entry');
+      if (key !== null && key !== node.back) throw new Error('Mismatched save keys');
+      key = node.back;
+      const bytes = Uint8Array.from(node.value.match(/../g), (hex,i) => parseInt(hex,16) ^ key.charCodeAt(i % 6));
+      const value = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+      if (value !== null && !['string','number','boolean'].includes(typeof value)) throw new Error('Invalid scalar');
+      return value;
+    }
+    return Object.fromEntries(Object.entries(node).map(([k,v]) => {
+      if (['__proto__','prototype','constructor'].includes(k)) throw new Error('Invalid field');
+      return [k,decode(v,depth + 1)];
+    }));
+  };
+  const data = decode(JSON.parse(atob(raw)));
+  if (!key) throw new Error('Missing save key');
+  return {data,key};
+}
+function validateSave(data) {
+  const require = ok => {if (!ok) throw new Error('Invalid progress data');};
+  const number = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isFinite(n) && n >= min && n <= max;
+  const integer = (n,min = 0,max = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && number(n,min,max);
+  require(data?.version === SAVE_VERSION && data.maxLevel === CONFIG.MAX_LEVEL && number(data.gameNow) && number(data.hitStopRemaining,0,CONFIG.HIT_STOP_MS));
+  const s = data.state;
+  require(s && typeof s === 'object' && Object.keys(s).sort().join() === Object.keys(initialState()).sort().join());
+  const savedSizeLimit = CONFIG.SLIME_LIMIT * CONFIG.BASE_GROWTH;
+  const shape = v => v && ['slime','scarecrow'].includes(v.kind) && integer(v.level,1,CONFIG.MAX_LEVEL) && integer(v.count,1,v.kind === 'slime' ? 4 : 1) && number(v.baseSize,CONFIG.BASE_SLIME_SIZE,savedSizeLimit) && integer(v.cycles);
+  require(shape(s) && ['ready','waiting','transforming','finished','failed'].includes(s.phase));
+  for (const id of ['coins','totalHits','acceptedClicks','totalCasts','generation','criticalHits','pending']) require(integer(s[id]));
+  require(integer(s.stage,1) && number(s.stageRemaining,0,CONFIG.STAGE_LIMIT_MS) && integer(s.rng,1,0xffffffff));
+  require(s.phase !== 'failed' || (s.stage > CONFIG.UNTIMED_STAGES && s.stageRemaining === 0));
+  require(s.phase !== 'ready' || s.stage <= CONFIG.UNTIMED_STAGES || s.stageRemaining > 0);
+  for (const [obj,ids,check] of [
+    [s.passives,Object.keys(PASSIVES),(v,id)=>integer(v,0,PASSIVES[id].maxLevel)],
+    [s.owned,ACTIVE_IDS,v=>typeof v==='boolean'],
+    [s.items,Object.keys(ITEMS),v=>typeof v==='boolean'],
+    [s.uses,Object.keys(ATTACKS),v=>integer(v,0,s.totalCasts)],
+    [s.lastCast,Object.keys(ATTACKS),v=>v===null||number(v,0,data.gameNow)]
+  ]) {
+    require(obj && Object.keys(obj).sort().join() === [...ids].sort().join() && Object.entries(obj).every(([id,v])=>check(v,id)));
+  }
+  require(Object.values(s.uses).reduce((sum, uses) => sum + uses, 0) <= s.totalCasts);
+  require(s.lastAcceptedAt === null || number(s.lastAcceptedAt,0,data.gameNow));
+  require(Array.isArray(s.enemies) && s.enemies.length === s.count);
+  s.enemies.forEach((e,id) => require(e.id === id && integer(e.hp,0,hpPerBarOf(s)) && integer(e.reserved) && typeof e.dead === 'boolean' && (s.phase === 'transforming' ? !e.dead && e.hp === 0 : e.dead === (e.hp <= 0))));
+  require(number(s.hp,0,maxHpOf(s)) && Math.abs(s.hp - s.enemies.reduce((sum,e)=>sum+e.hp,0)) < .001);
+  require(s.targetId === null || integer(s.targetId,0,s.count-1));
+  if (['waiting','transforming'].includes(s.phase)) {
+    const tr = s.transition;
+    require(tr && shape(tr.from) && shape(tr.to) && ['level','spawn','compress','scarecrow'].includes(tr.event) && typeof tr.finish === 'boolean');
+    require(number(tr.start) && number(tr.end) && Math.abs(tr.end-tr.start-CONFIG.EVOLUTION_LOCK_MS)<.001 && tr.end > data.gameNow && s.hp === 0);
+    const current = s.phase === 'waiting' ? tr.from : tr.to;
+    require(['kind','level','count','baseSize','cycles'].every(k=>s[k]===current[k]));
+    const {next,finish,event}=progressState(tr.from);
+    require(!tr.legacy && Object.keys(next).every(k=>next[k]===tr.to[k]) && finish===tr.finish && event===tr.event);
+  } else require(s.transition === null);
+  require(s.phase !== 'finished' || (s.kind === 'scarecrow' && s.level === CONFIG.MAX_LEVEL));
+  require(Array.isArray(data.casts) && data.casts.length <= 5);
+  const maximumDamageState = {passives: Object.fromEntries(Object.entries(PASSIVES).map(([id, passive]) => [id, passive.maxLevel]))};
+  const sources = new Set(), reserved = s.enemies.map(()=>0);
+  for (const a of data.casts) {
+    const t = a.ticket;
+    require(s.phase === 'ready' && Object.hasOwn(ATTACKS,a.source) && !sources.has(a.source) && (a.source === 'basic' || s.owned[a.source])); sources.add(a.source);
+    // Another critical in the same simulation step can stop this already-due hit.
+    require(integer(a.seed,1) && t && t.source === a.source && t.generation === s.generation && t.consumed === false && integer(t.targetId,0,s.count-1) && typeof t.critical === 'boolean');
+    const times = hitTimes(t);
+    require(integer(t.hitIndex,0,times.length-1));
+    require(number(a.t,t.hitIndex ? times[t.hitIndex-1] : 0,times[t.hitIndex]+1/120+1e-7));
+    // A passive may have changed since casting. Current v3 saves may also contain
+    // an in-flight cast from the old maximum multiplier: 1.5 * (1 + 35 * .01) = 2.025.
+    const previousCriticalMax = Math.round(ATTACKS[a.source].damage * CONFIG.DAMAGE_GROWTH ** 10 * 2.025);
+    require(integer(t.damage,ATTACKS[a.source].damage,Math.max(previousCriticalMax,attackDamage(maximumDamageState,a.source,true))));
+    if (!Object.hasOwn(a,'side')) a.side = a.source==='acid' ? effectSide(a.seed) : 1;
+    require(a.side===1 || a.side===-1);
+    reserved[t.targetId] += remainingDamage(t);
+  }
+  require(s.pending === data.casts.length && reserved.every((n,id)=>Math.abs(n-s.enemies[id].reserved)<.001));
+  s.lastAcceptedAt ??= -Infinity;
+  for (const id of Object.keys(ATTACKS)) s.lastCast[id] ??= -Infinity;
+  return data;
+}
+
+// GAME_RULES_END
+    const COLORS = [
+      { name: '그린', palette: ['#061412','#0b2f2b','#12594a','#1f8f4f','#47c752','#a6f06a','#f0ffd2'] },
+      { name: '라임', palette: ['#111a0c','#273a15','#3f6724','#70a52e','#a6d83f','#d7f67b','#f7ffd5'] },
+      { name: '골드', palette: ['#1b1407','#40270e','#79501a','#ba8220','#e6b632','#ffdc77','#fff5d4'] },
+      { name: '코랄', palette: ['#1f1013','#492328','#803b39','#bd6050','#f18c66','#ffbc93','#ffe9ce'] },
+      { name: '레드', palette: ['#200c18','#491426','#7c2440','#bc3656','#ed5475','#ff91a8','#ffdae2'] },
+      { name: '핑크', palette: ['#1c0d22','#3e1b4a','#713070','#ab469f','#e16bd1','#ffa7ed','#ffe5fc'] },
+      { name: '바이올렛', palette: ['#100d25','#29204e','#44377f','#7160b7','#9b8bea','#c6baff','#eee7ff'] },
+      { name: '블루', palette: ['#0a1526','#153252','#205486','#367db9','#5fa8ec','#a4d5ff','#e3f5ff'] },
+      { name: '시안', palette: ['#071d25','#123e4b','#1d6c7b','#269ca9','#49d5d8','#9cfff5','#e2fffc'] },
+      { name: '펄', palette: ['#161525','#30304d','#555675','#8487ac','#b8bce5','#e2e4ff','#ffffff'] }
+    ];
+
+// App adapters: original pixelfx modules draw the art; game rules own combat and progression.
+const CDN = 'https://cdn.jsdelivr.net/gh/patch-gg/pixelfx@main/src';
+const $ = id => document.getElementById(id);
+const app = $('app');
+app.style.setProperty('--ground-position', `${CONFIG.GROUND_RATIO * 100}%`);
+$('max-level').textContent = String(CONFIG.MAX_LEVEL);
+$('stages').setAttribute('aria-label', `${CONFIG.MAX_LEVEL}단계 색상 진행`);
+const worldCanvas = $('world'), worldCtx = worldCanvas.getContext('2d', { alpha: false });
+const vfxCanvas = $('vfx'), vfxCtx = vfxCanvas.getContext('2d');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const debugEnabled = new URLSearchParams(location.search).get('debug') === '1';
+const BAR_HOLD_TIME = 1.28;
+const stageDots = COLORS.slice(0, CONFIG.MAX_LEVEL).map((c, i) => {
+  const dot = document.createElement('span'); dot.className = 'stage-dot';
+  dot.style.backgroundColor = c.palette[4]; dot.title = `${i + 1}단계 / ${c.name}`;
+  dot.setAttribute('aria-hidden', 'true'); $('stages').append(dot); return dot;
+});
+const freshSeed = () => crypto.getRandomValues(new Uint32Array(1))[0] || 1;
+let core, slimeModule, healthModule, critModule, damageModule, coinModule, ready = false;
+let effectModules = {}, effectBuffers = new Map();
+let weatherModules = {}, weatherFx = null, environmentKey = '';
+let state = initialState(freshSeed()), units = [], healthRows = [], attacks = [], serial = 0;
+let gameNow = 0, hitStopUntil = 0, flash = 0, shakeTime = 0, toastUntil = 0;
+let stageWall = performance.now(), pageVisible = !document.hidden, lastSaveAt = -Infinity, saveKey = '', savedSignature = '';
+let pauseStartedAt = null, pauseHitStopRemaining = 0;
+let cssWidth = 1, cssHeight = 1, width = 1, height = 1;
+let background, backgroundFrame, backgroundImage, visualSize = 32, view = null, hudDirty = true;
+let lastRenderedAt = -Infinity;
+const combatButtons = new Map();
+const formatNumber = n => Number(n.toFixed(2)).toString();
+const formatSize = n => Number(n.toFixed(1)).toString();
+const seconds = ms => `${formatNumber(ms / 1000)}s`;
+const modalOpen = () => !!document.querySelector('dialog[open]');
+function saveProgress(force = false) {
+  if (!ready) return false;
+  try {
+    const data = {version:SAVE_VERSION,maxLevel:CONFIG.MAX_LEVEL,state,gameNow,hitStopRemaining:pauseStartedAt === null ? Math.max(0,hitStopUntil-performance.now()) : pauseHitStopRemaining,
+      casts:attacks.filter(a=>a.ticket && !a.ticket.consumed && a.ticket.generation===state.generation && state.phase==='ready')
+        .map(a=>({source:a.source,t:a.fx.t,seed:a.fx.options.seed,ticket:a.ticket,side:a.side}))};
+    const signature = JSON.stringify(data);
+    lastSaveAt=performance.now();
+    if (!force && signature === savedSignature) return true;
+    const key = freshSaveKey(saveKey);
+    localStorage.setItem(SAVE_KEY,encodeSave(JSON.parse(signature),key));
+    saveKey=key;savedSignature=signature;lastSaveAt=performance.now();
+    $('save-status').textContent='진행 상태가 자동 저장됩니다.';
+    return true;
+  } catch (error) {
+    lastSaveAt=performance.now();
+    $('save-status').textContent='브라우저 저장 공간에 접근할 수 없어 기록을 저장하지 못했습니다.';
+    return false;
+  }
+}
+function loadProgress() {
+  try {
+    const raw=localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const decoded=decodeSave(raw),data=validateSave(decoded.data);
+    saveKey=decoded.key;state=data.state;gameNow=data.gameNow;
+    return data;
+  } catch (error) {
+    // No partial recovery: a single mismatched key or malformed item resets all progress.
+    state=initialState(freshSeed());gameNow=0;
+    try {localStorage.removeItem(SAVE_KEY);} catch {}
+    $('save-status').textContent='저장 기록을 확인할 수 없어 진행을 초기화했습니다.';
+    return null;
+  }
+}
+function updateStageUi() {
+  $('stage-number').textContent=`스테이지 ${state.stage}`;
+  const limited=state.stage>CONFIG.UNTIMED_STAGES,paused=modalOpen()||!pageVisible;
+  $('stage-time').textContent=state.phase==='finished'?'완료':!limited?'시간제한 없음':`남은 시간 ${Math.ceil(state.stageRemaining/1000)}s${paused&&state.phase!=='failed'?' / 일시 정지':''}`;
+  $('stage-time').dataset.urgent=String(limited&&state.stageRemaining<=10000);
+}
+function showTimeout() {
+  $('timeout-message').textContent=`스테이지 ${state.stage}의 제한시간이 끝났습니다. 보유 코인: ${state.coins}${state.coins<CONFIG.CONTINUE_COST?' / 코인이 부족합니다.':''}`;
+  const cost = CONFIG.CONTINUE_COST.toLocaleString('ko-KR');
+  $('timeout-description').textContent = `${cost}코인을 지불하면 스킬, 아이템, 스킬 사용 횟수와 남은 코인, 누적 기록을 유지하고 1스테이지부터 다시 시작합니다.`;
+  const keepButton = $('timeout-keep');
+  keepButton.textContent = `${cost} 코인 / 정보 유지`;
+  keepButton.disabled = state.coins < CONFIG.CONTINUE_COST;
+  if (!$('timeout-dialog').open) $('timeout-dialog').showModal();
+}
+function syncStageTimer(now=performance.now()) {
+  const elapsed=Math.max(0,now-Math.max(stageWall,hitStopUntil));stageWall=now;
+  if (ready && pageVisible && !modalOpen() && elapseStageTime(state,elapsed)) {
+    attacks=[];hitStopUntil=0;hudDirty=true;showTimeout();saveProgress(true);
+  }
+  updateStageUi();
+}
+function showFinished() {
+  $('finish-message').textContent=`허수아비가 ${CONFIG.MAX_LEVEL}단계에 도달했습니다.`;
+  $('finish-stats').textContent=`누적 적중 ${state.totalHits.toLocaleString('ko-KR')}회 / 코인 ${state.coins}`;
+  $('finish').hidden=false;$('finish-reset').focus({preventScroll:true});
+}
+function mixPalette(a, b, u) {
+  const from = core.fit(a, b.length), to = core.fit(b, b.length);
+  return from.map((c, i) => core.toHex(core.mix(c, to[i], u)));
+}
+function visualState() {
+  const tr = state.transition;
+  const p = tr ? clamp01((gameNow - tr.start) / CONFIG.EVOLUTION_LOCK_MS) : 1, u = easeInOut(p);
+  const fromSize = tr && tr.from.kind === tr.to.kind ? sizeOf(tr.from) : sizeOf(state);
+  return { size: fromSize + (sizeOf(state) - fromSize) * u, p,
+    palette: tr && state.phase === 'transforming' ? mixPalette(core.PAL.night, COLORS[state.level - 1].palette, u) : COLORS[state.level - 1].palette };
+}
+function newUnit(index) {
+  const kind = state.kind, frameSize = kind === 'slime' ? [112, 88] : [160, 140];
+  const origin = kind === 'slime' ? [56, 72] : [64, 112];
+  const element = document.createElement('div'); element.className = 'creature'; element.dataset.index = index;
+  const canvas = document.createElement('canvas'); canvas.width = frameSize[0]; canvas.height = frameSize[1];
+  Object.assign(canvas.style, { width: `${frameSize[0]}px`, height: `${frameSize[1]}px`, left: `${-origin[0]}px`, top: `${-origin[1]}px`, transformOrigin: `${origin[0]}px ${origin[1]}px` });
+  canvas.setAttribute('aria-hidden', 'true'); element.append(canvas); $('creatures').append(element);
+  const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  const unit = { index, kind, element, canvas, ctx, origin, frame: core.createFrame(...frameSize), image: ctx.createImageData(...frameSize), hitAge: 1, hitPower: 0, hitDirection: 1, x: 0, y: 0 };
+  if (kind === 'slime') unit.fx = core.createFx(slimeModule, { x: origin[0], y: origin[1], palette: COLORS[state.level - 1].palette, hop: CONFIG.SLIME_HOP, seed: index + 1, light: 1 });
+  else unit.target = new core.Target(0, index + 17);
+  return unit;
+}
+function syncUnits(force = false) {
+  if (force || units.some(u => u.kind !== state.kind)) {units.forEach(u => u.element.remove()); units = [];}
+  while (units.length > state.count) units.pop().element.remove();
+  while (units.length < state.count) units.push(newUnit(units.length));
+  $('creatures').setAttribute('aria-label', `${state.kind === 'slime' ? '슬라임' : '허수아비'} ${state.count}개체`);
+}
+function setHealthEffect(animate = false, changedId = null, force = false) {
+  while (healthRows.length > state.count) healthRows.pop().element.remove();
+  while (healthRows.length < state.count) {
+    const element = document.createElement('div'); element.className = 'health-unit';
+    const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 64; canvas.setAttribute('aria-hidden', 'true');
+    element.append(canvas); $('health-bars').append(element);
+    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    healthRows.push({ element, canvas, ctx, frame: core.createFrame(160, 64), image: ctx.createImageData(160, 64), fx: null, age: 0, hp: 0 });
+  }
+  healthRows.forEach((row, i) => {
+    const enemy = state.enemies[i], to = enemy.hp, from = animate && row.fx ? row.hp : to, capacity = hpPerBarOf(state);
+    row.element.dataset.dead = String(enemy.dead); row.element.title = `적 ${i + 1}: ${formatNumber(to)}/${capacity} HP`;
+    if (!force && row.fx && row.hp === to) return;
+    const c = enemy.dead ? core.PAL.night : COLORS[state.level - 1].palette;
+    row.fx = core.createFx(healthModule, {x:80,y:30,from:from/capacity,to:to/capacity,palette:c,seed:state.totalHits+i+17,light:.9});
+    row.age = animate && i === changedId && from !== to ? .205 : BAR_HOLD_TIME;
+    row.fx.update(row.age); row.hp = to;
+  });
+}
+function updateHud() {
+  $('level').textContent = String(state.level).padStart(2, '0'); $('count').textContent = state.count;
+  $('hp').textContent = formatNumber(state.hp); $('max-hp').textContent = maxHpOf(state); $('hits').textContent = state.totalHits;
+  $('coins').textContent = state.coins;
+  const base = state.kind === 'slime' ? state.baseSize : CONFIG.DUMMY_SIZE;
+  $('size-detail').textContent = `1단계 적 크기 : ${formatSize(base)}px / 현재 단계 적 크기 : ${formatSize(sizeOf(state))}px`;
+  $('hp-caption').textContent = `${formatNumber(state.hp)}/${maxHpOf(state)} HP`;
+  $('hp-dock').setAttribute('aria-label', `적 체력 ${maxHpOf(state)} HP 중 ${formatNumber(state.hp)} HP 남음`);
+  stageDots.forEach((dot, i) => dot.classList.toggle('active', i + 1 === state.level));
+  app.dataset.phase = state.phase; app.dataset.kind = state.kind; hudDirty = false;
+  updateSkillUi();
+  updateStageUi();
+}
+function showToast(text) { $('toast').textContent = text; $('toast').classList.add('visible'); toastUntil = gameNow + 1200; }
+function settle() {
+  if (!settleState(state, gameNow)) return;
+  syncUnits(); setHealthEffect(false, null, true); hudDirty = true;
+  if (state.phase === 'transforming') {
+    const tr = state.transition;
+    showToast(tr.finish ? `허수아비 ${CONFIG.MAX_LEVEL}단계 도달!` : tr.event === 'scarecrow' ? '허수아비 등장' : tr.event === 'compress' ? `기본 크기 ×1.5 / ${formatSize(state.baseSize)}px` : tr.event === 'spawn' ? `${state.count}마리로 증가` : `LEVEL ${state.level}`);
+  }
+  if (state.phase === 'finished') {
+    showFinished();
+  }
+  stageWall=performance.now();saveProgress();
+}
+function updateLayout() {
+  if (!ready) return;
+  const visual = visualState(); visualSize = visual.size;
+  const top = app.getBoundingClientRect().top, hudBottom = $('hud').getBoundingClientRect().bottom - top;
+  const footerHeight = document.querySelector('.footer').getBoundingClientRect().height;
+  const groundUiBottom = $('ground-ui').getBoundingClientRect().bottom - top;
+  const raised = groundUiBottom + 8 > cssHeight - footerHeight - 16;
+  app.classList.toggle('footer-above-ground', raised);
+  const footerTop = hudBottom + 8;
+  app.style.setProperty('--footer-top', `${footerTop}px`);
+  app.style.setProperty('--footer-height', `${footerHeight}px`);
+  const coinRect = $('coin-dock').getBoundingClientRect();
+  app.style.setProperty('--toast-top', `${coinRect.bottom-top+4}px`);
+  const occupied = raised ? footerTop + footerHeight : hudBottom;
+  view = groupLayout(state.count, visual.size, Math.max(40, cssWidth - 32), Math.max(36, cssHeight * CONFIG.GROUND_RATIO - occupied - 16), state.kind);
+  for (let i = 0; i < units.length; i++) {
+    const unit = units[i], pos = view.points[i], dead = state.enemies[i].dead;
+    unit.x = cssWidth / 2 + pos.x * view.camera; unit.y = cssHeight * CONFIG.GROUND_RATIO + pos.y * view.camera;
+    Object.assign(unit.element.style, {left:`${unit.x}px`,top:`${unit.y}px`,zIndex:String(pos.z)});
+    unit.element.dataset.dead = String(dead);
+    const tr = state.transition;
+    unit.element.style.opacity = tr && state.phase === 'transforming' && (tr.from.kind !== state.kind || i >= tr.from.count) ? Math.max(.05, visual.p) : 1;
+    const scale = visual.size / (state.kind === 'slime' ? 32 : 52) * view.camera;
+    const hit = slimeHitPose(unit.hitAge,dead||reducedMotion||unit.kind!=='slime'?0:unit.hitPower,unit.hitDirection);
+    unit.canvas.style.transform = `translate3d(${hit.x}px,0,0) scale(${scale*hit.scaleX},${scale*hit.scaleY})`;
+    if (unit.fx) unit.fx.options.palette = dead ? core.PAL.night : hit.flash>0 ? mixPalette(visual.palette,visual.palette.map(()=>'#ffffff'),hit.flash) : visual.palette;
+  }
+  $('view-detail').textContent = `VIEW ${Math.round(view.camera*100)}%`;
+  app.dataset.layout = view.mode;
+}
+function updateInputStatus() {
+  const gate = ready ? inputGate(state, gameNow) : 'loading';
+  const paused = modalOpen(), stopped = performance.now() < hitStopUntil;
+  $('main-menu-open').disabled = !ready || paused || state.phase === 'failed';
+  $('pause-open').disabled = !ready || paused || ['failed','finished'].includes(state.phase);
+  let label = '클릭 / 터치 / Space = 기본 공격';
+  if (!ready) label = 'pixelfx 로딩 중';
+  else if (paused) label = '전투 일시 정지';
+  else if (state.phase === 'finished') label = '완료 / 설정에서 다시 시작';
+  else if (state.phase === 'failed') label = '시간 초과';
+  else if (state.phase === 'waiting') label = `적 변화 준비 / ${seconds(Math.max(0,state.transition.start-gameNow))}`;
+  else if (state.phase === 'transforming') label = `적 변화 중 / ${seconds(Math.max(0,state.transition.end-gameNow))}`;
+  else if (gate === 'pending') label = '대상에게 공격이 도착하는 중';
+  $('input-label').textContent = label;
+  for (const id of Object.keys(ATTACKS)) {
+    const {button,name,time,progress} = combatButtons.get(id);
+    const owned = id === 'basic' || state.owned[id];
+    const period = attackPeriod(state,id), left = Math.max(0,period-(gameNow-state.lastCast[id]));
+    button.disabled = !ready || paused || stopped || inputGate(state,gameNow,id) !== 'ready';
+    button.hidden = !owned;
+    const nameText=`${ATTACKS[id].name}${isAutomatic(state,id) ? ' · AUTO' : ''}`;
+    const timeText=!owned ? '미구매' : left > .005 ? seconds(left) : '준비';
+    if(name.textContent!==nameText)name.textContent=nameText;
+    if(time.textContent!==timeText)time.textContent=timeText;
+    progress.style.transform = `scaleX(${owned ? clamp01(1-left/period) : 0})`;
+    button.setAttribute('aria-label',`${ATTACKS[id].name} / ${!owned?'미구매':left>0?seconds(left)+' 후 사용 가능':'사용 가능'} / 주기 ${seconds(period)}`);
+  }
+  app.dataset.input = gate;
+}
+function resize() {
+  if (!ready) return;
+  const w=app.clientWidth,h=app.clientHeight;
+  if (w===cssWidth && h===cssHeight && background) return;
+  cssWidth=Math.max(1,w);cssHeight=Math.max(1,h);
+  const pixelSize=Math.max(2,Math.ceil(Math.max(cssWidth/400,cssHeight/350)));
+  width=Math.max(1,Math.round(cssWidth/pixelSize));height=Math.max(1,Math.round(cssHeight/pixelSize));
+  worldCanvas.width=vfxCanvas.width=width;worldCanvas.height=vfxCanvas.height=height;
+  worldCtx.imageSmoothingEnabled=vfxCtx.imageSmoothingEnabled=false;
+  backgroundFrame=core.createFrame(width,height);backgroundImage=worldCtx.createImageData(width,height);
+  environmentKey='';syncEnvironment();
+  updateLayout();render();
+}
+function syncEnvironment() {
+  const environment = environmentOf(state), key = `${environment.weather}/${environment.ground}`;
+  if (key === environmentKey) return;
+  const y = Math.round(height * CONFIG.GROUND_RATIO);
+  background = core.backdrop('dark', width, height);
+  if (environment.ground === 'ground') {
+    const ground = core.backdrop('ground', width, height, y);
+    background.set(ground.subarray(y * width), y * width);
+  }
+  const module = weatherModules[environment.weather];
+  weatherFx = module ? core.createFx(module, {x: module.meta.origin[0], y: module.meta.origin[1], seed: 19, light: .8}) : null;
+  environmentKey = key; app.dataset.weather = environment.weather || 'none';
+}
+function effectBuffer(module) {
+  if (!effectBuffers.has(module)) {
+    const [w,h]=module.meta.size,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+    const ctx=canvas.getContext('2d');effectBuffers.set(module,{canvas,ctx,frame:core.createFrame(w,h),image:ctx.createImageData(w,h)});
+  }
+  return effectBuffers.get(module);
+}
+function makeEffect(source, targetId, critical, ticket = null, options = {}) {
+  const module=source==='critical'?critModule:source==='damage'?damageModule:source==='coins'?coinModule:effectModules[source];
+  const def=source==='critical'?{impact:[0,-26],body:true}:source==='damage'||source==='coins'?{impact:[0,0]}:ATTACKS[source];
+  const unit=units[targetId],bodyOffset=source==='damage'?visualSize*view.camera+12:def.body?visualSize*(state.kind==='slime'?.4:.5)*view.camera:0;
+  const [ox,oy]=module.meta.origin;
+  const opts={x:ox,y:oy,seed:++serial+200,light:1,...options};
+  if (critical) {opts.palette=core.PAL.candy;opts.sparks=core.PAL.candy;}
+  if (source === 'coins') opts.smoke = [0, 0, 0, 0];
+  const jitter = source === 'damage' ? new core.Rng(opts.seed) : null;
+  const fx=core.createFx(module,opts);
+  const side=source==='acid' ? (options.side ?? effectSide(opts.seed)) : 1;
+  const scale=source==='damage' ? damageNumberScale(options.damage??Math.abs(Number(options.text))) : source==='coins' ? .5 : CONFIG.ATTACK_EFFECT_SCALE*(source==='lightning'?CONFIG.LIGHTNING_SCALE:1);
+  // Fit the visible number, not its large transparent safety margin.
+  const halfText=source==='damage' ? (String(options.text).length*6-1)*3.4/2+3 : 0;
+  const bounds=source==='damage' ? [Math.max(0,ox-halfText),0,Math.min(module.meta.size[0],ox+halfText+20),module.meta.size[1]] : [0,0,...module.meta.size];
+  return {source,module,fx,ticket,targetId,critical,side,bounds,impact:def.impact,scale,keepInView:source==='damage'||source==='coins',anchorX:(unit.x+(jitter?jitter.range(-12,12):0))/cssWidth,anchorY:(unit.y-bodyOffset+(jitter?jitter.range(-8,8):0))/cssHeight};
+}
+function strike(source = 'basic') {
+  syncStageTimer();
+  if (!ready || !background || document.hidden || modalOpen() || performance.now()<hitStopUntil) return false;
+  settle();updateLayout();
+  // Screen order chooses the next target; an existing living target stays selected.
+  const order=[...units].sort((a,b)=>b.x-a.x || view.points[b.index].z-view.points[a.index].z || b.index-a.index).map(u=>u.index);
+  const ticket=reserveAttack(state,gameNow,source,order);
+  if (!ticket) {updateInputStatus();return false;}
+  attacks.push(makeEffect(source,ticket.targetId,ticket.critical,ticket));updateInputStatus();saveProgress();return true;
+}
+function onHit(attack, wallNow) {
+  const result=applyHit(state,attack.ticket,gameNow);
+  if (!result) return;
+  const unit=units[result.targetId];
+  unit.hitAge=0;unit.hitPower=result.critical?1:.7;unit.hitDirection=attack.side;
+  if (unit.target) unit.target.hit({push:result.critical?2.8:1.2,straw:result.critical?18:8,flash:.05});
+  setHealthEffect(true,result.targetId);hudDirty=true;
+  flash=Math.max(flash,result.critical?.13:.04);shakeTime=Math.max(shakeTime,result.critical?.25:.08);
+  if (result.critical) {
+    const burst=makeEffect('critical',result.targetId,true);burst.fx.update(.025);attacks.push(burst);
+    hitStopUntil=wallNow+CONFIG.HIT_STOP_MS;
+  }
+  // Visual feedback has no damage ticket: it cannot hit or award coins again.
+  if (result.coins > 0) attacks.push(makeEffect('coins',result.targetId,false,null,{coins:result.coins}));
+  attacks.push(makeEffect('damage',result.targetId,result.critical,null,{text:`-${formatNumber(result.damage)}`,damage:result.damage}));
+  $('combat-feedback').textContent=`${result.critical?'크리티컬 / ':''}피해 ${formatNumber(result.damage)}${result.coins?` / ${result.coins} 코인 획득`:''}`;
+  if (result.transition) showToast(`${result.critical?'CRITICAL! / ':''}성장 준비`);
+  else if (result.critical) showToast('CRITICAL!');
+  saveProgress();
+}
+function resetGame(next = null) {
+  const generation=state.generation+1;
+  state=next||initialState(freshSeed());state.generation=generation;gameNow=0;hitStopUntil=0;stageWall=performance.now();
+  pauseStartedAt=null;pauseHitStopRemaining=0;
+  attacks=[];flash=shakeTime=toastUntil=0;
+  $('combat-feedback').textContent='';
+  document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+  $('toast').classList.remove('visible');$('finish').hidden=true;$('scene').style.transform='';$('flash').style.opacity='0';
+  if(ready){syncUnits(true);setHealthEffect(false,null,true);}
+  updateHud();updateInputStatus();if(ready){updateLayout();render();}
+  saveProgress(true);
+}
+function update(dt, wallNow) {
+  if(modalOpen() || document.hidden || state.phase==='failed') {updateInputStatus();return;}
+  if(wallNow<hitStopUntil){updateInputStatus();return;}
+  // Every animation shares this clock. No per-effect or normal-hit hit-stop is applied.
+  for(let remaining=dt;remaining>1e-8;){
+    const step=Math.min(remaining,1/120);remaining-=step;gameNow+=step*1000;settle();
+    flash=Math.max(0,flash-step);shakeTime=Math.max(0,shakeTime-step);
+    if(gameNow>=toastUntil)$('toast').classList.remove('visible');
+    for(const unit of units){
+      unit.hitAge=Math.min(1,unit.hitAge+step);
+      if(!state.enemies[unit.index].dead){unit.fx?.update(step*CONFIG.ANIMATION_SPEED);unit.target?.step(step);}
+    }
+    const batch=[...attacks];
+    batch.forEach(attack=>attack.fx.update(step));
+    for(const row of healthRows){if(row.fx && row.age<BAR_HOLD_TIME){const delta=Math.min(step,BAR_HOLD_TIME-row.age);row.fx.update(delta);row.age+=delta;}}
+    for(const attack of batch){
+      while(attack.ticket && !attack.ticket.consumed && attack.ticket.generation===state.generation && state.phase==='ready' && attack.fx.t+1e-8>=hitTimes(attack.ticket)[attack.ticket.hitIndex]){
+        onHit(attack,wallNow);if(wallNow<hitStopUntil)break;
+      }
+      if(wallNow<hitStopUntil)break;
+    }
+    attacks=attacks.filter(attack=>!attack.fx.done());
+    if(wallNow<hitStopUntil)break;
+  }
+  for (const id of Object.keys(ATTACKS)) {
+    if (wallNow >= hitStopUntil && isAutomatic(state,id) && inputGate(state,gameNow,id) === 'ready') strike(id);
+  }
+  if(hudDirty)updateHud();updateInputStatus();
+}
+function render() {
+  if(!ready || !background)return;
+  lastRenderedAt=gameNow;
+  syncEnvironment();
+  updateLayout();core.clearFrame(backgroundFrame);core.composite(backgroundFrame,backgroundImage.data,background);worldCtx.putImageData(backgroundImage,0,0);
+  if (weatherFx) {
+    const module = weatherModules[environmentOf(state).weather], b = effectBuffer(module);
+    weatherFx.update(gameNow / 1000 - weatherFx.t);
+    core.clearFrame(b.frame);weatherFx.draw(b.frame);core.composite(b.frame,b.image.data,null);b.ctx.putImageData(b.image,0,0);
+    worldCtx.drawImage(b.canvas,0,0,width,Math.round(height*CONFIG.GROUND_RATIO));
+  }
+  vfxCtx.clearRect(0,0,width,height);
+  // Keep damage text above attacks and loot, including later overlapping casts.
+  for(const attack of [...attacks].sort((a,b)=>Number(a.source==='damage')-Number(b.source==='damage'))){
+    const b=effectBuffer(attack.module),[ox,oy]=attack.module.meta.origin;
+    const [left,top,right,bottom]=attack.bounds;
+    let scale=attack.keepInView?Math.min(attack.scale,Math.max(1,width-4)/(right-left),Math.max(1,height-4)/(bottom-top)):attack.scale;
+    let x=attack.anchorX*width-(ox+attack.impact[0])*scale,y=attack.anchorY*height-(oy+attack.impact[1])*scale;
+    if(attack.source==='acid'){
+      const target=units[attack.targetId],tracking=attack.ticket?.generation===state.generation;
+      const tx=tracking?target.x/cssWidth:attack.anchorX,ty=tracking?target.y/cssHeight:attack.anchorY;
+      const placement=vinePlacement(tx*width,ty*height,visualSize*view.camera*(state.kind==='slime'?.7:1)*height/cssHeight,width,height,attack.side);
+      ({x,y,scale}=placement);attack.placement=placement;
+    }
+    if(attack.keepInView){x=Math.max(2-left*scale,Math.min(width-right*scale-2,x));y=Math.max(2-top*scale,Math.min(height-bottom*scale-2,y));}
+    for(const [layer,ctx] of [['back',worldCtx],['front',vfxCtx]]){
+      core.clearFrame(b.frame);attack.fx.draw(b.frame,layer);core.composite(b.frame,b.image.data,null);b.ctx.putImageData(b.image,0,0);
+      if(attack.side===-1){ctx.save();ctx.translate(x+b.frame.w*scale,y);ctx.scale(-1,1);ctx.drawImage(b.canvas,0,0,b.frame.w*scale,b.frame.h*scale);ctx.restore();}
+      else ctx.drawImage(b.canvas,x,y,b.frame.w*scale,b.frame.h*scale);
+    }
+  }
+  for(const unit of units){
+    core.clearFrame(unit.frame);
+    if(unit.fx)unit.fx.draw(unit.frame);
+    else{unit.target.draw(unit.frame.color,unit.frame.w,unit.frame.h,...unit.origin,false);unit.target.drawStraw(unit.frame.color,unit.frame.w,unit.frame.h,...unit.origin,false);}
+    core.composite(unit.frame,unit.image.data,null);unit.ctx.putImageData(unit.image,0,0);
+  }
+  for(const row of healthRows){if(!row.fx)continue;core.clearFrame(row.frame);row.fx.draw(row.frame);core.composite(row.frame,row.image.data,null);row.ctx.putImageData(row.image,0,0);}
+  const shake=reducedMotion?0:Math.min(5,shakeTime*20),dx=Math.sin(gameNow*.08)*shake,dy=Math.cos(gameNow*.061)*shake*.5;
+  $('scene').style.transform=`translate3d(${dx}px,${dy}px,0)`;$('flash').style.opacity=reducedMotion?0:flash;
+}
+function startLoop(){
+  let last=performance.now(),drawAge=0;
+  function tick(now){
+    const elapsed=Math.max(0,now-Math.max(last,hitStopUntil));last=now;
+    syncStageTimer(now);
+    update(Math.min(elapsed/1000,.07),now);drawAge+=elapsed;
+    if(now-lastSaveAt>=1000)saveProgress();
+    if(gameNow!==lastRenderedAt && (drawAge>=1000/30 || now<hitStopUntil)){render();drawAge=0;}
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function buildSkillUi(){
+  for (const id of Object.keys(ATTACKS)) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'combat-skill'; button.dataset.cast = id;
+    button.innerHTML = `<span class="skill-name">${ATTACKS[id].name}</span><span class="skill-time"></span><span class="input-track"><span class="input-progress" style="display:block"></span></span>`;
+    combatButtons.set(id,{button,name:button.querySelector('.skill-name'),time:button.querySelector('.skill-time'),progress:button.querySelector('.input-progress')});
+    button.addEventListener('click', () => strike(id)); $('combat-skills').append(button);
+  }
+  for(const [id,skill] of Object.entries(PASSIVES)){
+    const card=document.createElement('article');card.className='skill-card';
+    const requirement = (skill.requires || []).map(([key, level]) => `${PASSIVES[key].name} ${level}레벨 이상`).join(', ') || '없음';
+    card.innerHTML=`<h3>${skill.name} <span id="level-${id}"></span></h3><p>${skill.description}<br>최대 ${skill.maxLevel}레벨 / 레벨당 <span class="cost">${skill.cost}코인</span><br>구매 조건 · ${requirement}</p><button class="reset" data-upgrade="${id}" type="button"></button>`;
+    $('passive-panel').append(card);
+  }
+  for(const id of ACTIVE_IDS){
+    const skill=ATTACKS[id],card=document.createElement('article');card.className='skill-card';
+    const type = {physical: '물리', magic: '마법', neutral: '중립 · 물리 50% + 마법 50%'}[skill.type];
+    card.innerHTML=`<h3><span class="skill-grade">[ ${skillGrade(id)} ]</span> ${skill.name}</h3><p>${type} / 기본 공격력 ${skill.damage} / 기본 주기 ${seconds(skill.period)}</p><p id="period-${id}"></p><button class="reset" data-buy="${id}" type="button"></button>`;
+    $('active-skills-panel').append(card);
+  }
+  for (const [id, item] of Object.entries(ITEMS)) {
+    const card = document.createElement('article'); card.className = 'skill-card';
+    card.innerHTML = `<h3>${item.name}</h3><p><span class="cost">${item.cost}코인</span> / 1회 구매<br>${item.grade} 등급 공격 자동 사용<br>구매 조건 · 해당 등급의 모든 스킬 보유 및 각각 25회 사용</p><p id="item-progress-${id}"></p><button class="reset" data-item="${id}" type="button"></button>`;
+    $('items-panel').append(card);
+  }
+}
+function updateSkillUi(force = false){
+  if(!force&&!$('skills-dialog').open&&!$('items-dialog').open)return;
+  $('skills-wallet').textContent=`보유 코인 ${state.coins}`;
+  $('skill-summary').innerHTML=`물리 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.strength)} / 마법 ×${formatNumber(CONFIG.DAMAGE_GROWTH ** state.passives.intelligence)}<br>공격속도 I +${Math.round(speedBonus(state,'basic')*100)}% , II +${Math.round(speedBonus(state,'lightning')*100)}% , III +${state.passives.dexterity}%<br>크리티컬 확률 ${Math.round(criticalChance(state)*100)}%<br>크리티컬 피해 ${Math.round(criticalMultiplier(state.passives.critDamage)*100)}%`;
+  for(const id of Object.keys(PASSIVES)){
+    const passive = PASSIVES[id], unlocked = passiveUnlocked(state,id);
+    $(`level-${id}`).textContent=`${state.passives[id]}/${passive.maxLevel}`;
+    const button=document.querySelector(`[data-upgrade="${id}"]`),max=state.passives[id]>=passive.maxLevel;
+    button.disabled=max || !unlocked || state.coins<passive.cost;button.innerHTML=max?'최대 레벨':!unlocked?'구매 조건 미충족':`<span class="cost">${passive.cost} 코인</span>`;
+    button.closest('.skill-card').dataset.available=String(!button.disabled);
+  }
+  for(const id of ACTIVE_IDS){
+    $(`period-${id}`).textContent=`현재 공격력 ${attackDamage(state,id)} / 주기 ${seconds(attackPeriod(state,id))}${state.owned[id]?isAutomatic(state,id)?' / 자동 사용':' / 수동 사용':''}`;
+    const button=document.querySelector(`[data-buy="${id}"]`);button.disabled=state.owned[id] || state.coins<ATTACKS[id].cost;
+    button.innerHTML=state.owned[id]?'구매 완료 / 사용 가능':`<span class="cost">${ATTACKS[id].cost} 코인</span>`;
+  }
+  $('items-wallet').textContent = `보유 코인 ${state.coins}`;
+  for (const [id, item] of Object.entries(ITEMS)) {
+    $(`item-progress-${id}`).textContent = item.skills.map(skill => `${ATTACKS[skill].name} · ${skill === 'basic' || state.owned[skill] ? '보유' : '미보유'} / ${state.uses[skill]}/25회`).join(' | ');
+    const button = document.querySelector(`[data-item="${id}"]`);
+    const unlocked = itemUnlocked(state,id);
+    button.disabled = state.items[id] || !unlocked || state.coins < item.cost;
+    button.closest('.skill-card').dataset.available = String(!button.disabled);
+    button.innerHTML = state.items[id] ? '구매 완료 / 자동 사용 중' : !unlocked ? '구매 조건 미충족' : `<span class="cost">${item.cost} 코인</span>`;
+  }
+}
+function pauseGame() {
+  syncStageTimer();
+  if (!ready || pauseStartedAt !== null || ['failed','finished'].includes(state.phase)) return;
+  pauseStartedAt = Date.now();
+  pauseHitStopRemaining = Math.max(0,hitStopUntil-performance.now());
+  $('pause-time').textContent = `${new Date(pauseStartedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false})}`;
+  $('pause-dialog').showModal();
+  updateInputStatus();updateStageUi();saveProgress();
+}
+function resumeGame() {
+  if (document.hidden) return;
+  hitStopUntil = performance.now() + pauseHitStopRemaining;
+  pauseStartedAt = null;pauseHitStopRemaining = 0;stageWall = performance.now();
+  $('pause-dialog').close();updateInputStatus();saveProgress();
+}
+function handleVisibilityChange() {
+  syncStageTimer();pageVisible=!document.hidden;stageWall=performance.now();
+  if (!pageVisible) pauseGame();
+  saveProgress();updateStageUi();updateInputStatus();
+}
+function openModal(id){syncStageTimer();if(ready&&!document.hidden&&state.phase!=='failed'){$(id).showModal();updateInputStatus();updateStageUi();saveProgress();}}
+function requestMainMenu() {
+  $('main-menu-error').hidden = true;
+  openModal('main-menu-dialog');
+  if ($('main-menu-dialog').open) $('main-menu-cancel').focus();
+}
+function returnToMainMenu() {
+  if (!$('main-menu-dialog').open) return;
+  syncStageTimer();
+  if (saveProgress(true)) {
+    location.assign('./index.html');
+  } else {
+    $('main-menu-error').textContent = '진행 상태를 저장하지 못했습니다. 브라우저 저장 공간을 확인한 후 다시 시도해 주세요.';
+    $('main-menu-error').hidden = false;
+  }
+}
+function requestReset(){$('reset-dialog').showModal();$('reset-cancel').focus();}
+function selectTab(name){
+  for(const id of ['passive','active']){const selected=id===name;$(`${id}-tab`).setAttribute('aria-selected',String(selected));$(`${id}-tab`).tabIndex=selected?0:-1;$(`${id}-panel`).hidden=!selected;}
+}
+buildSkillUi();
+$('settings-open').addEventListener('click',()=>openModal('settings-dialog'));
+$('main-menu-open').addEventListener('click',requestMainMenu);
+$('main-menu-cancel').addEventListener('click',()=>$('main-menu-dialog').close());
+$('main-menu-confirm').addEventListener('click',returnToMainMenu);
+$('pause-open').addEventListener('click',pauseGame);
+$('pause-resume').addEventListener('click',resumeGame);
+$('pause-dialog').addEventListener('cancel',event=>event.preventDefault());
+$('items-open').addEventListener('click',()=>{updateSkillUi(true);$('item-message').textContent='';openModal('items-dialog');});
+$('skills-open').addEventListener('click',()=>{updateSkillUi(true);$('shop-message').textContent='';openModal('skills-dialog');});
+document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.close).close()));
+$('reset').addEventListener('click',requestReset);$('finish-reset').addEventListener('click',requestReset);
+$('reset-cancel').addEventListener('click',()=>$('reset-dialog').close());
+$('reset-confirm').addEventListener('click',()=>{resetGame();app.focus({preventScroll:true});});
+$('timeout-keep').addEventListener('click',()=>{
+  const next=restartAfterFailure(state,true,freshSeed());
+  if(next){resetGame(next);app.focus({preventScroll:true});}
+});
+$('timeout-reset').addEventListener('click',()=>{
+  const next=restartAfterFailure(state,false,freshSeed());
+  if(next){resetGame(next);app.focus({preventScroll:true});}
+});
+$('timeout-dialog').addEventListener('cancel',event=>event.preventDefault());
+window.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&$('timeout-dialog').open){event.preventDefault();event.stopPropagation();}
+},true);
+document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('close',()=>{stageWall=performance.now();updateStageUi();updateInputStatus();saveProgress();}));
+for(const name of ['passive','active']){
+  $(`${name}-tab`).addEventListener('click',()=>selectTab(name));
+  $(`${name}-tab`).addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();const next=name==='passive'?'active':'passive';selectTab(next);$(`${next}-tab`).focus();}});
+}
+$('skills-dialog').addEventListener('click',event=>{
+  const upgrade=event.target.closest('[data-upgrade]'),buy=event.target.closest('[data-buy]');
+  if(upgrade){const id=upgrade.dataset.upgrade;if(upgradePassive(state,id)){$('shop-message').textContent=`${PASSIVES[id].name} ${state.passives[id]}레벨`;updateHud();updateInputStatus();saveProgress();}}
+  if(buy){const id=buy.dataset.buy;if(buySkill(state,id)){$('shop-message').textContent=`${ATTACKS[id].name} 구매 완료`;updateHud();updateInputStatus();saveProgress();}}
+});
+$('items-dialog').addEventListener('click', event => {
+  const button = event.target.closest('[data-item]');
+  if (!button || !buyItem(state, button.dataset.item)) return;
+  $('item-message').textContent = `${ITEMS[button.dataset.item].name} 구매 완료 / 자동 공격 활성화`;
+  updateHud(); updateInputStatus(); saveProgress();
+});
+const SCENARIOS={
+  start:{},two:{count:2,level:CONFIG.MAX_LEVEL},three:{count:3,level:CONFIG.MAX_LEVEL},four:{count:4,level:CONFIG.MAX_LEVEL},
+  compress:{count:4,level:CONFIG.MAX_LEVEL,hp:1},replace:{count:1,level:CONFIG.MAX_LEVEL,hp:1,baseSize:162,cycles:4},
+  finish:{kind:'scarecrow',count:1,level:CONFIG.MAX_LEVEL-1,hp:1,baseSize:243,cycles:5},
+  shop:{coins:2000,count:4},critical:{coins:2000,count:4,rng:1},
+  timed:{coins:1000,stage:11,count:2,level:4},grace:{stage:10,count:2,level:3,hp:1},poor:{coins:499,stage:11,count:2,level:4}
+};
+function loadScenario(name){
+  if(!debugEnabled || !ready || !Object.hasOwn(SCENARIOS,name))return false;
+  resetGame();Object.assign(state,SCENARIOS[name]);resetEnemies(state,SCENARIOS[name].hp??maxHpOf(state));
+  if(name==='critical')state.passives.critChance=30;
+  syncUnits(true);setHealthEffect(false,null,true);updateHud();render();updateInputStatus();saveProgress(true);return true;
+}
+function snapshot(){return {...JSON.parse(JSON.stringify(state)),maxHp:maxHpOf(state),logicalSize:sizeOf(state),gameNow,
+  input:inputGate(state,gameNow),camera:view?.camera,layout:view?.mode,points:view?.points,activeAttacks:attacks.length,healthBars:healthRows.length,
+  hitStopRemaining:Math.max(0,hitStopUntil-performance.now()),modal:document.querySelector('dialog[open]')?.id??null,
+  effects:attacks.map(a=>({source:a.source,t:a.fx.t,critical:a.critical,targetId:a.targetId,palette:a.critical?'candy':'default',colors:a.fx.options.palette,text:a.fx.options.text,coins:a.fx.options.coins,scale:a.scale,side:a.side,placement:a.placement,seed:a.fx.options.seed})),
+  unitReactions:units.map(u=>({age:u.hitAge,power:u.hitPower,transform:u.canvas.style.transform})),
+  unitTimes:units.map(u=>u.fx?.t??u.target?.clock),healthTimes:healthRows.map(r=>r.fx?.t),
+  grades:Object.fromEntries(Object.keys(ATTACKS).map(id=>[id,skillGrade(id)])),unitPalettes:units.map(u=>u.fx?.options.palette??null),periods:Object.fromEntries(Object.keys(ATTACKS).map(id=>[id,attackPeriod(state,id)])),config:{...CONFIG}};}
+if(debugEnabled){
+  $('test-tools').hidden=false;
+  for(const [name,count] of [['two',2],['three',3],['four',4]])document.querySelector(`option[value="${name}"]`).textContent=`${count}마리 / ${CONFIG.MAX_LEVEL}단계`;
+  Object.defineProperty(window,'pixelfxDemo',{value:Object.freeze({snapshot,scenario:loadScenario,strike,reset:resetGame})});
+  $('test-apply').addEventListener('click',()=>loadScenario($('test-scenario').value));
+}
+app.addEventListener('pointerdown',event=>{
+  if(event.pointerType==='mouse' && event.button!==0)return;
+  if(event.target.closest('button,a,select,input,summary,dialog,#test-tools,#finish,#error'))return;
+  event.preventDefault();strike();
+},{passive:false});
+window.addEventListener('keydown',event=>{
+  if(event.code!=='Space' || event.repeat || modalOpen() || event.target.closest?.('button,a,select,input,summary'))return;
+  event.preventDefault();strike();
+});
+$('reload').addEventListener('click',()=>location.reload());
+window.addEventListener('resize',resize);if('ResizeObserver' in window)new ResizeObserver(resize).observe(app);
+document.addEventListener('visibilitychange',handleVisibilityChange);
+window.addEventListener('pagehide',()=>{syncStageTimer();saveProgress();});
+window.addEventListener('pageshow',()=>{stageWall=performance.now();pageVisible=!document.hidden;});
+updateHud();updateInputStatus();
+async function bootstrap(){
+  try{
+    const ids=Object.keys(ATTACKS);
+    const modules=await Promise.all([import(`${CDN}/core/index.js`),import(`${CDN}/fx/critters/slime.js`),import(`${CDN}/fx/ui/health-bar-hit.js`),import(`${CDN}/fx/impacts/crit-hit.js`),import(`${CDN}/fx/ui/damage-number.js`),import(`${CDN}/fx/spawn/coin-drop.js`),...ids.map(id=>import(`${CDN}/fx/${ATTACKS[id].path}.js`)),import(`${CDN}/fx/weather/fog.js`),import(`${CDN}/fx/weather/fireflies.js`)]);
+    [core,slimeModule,healthModule,critModule,damageModule,coinModule]=modules;
+    // Leave room for large damage numbers and their arc, without changing the original art.
+    damageModule={...damageModule,meta:{...damageModule.meta,size:[160,100],origin:[80,76]}};
+    effectModules=Object.fromEntries(ids.map((id,i)=>[id,modules[i+6]]));
+    weatherModules={fog:modules[ids.length+6],fireflies:modules[ids.length+7]};
+    const restored=loadProgress();
+    ready=true;syncUnits();setHealthEffect(false,null,true);updateHud();resize();
+    if(restored){
+      for(const cast of restored.casts){
+        const attack=makeEffect(cast.source,cast.ticket.targetId,cast.ticket.critical,cast.ticket,{seed:cast.seed,side:cast.side});
+        attack.fx.update(cast.t);attacks.push(attack);serial=Math.max(serial,cast.seed-200);
+      }
+      hitStopUntil=performance.now()+restored.hitStopRemaining;
+    }
+    stageWall=performance.now();
+    if(state.phase==='failed')showTimeout();
+    if(state.phase==='finished')showFinished();
+    if(document.hidden)pauseGame();
+    saveProgress(true);updateInputStatus();render();
+    $('connection').textContent='PIXELFX LIVE';$('connection').classList.add('ready');startLoop();
+  }catch(error){ready=false;console.error(error);$('connection').textContent='FX 연결 실패';$('connection').classList.add('error');$('error-details').textContent=String(error);$('error').hidden=false;}
+}
+bootstrap();
+</script>
+</body>
+</html>
